@@ -6,6 +6,7 @@ import { AlertTriangle, Car, Info, MapPin, Route, RotateCcw, Undo2 } from "lucid
 
 import { ItineraryDay } from "@/components/plan/itinerary-day";
 import { INTERESTS, PlanIntake } from "@/components/plan/plan-intake";
+import { TransferPicker } from "@/components/transfers/transfer-picker";
 import { Button, LinkButton } from "@/components/ui/button";
 import { getDestinationBySlug, getExperienceBySlug } from "@/lib/content";
 import { formatDuration, interestName, regionName } from "@/lib/format";
@@ -495,6 +496,13 @@ export function PlanBuilder() {
                 </Button>
               </div>
             ) : null}
+
+            <section aria-labelledby="plan-transfers-heading" className="mt-12">
+              <h2 id="plan-transfers-heading" className="font-display text-h3 text-ink-900">
+                Transfers &amp; vehicle
+              </h2>
+              <TransferPicker className="mt-5" />
+            </section>
           </div>
 
           <aside

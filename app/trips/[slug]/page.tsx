@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CalendarRange, Car, Check, Map, Wallet, X } from "lucide-react";
 
 import { DestinationCard } from "@/components/cards/destination-card";
+import { TransferPicker } from "@/components/transfers/transfer-picker";
 import { TripItinerary } from "@/components/trips/trip-itinerary";
 import { LinkButton } from "@/components/ui/button";
 import { Container, Section } from "@/components/ui/section";
@@ -245,6 +246,17 @@ export default async function TripDetailPage({
           <div className="mt-10 max-w-[var(--container-prose)]">
             <TripItinerary days={trip.days} tripName={trip.name} />
           </div>
+        </Container>
+      </Section>
+
+      <Section className="bg-surface">
+        <Container>
+          <h2 className="font-display text-h2 text-ink-900">Transfers &amp; vehicle</h2>
+          <p className="np-measure-lead mt-3 text-lead text-ink-600">
+            Tell us if you want to be met at the airport or dropped back, and which vehicle
+            suits your group.
+          </p>
+          <TransferPicker className="mt-8 max-w-[var(--container-prose)]" />
         </Container>
       </Section>
 

@@ -433,6 +433,7 @@ Authored by the UI/UX Designer and cited throughout `docs/design/`.
 | D-14 | Breakpoint set replaces Tailwind's defaults entirely | Design / Front-end | 2026-09-19 | Approved |
 | D-15 | Target size set at 44 × 44 (AAA) rather than the AA 24 × 24 | Design / a11y | 2026-09-19 | Approved |
 | D-16 | AAA contrast (7:1) explicitly **not** targeted | Design / a11y | 2026-09-19 | Approved with documented exception |
+| D-18 | Airport transfer and vehicle choice, saved in the browser | Product / Front-end | 2026-09-21 | Implemented |
 
 ---
 
@@ -741,6 +742,24 @@ Also: payment card data must never reach the Noble Path origin (provider-hosted 
 - Dependencies added: `leaflet`, `@types/leaflet`.
 
 **Known limitations:** Data comes from a team-compiled list and is **unverified**. Coordinates are **approximate** (see docs/database/accommodation-content.md). About 165 properties across 18 destinations; other places in the source need a destination entry first. No prices or availability. Saved stays are not connected to the planner or to booking enquiries. An "All Sri Lanka" tab shows every stay in a tier on one map.
+
+---
+
+## D-18 - Airport transfer and vehicle choice, saved in the browser
+
+**Decision:** The trip page (`/trips/[slug]`) and the plan builder both offer airport pickup, airport drop and one vehicle from: Sedan, Sedan (electric), Mini car, Mini car (electric), Van, Bus, Scooter, Tuk tuk.
+
+**Reason:** Requested product feature. Travellers need to say how they get to and from the airport and what they travel in.
+
+**Alternatives considered:** Adding the fields to `PlanInput` and the itinerary engine (rejected: the choice does not affect route generation, and the trip page has no planner input); sending the choice to a server (rejected: no backend for it exists, and it would add personal-data handling for a preference).
+
+**Chosen solution:** One shared client component, `components/transfers/transfer-picker.tsx`, with data and parsing in `lib/transfers.ts`. It stores `{ airportPickup, airportDrop, vehicle }` in `localStorage` under `np.transfers.v1`. The stored value is parsed as untrusted input: unknown vehicle ids fall back to none. If storage is unavailable, the picker still works but does not persist.
+
+**Impact:**
+- The choice is shared between the two pages in one browser, and never sent to a server.
+- Adding or renaming a vehicle means editing `VEHICLE_IDS` and `VEHICLES` in `lib/transfers.ts`.
+
+**Known limitations:** It is a preference, not a booking. It is not passed to the `/bookings` enquiry form, so the traveller has to mention it when they enquire. There are no prices or availability. The plan builder has no route at present (the `/plan` route was removed), so its placement was type-checked and linted but not viewed in a browser. One vehicle only; multiple vehicles are not supported.
 
 ---
 
