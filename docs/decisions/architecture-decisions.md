@@ -434,6 +434,7 @@ Authored by the UI/UX Designer and cited throughout `docs/design/`.
 | D-15 | Target size set at 44 × 44 (AAA) rather than the AA 24 × 24 | Design / a11y | 2026-09-19 | Approved |
 | D-16 | AAA contrast (7:1) explicitly **not** targeted | Design / a11y | 2026-09-19 | Approved with documented exception |
 | D-18 | Airport transfer and vehicle choice, saved in the browser | Product / Front-end | 2026-09-21 | Implemented |
+| D-19 | Booking request page (front end only) | Product / Front-end | 2026-09-21 | Front end done, delivery pending, security review required |
 
 ---
 
@@ -762,6 +763,27 @@ Also: payment card data must never reach the Noble Path origin (provider-hosted 
 **Vehicle artwork:** each vehicle is a cartoon SVG in `public/images/vehicles/<id>.svg` (drawn in-house, original, no third-party licence). To replace one, save new art over the file with the same name (keep it SVG, or change the `src` in `transfer-picker.tsx`). The images are decorative (`alt=""`); the label carries the meaning.
 
 **Known limitations:** It is a preference, not a booking. It is not passed to the `/bookings` enquiry form, so the traveller has to mention it when they enquire. There are no prices or availability. `/plan` (`app/plan/page.tsx`, 2026-09-21) shows only the transfer picker; the generated day-by-day plan was removed from the page at the product owner's request. `components/plan/*` and `lib/itinerary.ts` are no longer used by any route. Only the page load was checked, not the picker in a browser. One vehicle only; multiple vehicles are not supported.
+
+---
+
+## D-19 - Booking request page (front end only)
+
+**Decision:** `/bookings` ("Plan your trip") is a booking request form: traveller details, trip dates (nights and days calculated), airport transfers, then Option A (pre-planned package: view itinerary, add to my trip) or Option B (build my own: stays, activities and transport, or a preferences-only request). A review step shows the full summary and an estimated price or custom quotation, then terms and **Submit booking request**, which shows a unique request ID. It is separate from `/plan`.
+
+**Reason:** Requested product flow. The front end was built first, at the product owner's request, before any delivery mechanism.
+
+**Alternatives considered:** Multi-page wizard (rejected: more state to carry and harder to review as a whole); saving the draft in `localStorage` (rejected: it holds names, emails and phone numbers, which should not sit in browser storage).
+
+**Chosen solution:** `components/booking/*` (form sections, summary), `lib/booking-request.ts` (model, validation, nights/days, ID, price estimate), `app/bookings/page.tsx`. The vehicle grid is shared with the transfer picker (`components/transfers/vehicle-grid.tsx`).
+
+**Impact:**
+- **Submission is not connected.** `submitBookingRequest()` only makes an ID in the browser. `DELIVERY_CONNECTED` in `lib/booking-request.ts` is `false`, and the confirmation screen then tells the traveller the request has not reached the team. Set it to `true` only when a server route delivers requests.
+- The request ID (`NP-YYYYMMDD-XXXXXX`) is random and client-made, so it is not guaranteed unique. The server that stores requests must issue or check the real ID.
+- Client validation is a convenience only. The server route must repeat it. `lib/validation.ts` (existing Zod schema) covers the older simple enquiry and needs extending to this request shape.
+- Prices: the site only holds indicative bands, so a package shows its band and a custom trip shows "custom quotation". No figures are invented.
+- The old `/api/bookings` route described in `docs/architecture/application-architecture.md` does not exist in the repo.
+
+**Known limitations:** Terms text is draft wording and needs review against real booking, cancellation and privacy policies. Not viewed in a browser (the extension was unavailable); logic was tested with a script and the page was checked server-side. No email or WhatsApp reaches staff yet. Personal data is collected, so **a Cybersecurity review is required before delivery is connected** (input validation, rate limiting, spam protection, storage, retention, consent).
 
 ---
 

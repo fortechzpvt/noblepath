@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import Image from "next/image";
 import { PlaneLanding, PlaneTakeoff, X } from "lucide-react";
 
+import { VehicleGrid } from "@/components/transfers/vehicle-grid";
 import { FieldGroup } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
 import {
   EMPTY_TRANSFERS,
   TRANSFERS_STORAGE_KEY,
-  VEHICLES,
   parseTransfers,
   vehicleLabel,
   type TransferSelection,
@@ -111,40 +110,7 @@ export function TransferPicker({ className }: { readonly className?: string }) {
       </FieldGroup>
 
       <FieldGroup legend="Vehicle" description="Choose one.">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {VEHICLES.map((vehicle) => (
-            <label key={vehicle.id} className="cursor-pointer">
-              <input
-                type="radio"
-                name={`${baseId}-vehicle`}
-                value={vehicle.id}
-                checked={selection.vehicle === vehicle.id}
-                onChange={() => setVehicle(vehicle.id)}
-                className="np-sr-only peer"
-              />
-              <span
-                className={cn(
-                  "flex h-full flex-col items-center gap-2 rounded-xl border-2 border-border bg-surface p-3 text-center",
-                  "transition-[background-color,border-color] duration-[var(--dur-2)] ease-[var(--ease-standard)]",
-                  "hover:border-border-strong hover:bg-sand-100",
-                  "peer-checked:border-jungle-700 peer-checked:bg-jungle-50 peer-focus-visible:shadow-[var(--focus-ring)]",
-                )}
-              >
-                {/* Decorative: the label below names the vehicle. `unoptimized` because
-                    these are small SVGs that the image optimiser cannot improve. */}
-                <Image
-                  src={`/images/vehicles/${vehicle.id}.svg`}
-                  alt=""
-                  width={160}
-                  height={100}
-                  unoptimized
-                  className="h-auto w-full max-w-[140px]"
-                />
-                <span className="text-body-sm font-semibold text-ink-900">{vehicle.label}</span>
-              </span>
-            </label>
-          ))}
-        </div>
+        <VehicleGrid name={`${baseId}-vehicle`} value={selection.vehicle} onChange={setVehicle} />
         {selection.vehicle !== null ? (
           <button
             type="button"
