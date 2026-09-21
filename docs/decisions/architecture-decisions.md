@@ -435,6 +435,7 @@ Authored by the UI/UX Designer and cited throughout `docs/design/`.
 | D-16 | AAA contrast (7:1) explicitly **not** targeted | Design / a11y | 2026-09-19 | Approved with documented exception |
 | D-18 | Airport transfer and vehicle choice, saved in the browser | Product / Front-end | 2026-09-21 | Implemented |
 | D-19 | Booking request page (front end only) | Product / Front-end | 2026-09-21 | Front end done, delivery pending, security review required |
+| D-20 | Activities page with a broad activity catalogue | Product / Content | 2026-09-21 | Implemented, content unconfirmed |
 
 ---
 
@@ -784,6 +785,22 @@ Also: payment card data must never reach the Noble Path origin (provider-hosted 
 - The old `/api/bookings` route described in `docs/architecture/application-architecture.md` does not exist in the repo.
 
 **Known limitations:** Terms text is draft wording and needs review against real booking, cancellation and privacy policies. Not viewed in a browser (the extension was unavailable); logic was tested with a script and the page was checked server-side. No email or WhatsApp reaches staff yet. Personal data is collected, so **a Cybersecurity review is required before delivery is connected** (input validation, rate limiting, spam protection, storage, retention, consent).
+
+---
+
+## D-20 - Activities page with a broad activity catalogue
+
+**Decision:** `/activities` lists 92 activities in 27 categories (beaches, water sports, safaris, treks, adventure, trains and tours, tea, food, culture, village life, arts and crafts, eco, bird watching, wellness, photography, camping, Colombo, Kandy, Ella and Hill Country, Galle and the South, Jaffna and the North, Trincomalee and the East, family, couples, shopping, fishing, romantic dining). Each card shows location, duration, difficulty and an indicative price band. There is no booking status, at the product owner's request. `/experiences` redirects to `/activities` because the header, footer and destination pages link to it.
+
+**Reason:** Requested product feature.
+
+**Alternatives considered:** Extending `content/experiences.ts` (rejected: those are fully written, seasonal, photographed experiences used by the planner, and 92 more would dilute them); restoring a separate `/experiences` page (rejected in favour of one activity page).
+
+**Chosen solution:** `content/activities.ts` (typed data), `components/activities/*` (card and filter/search explorer), `app/activities/page.tsx`. Difficulty reuses the site's `easy / moderate / challenging` scale and meter; price reuses the `$ / $$ / $$$` bands.
+
+**Impact:** The header "Experiences" link now lands on `/activities`. The booking form's activity list still uses the 33 experiences; it does not yet offer these 92.
+
+**Known limitations:** **The details are draft.** Locations, durations, difficulty and price bands were drafted from general knowledge and are not confirmed by Noble Path or any operator; they must be reviewed before being treated as fact. Some are seasonal or need permits (for example Minneriya gatherings, whale watching, Adam's Peak season, national park entry) and no season or permit information is shown. No photographs. Not viewed in a browser (the extension was unavailable); data was checked by script (no duplicate slugs, every category used) and the page was checked server-side.
 
 ---
 
