@@ -759,6 +759,8 @@ Also: payment card data must never reach the Noble Path origin (provider-hosted 
 - The choice is shared between the two pages in one browser, and never sent to a server.
 - Adding or renaming a vehicle means editing `VEHICLE_IDS` and `VEHICLES` in `lib/transfers.ts`.
 
+**Vehicle artwork:** each vehicle is a cartoon SVG in `public/images/vehicles/<id>.svg` (drawn in-house, original, no third-party licence). To replace one, save new art over the file with the same name (keep it SVG, or change the `src` in `transfer-picker.tsx`). The images are decorative (`alt=""`); the label carries the meaning.
+
 **Known limitations:** It is a preference, not a booking. It is not passed to the `/bookings` enquiry form, so the traveller has to mention it when they enquire. There are no prices or availability. `/plan` (`app/plan/page.tsx`, 2026-09-21) shows only the transfer picker; the generated day-by-day plan was removed from the page at the product owner's request. `components/plan/*` and `lib/itinerary.ts` are no longer used by any route. Only the page load was checked, not the picker in a browser. One vehicle only; multiple vehicles are not supported.
 
 ---
