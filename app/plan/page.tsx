@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 
-import { PlanBuilder } from "@/components/plan/plan-builder";
+import { TransferPicker } from "@/components/transfers/transfer-picker";
 import { PageHeader } from "@/components/ui/page-header";
 import { Container, Section } from "@/components/ui/section";
 
 export const metadata: Metadata = {
   title: "Plan your trip",
-  description:
-    "Tell us how long you have, when you arrive and what you love, and get a day-by-day Sri Lanka route, with airport transfers and a vehicle of your choice.",
+  description: "Choose airport pickup, airport drop and the vehicle you want for your Sri Lanka trip.",
   alternates: { canonical: "/plan" },
 };
 
@@ -16,12 +15,12 @@ export default function PlanPage() {
     <>
       <PageHeader
         imageSrc="/images/destinations/ella.jpg"
-        title="Let's build your Sri Lanka"
-        lead="Answer three questions, get a day-by-day route, then choose your airport transfers and vehicle."
+        title="Plan your trip"
+        lead="Choose your airport transfers and the vehicle you want to travel in."
       />
       <Section className="bg-sand-50">
         <Container>
-          <PlanBuilder />
+          <TransferPicker className="max-w-[var(--container-prose)]" />
         </Container>
       </Section>
     </>
