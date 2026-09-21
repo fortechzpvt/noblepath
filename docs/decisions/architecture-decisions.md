@@ -759,7 +759,7 @@ Also: payment card data must never reach the Noble Path origin (provider-hosted 
 - The choice is shared between the two pages in one browser, and never sent to a server.
 - Adding or renaming a vehicle means editing `VEHICLE_IDS` and `VEHICLES` in `lib/transfers.ts`.
 
-**Known limitations:** It is a preference, not a booking. It is not passed to the `/bookings` enquiry form, so the traveller has to mention it when they enquire. There are no prices or availability. The plan builder has no route at present (the `/plan` route was removed), so its placement was type-checked and linted but not viewed in a browser. One vehicle only; multiple vehicles are not supported.
+**Known limitations:** It is a preference, not a booking. It is not passed to the `/bookings` enquiry form, so the traveller has to mention it when they enquire. There are no prices or availability. The `/plan` route (`app/plan/page.tsx`, restored 2026-09-21) renders the plan builder. The transfer picker appears in the plan view, after the traveller builds a route, not on the intake form; only the page load was checked, not the picker in a browser. One vehicle only; multiple vehicles are not supported.
 
 ---
 
