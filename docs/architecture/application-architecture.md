@@ -1,0 +1,139 @@
+# Noble Path — Application Architecture
+
+**Status:** Approved for v1
+**Last updated:** 2026-09-19
+
+Companion to `system-architecture.md`. That document explains the runtime shape;
+this one explains how the code inside the application is organised and why.
+
+---
+
+## 1. Directory layout
+
+```
+app/                      Routes. Server components unless marked otherwise.
+  layout.tsx              Root layout: fonts, metadata, header, footer, skip link
+  globals.css             The design tokens (@theme) + base + utilities
+  page.tsx                Home
+  destinations/           Index + [slug] detail
+  experiences/            Index
+  trips/                  Index + [slug] detail
+  plan/                   The itinerary builder
+  bookings/               Enquiry form
+  about/                  About Us
+  api/bookings/route.ts   The only write endpoint
+  api/health/route.ts     Liveness probe
+
+components/               Presentational and interactive UI
+  site-header.tsx         Transparent-over-hero → solid-on-scroll nav (client)
+  site-footer.tsx
+  ui/                     Primitives: button, chip, field, glass panel
+  home/                   Home-page sections, including the hero
+  cards/                  Destination, experience and trip cards
+  plan/                   Itinerary builder (client)
+  booking/                Booking form (client)
+
+content/                  The editorial source of truth (typed data)
+lib/                      Domain logic: types, content queries, itinerary, validation
+public/images/            Owned photography and the route-pin vector
+docs/                     Documentation — the project's memory
+```
+
+## 2. The server/client boundary
+
+This is the single most important rule in the codebase, because it is what keeps
+the performance budget (ADR-001).
+
+**Server by default.** A component is only a client component when it needs state,
+an effect, or a browser API. Currently that is exactly five places:
+
+| Client component | Why it must be |
+| --- | --- |
+| `site-header` | Reacts to scroll position; owns the mobile menu |
+| `home/hero` | Scroll-linked parallax and the route-line draw-on |
+| `plan/*` | The itinerary builder is stateful and persists to `localStorage` |
+| `booking/booking-form` | Form state, client-side validation, submission |
+| Filter controls on index pages | Selection state |
+
+Everything else — every page, every card, every section — renders on the server and
+ships no JavaScript. A `"use client"` added near the root of a tree silently pulls
+everything below it into the bundle, so the directive belongs as far down the tree as
+possible, on the smallest component that genuinely needs it.
+
+## 3. Data access
+
+Pages never reach into `content/*` directly. They call the typed accessors in
+`lib/content.ts`.
+
+This matters for one concrete reason: ADR-002 commits to replacing the file-based
+content layer with a CMS when non-technical editors arrive. That migration is a
+rewrite of `lib/content.ts` and nothing else — provided no page ever imported a
+content module directly. The indirection looks redundant today; it is what makes the
+documented exit cheap.
+
+## 4. Where input is trusted
+
+Untrusted input enters at exactly one point: `POST /api/bookings`.
+
+`lib/validation.ts` holds the Zod schema, and it is imported by **both** the client
+form and the server route. The client copy exists to give immediate, identical error
+copy; it is never a control. The server re-validates unconditionally (NFR-7). If the
+two ever disagree, the server wins — that is the whole point of a single shared schema.
+
+`.strict()` on the schema means an unexpected key is a validation failure rather than
+a silently ignored field, which is what stops a future refactor from quietly accepting
+something nobody designed for.
+
+## 5. Purity in the domain layer
+
+`lib/itinerary.ts` is a pure function: same input, same output, no I/O, no clock, no
+randomness (ADR-007). That constraint is deliberate and load-bearing:
+
+- It runs identically on the server and in the browser, so the planner works without a
+  round trip and the result can be pre-rendered if we ever want to.
+- It is trivially testable — no mocking, no fixtures, no time control.
+- A visitor who reports "the plan it gave me was wrong" can be reproduced exactly.
+
+The moment something in that module reads `Date.now()` or `Math.random()`, all three
+properties are lost. Seasonal logic therefore takes `arrivalMonth` as an explicit
+input rather than reading the current date.
+
+## 6. Styling
+
+One mechanism: Tailwind v4 utilities over the tokens in the `@theme` block
+(ADR-005). Recurring multi-property recipes from the design system — glass surfaces,
+the scrim layers, the dual focus ring, the measure constraints — are expressed once as
+`np-*` utilities in `globals.css` rather than repeated as long class strings.
+
+There are no CSS modules, no styled-components, and no inline style objects except
+where a value is genuinely dynamic (a computed parallax transform, an SVG path length).
+
+## 7. Accessibility is structural, not a pass at the end
+
+- The dual focus ring is applied globally in the base layer. Removing focus without a
+  replacement is a build-blocking defect (design system §11).
+- `prefers-reduced-motion` is handled once, globally, and the cinematic effects are
+  removed rather than shortened — including the route line, which is explicitly reset
+  to its fully-drawn state so it does not disappear.
+- Every image type in `lib/types.ts` requires `alt`. The type system enforces it; a
+  missing alt is a compile error rather than an audit finding.
+- Decorative elements — the route line, the pin — are `aria-hidden` and never the sole
+  carrier of meaning.
+
+## 8. Error handling
+
+- Server components render from compiled content, so the failure mode is a missing
+  slug → `notFound()` → the 404 route. There is no network error path to handle.
+- The booking endpoint returns structured, field-level errors and never leaks internals:
+  no stack traces, no reflected input, no raw exception messages.
+- Content integrity failures surface at **build** time via `lib/content.ts`, not at
+  runtime. A broken cross-reference fails CI instead of reaching a visitor.
+
+## 9. Conventions
+
+- Files are kebab-case; React components are PascalCase; types are PascalCase.
+- String-literal unions over TypeScript `enum` — better inference, no runtime artefact.
+- `noUncheckedIndexedAccess` is on, so array indexing yields `T | undefined` and must be
+  narrowed. This is deliberate: itinerary day arrays are indexed constantly, and an
+  off-by-one there produces a broken travel plan rather than a crash.
+- Comments explain *why*. The code already says what.

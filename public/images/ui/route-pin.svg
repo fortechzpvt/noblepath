@@ -1,0 +1,17 @@
+<!--
+  Noble Path route pin.
+
+  Traced to vector from the supplied flat raster marker, per
+  docs/design/design-system.md §10.5: the source PNG is a single-colour flat
+  icon, so keeping it as a raster would have required a 3x export and would
+  still have softened on high-DPI displays.
+
+  Decorative only. Consumers must mark it aria-hidden.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 48" width="36" height="48" fill="none" role="presentation" aria-hidden="true">
+  <path
+    d="M18 0C8.059 0 0 8.059 0 18c0 3.63 1.09 7.005 2.958 9.82L18 48l15.042-20.18A17.9 17.9 0 0 0 36 18c0-9.941-8.059-18-18-18Z"
+    fill="#FFFFFF"
+  />
+  <circle cx="18" cy="17.5" r="6.25" fill="#0A0F0D" fill-opacity="0.92" />
+</svg>

@@ -1,0 +1,523 @@
+/**
+ * Noble Path — global stylesheet.
+ *
+ * The @theme block below is the implementation of the approved design tokens in
+ * docs/design/design-system.md §12. It is copied verbatim from that specification:
+ * every token here maps to exactly one row in the design system, so the spec and
+ * this file can be diffed against each other during review (ADR-005).
+ *
+ * Do not add a token here that does not exist in the specification. If the design
+ * needs to change, change the specification first.
+ */
+
+@import "tailwindcss";
+
+@theme {
+  /* ---- breakpoints: replace Tailwind defaults entirely ---- */
+  --breakpoint-*: initial;
+  --breakpoint-xs: 390px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1440px;
+  --breakpoint-2xl: 1920px;
+
+  /* ---- colour: ink ---- */
+  --color-ink-950: #060A09;
+  --color-ink-900: #0A0F0D;
+  --color-ink-800: #16211E;
+  --color-ink-700: #24322E;
+  --color-ink-600: #33433E;
+  --color-ink-500: #4E605A;
+  --color-ink-400: #72827C;
+  --color-ink-300: #A3AFAA;
+
+  /* ---- colour: sand ---- */
+  --color-sand-50:  #FBF8F3;
+  --color-sand-100: #F3EDE3;
+  --color-sand-200: #E6DBC9;
+  --color-sand-300: #C9B99B;
+  --color-sand-400: #A08D6D;
+
+  /* ---- colour: jungle ---- */
+  --color-jungle-900: #0E3B34;
+  --color-jungle-800: #11473E;
+  --color-jungle-700: #15544A;
+  --color-jungle-600: #1A6659;
+  --color-jungle-500: #1E7A6A;
+  --color-jungle-400: #3FA08D;
+  --color-jungle-200: #BFE0D8;
+  --color-jungle-50:  #EAF5F2;
+
+  /* ---- colour: amber ---- */
+  --color-amber-700: #8A5416;
+  --color-amber-600: #C9812A;
+  --color-amber-500: #E9A23B;
+  --color-amber-400: #F4BF63;
+  --color-amber-100: #FCEFD8;
+
+  /* ---- colour: clay ---- */
+  --color-clay-600: #8E4C2C;
+  --color-clay-500: #B4643C;
+  --color-clay-100: #F6E5DB;
+
+  /* ---- colour: feedback ---- */
+  --color-success-600: #1E7A4A;
+  --color-success-200: #A8D8BC;
+  --color-success-50:  #E8F5ED;
+  --color-warning-700: #8A5A0E;
+  --color-warning-200: #EFD29A;
+  --color-warning-50:  #FCF2DF;
+  --color-error-600:   #B3261E;
+  --color-error-200:   #F1B5B0;
+  --color-error-50:    #FDECEA;
+
+  /* ---- semantic colour layer (design-system.md §2.2) ----
+     Components reference these, not the raw ramps above. The ramps exist so this
+     layer can be retuned in one place. */
+  --color-bg: #FBF8F3;
+  --color-bg-subtle: #F3EDE3;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FFFFFF;
+  --color-border: #E6DBC9;
+  --color-border-strong: #D3C6AF;
+  --color-text: #0A0F0D;
+  --color-text-secondary: #33433E;
+  --color-text-meta: #4E605A;
+  --color-text-placeholder: #72827C;
+  --color-text-inverse: #FFFFFF;
+  --color-link: #1E7A6A;
+  --color-link-hover: #15544A;
+  --color-accent: #8A5416;
+
+  /* ---- fonts ----
+     --font-playfair / --font-poppins are injected by next/font in app/layout.tsx.
+     next/font self-hosts both faces and generates a metric-adjusted local fallback,
+     which is what the specification calls "Playfair Display Fallback" / "Poppins
+     Fallback". Because the faces are self-hosted there is no runtime request to
+     Google, which is why the CSP in next.config.ts does not allow fonts.gstatic.com. */
+  --font-display: var(--font-playfair), "Iowan Old Style", "Times New Roman", Times, serif;
+  --font-sans: var(--font-poppins), "Century Gothic", "Avenir Next", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* ---- type scale ---- */
+  --text-display: clamp(2.5rem, 1.664rem + 3.429vw, 4.75rem);
+  --text-display--line-height: 1.06;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 700;
+
+  --text-display-sm: clamp(2rem, 1.443rem + 2.286vw, 3.5rem);
+  --text-display-sm--line-height: 1.10;
+  --text-display-sm--letter-spacing: -0.018em;
+
+  --text-h1: clamp(2rem, 1.443rem + 2.286vw, 3.5rem);
+  --text-h1--line-height: 1.12;
+  --text-h1--letter-spacing: -0.015em;
+
+  --text-h2: clamp(1.625rem, 1.3rem + 1.333vw, 2.5rem);
+  --text-h2--line-height: 1.18;
+  --text-h2--letter-spacing: -0.012em;
+
+  --text-h3: clamp(1.25rem, 1.064rem + 0.762vw, 1.75rem);
+  --text-h3--line-height: 1.25;
+  --text-h3--letter-spacing: -0.01em;
+
+  --text-h4: clamp(1.0625rem, 0.993rem + 0.286vw, 1.25rem);
+  --text-h4--line-height: 1.35;
+  --text-h4--letter-spacing: -0.005em;
+
+  --text-h5: 1rem;
+  --text-h5--line-height: 1.4;
+
+  --text-lead: clamp(1.0625rem, 1.016rem + 0.19vw, 1.1875rem);
+  --text-lead--line-height: 1.55;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.625;
+
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.55;
+
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.5;
+
+  --text-overline: clamp(0.75rem, 0.721rem + 0.122vw, 0.8125rem);
+  --text-overline--line-height: 1.3;
+  --text-overline--letter-spacing: 0.14em;
+  --text-overline--font-weight: 600;
+
+  --text-kicker: clamp(1rem, 0.954rem + 0.19vw, 1.125rem);
+  --text-kicker--line-height: 1.4;
+  --text-kicker--letter-spacing: 0.012em;
+
+  --text-button: clamp(0.9375rem, 0.909rem + 0.122vw, 1rem);
+  --text-button--line-height: 1;
+  --text-button--letter-spacing: 0.01em;
+  --text-button--font-weight: 600;
+
+  --text-button-serif: clamp(1.0625rem, 1.034rem + 0.122vw, 1.125rem);
+  --text-button-serif--line-height: 1;
+  --text-button-serif--letter-spacing: 0.005em;
+
+  --text-nav: clamp(0.9375rem, 0.884rem + 0.229vw, 1.0625rem);
+  --text-nav--line-height: 1;
+
+  --text-wordmark: clamp(1.125rem, 1.045rem + 0.343vw, 1.3125rem);
+  --text-wordmark--line-height: 1;
+  --text-wordmark--letter-spacing: 0em;
+  --text-wordmark--font-weight: 700;
+
+  /* ---- radii ---- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-3xl: 40px;
+  --radius-pill: 9999px;
+
+  /* ---- shadows ---- */
+  --shadow-xs: 0 1px 2px rgba(10,15,13,0.06);
+  --shadow-sm: 0 2px 6px rgba(10,15,13,0.08);
+  --shadow-md: 0 8px 24px -8px rgba(10,15,13,0.16), 0 2px 6px -2px rgba(10,15,13,0.08);
+  --shadow-lg: 0 20px 48px -16px rgba(10,15,13,0.24), 0 4px 12px -4px rgba(10,15,13,0.10);
+  --shadow-xl: 0 40px 80px -24px rgba(10,15,13,0.32);
+  --shadow-glass: 0 16px 40px -12px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.18);
+  --shadow-media: 0 12px 32px -12px rgba(6,10,9,0.45);
+
+  /* ---- blur ---- */
+  --blur-sm: 10px;
+  --blur-md: 18px;
+  --blur-lg: 28px;
+
+  /* ---- motion ---- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-cinematic: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ---- containers ---- */
+  --container-prose: 760px;
+  --container-form: 640px;
+  --container-max: 1280px;
+  --container-wide: 1440px;
+}
+
+/* ---------------------------------------------------------------------------
+   Non-@theme tokens: glass, scrims, durations, z-index, semantic aliases.
+   These are plain custom properties — they are consumed directly in the
+   utilities below and in component styles, and do not need to generate
+   Tailwind utilities of their own.
+   --------------------------------------------------------------------------- */
+:root {
+  --glass-bg: rgba(12,18,16,0.38);
+  --glass-bg-text: rgba(10,15,13,0.55);
+  --glass-bg-strong: rgba(10,15,13,0.68);
+  --glass-bg-light: rgba(255,255,255,0.72);
+  --glass-border: rgba(255,255,255,0.22);
+  --glass-border-light: rgba(10,15,13,0.08);
+  --glass-divider: rgba(255,255,255,0.28);
+  --glass-saturate: 140%;
+  --glass-filter: blur(var(--blur-md)) saturate(var(--glass-saturate));
+
+  --color-on-image: #FFFFFF;
+  --color-on-image-secondary: rgba(255,255,255,0.88);
+  --color-on-image-muted: rgba(255,255,255,0.74);
+  --color-on-image-rule: rgba(255,255,255,0.28);
+  --text-shadow-on-image: 0 1px 2px rgba(0,0,0,0.35), 0 2px 12px rgba(0,0,0,0.22);
+
+  --scrim-min-large: 0.45;
+  --scrim-min-body: 0.55;
+  --scrim-color: 6 10 9;
+
+  /* Hero scrim layers — design-system.md §10.2. The combined opacity under the
+     headline is ~0.82 and under the nav ~0.55, both at or above the body floor. */
+  --scrim-wash: rgba(6,10,9,0.14);
+  --scrim-vertical: linear-gradient(
+    to top,
+    rgba(6,10,9,0.80) 0%,
+    rgba(6,10,9,0.62) 26%,
+    rgba(6,10,9,0.30) 52%,
+    rgba(6,10,9,0.06) 76%,
+    rgba(6,10,9,0.00) 100%
+  );
+  --scrim-vertical-sm: linear-gradient(
+    to top,
+    rgba(6,10,9,0.86) 0%,
+    rgba(6,10,9,0.70) 34%,
+    rgba(6,10,9,0.40) 62%,
+    rgba(6,10,9,0.10) 86%,
+    rgba(6,10,9,0.00) 100%
+  );
+  --scrim-horizontal: linear-gradient(
+    to right,
+    rgba(6,10,9,0.55) 0%,
+    rgba(6,10,9,0.34) 34%,
+    rgba(6,10,9,0.10) 60%,
+    rgba(6,10,9,0.00) 78%
+  );
+  --scrim-top: linear-gradient(to bottom, rgba(6,10,9,0.48) 0%, rgba(6,10,9,0.00) 100%);
+  --scrim-card: linear-gradient(
+    to top,
+    rgba(6,10,9,0.82) 0%,
+    rgba(6,10,9,0.58) 38%,
+    rgba(6,10,9,0.14) 70%,
+    rgba(6,10,9,0.00) 100%
+  );
+
+  --dur-1: 120ms; --dur-2: 180ms; --dur-3: 240ms;
+  --dur-4: 360ms; --dur-5: 560ms; --dur-6: 900ms;
+  --dur-route: 2400ms; --dur-ken: 18000ms;
+
+  --z-base: 0; --z-media-scrim: 1; --z-media-content: 2; --z-raised: 10;
+  --z-sticky: 20; --z-nav: 50; --z-dropdown: 60; --z-overlay: 70;
+  --z-drawer: 80; --z-modal: 90; --z-toast: 100; --z-tooltip: 110; --z-skip-link: 120;
+
+  --color-focus: var(--color-jungle-600);
+  --color-focus-on-dark: var(--color-amber-400);
+  --color-focus-contrast: #FFFFFF;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --focus-ring: 0 0 0 var(--focus-ring-width) var(--color-focus),
+                0 0 0 calc(var(--focus-ring-width) + 2px) var(--color-focus-contrast);
+  --focus-ring-on-dark: 0 0 0 var(--focus-ring-width) var(--color-focus-on-dark),
+                        0 0 0 calc(var(--focus-ring-width) + 2px) rgba(6,10,9,0.9);
+
+  --measure-body: 68ch;
+  --measure-lead: 52ch;
+  --measure-hero: 38ch;
+
+  /* responsive semantic spacing */
+  --gutter: 20px;
+  --grid-gap: 16px;
+  --section-y: 64px;
+  --section-y-tight: 40px;
+  --card-pad: 16px;
+}
+@media (min-width: 768px)  { :root { --gutter: 32px; --grid-gap: 20px; --section-y: 80px;  --section-y-tight: 48px; --card-pad: 20px; } }
+@media (min-width: 1024px) { :root { --gutter: 40px; --grid-gap: 24px; --section-y: 96px;  --section-y-tight: 56px; --card-pad: 24px; } }
+@media (min-width: 1440px) { :root { --gutter: 48px; --section-y: 96px;  --section-y-tight: 64px; } }
+@media (min-width: 1920px) { :root { --section-y: 112px; } }
+
+/* ---------------------------------------------------------------------------
+   Base layer
+   --------------------------------------------------------------------------- */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-sand-50);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* The hero sits under a transparent nav; without this the page can show a
+       pale flash above the image while the photograph decodes. */
+    overscroll-behavior-y: none;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
+  p { margin: 0; text-wrap: pretty; }
+
+  /* Media never overflows its container, and always reserves its own space. */
+  img, picture, video, canvas, svg { display: block; max-width: 100%; }
+
+  /* Focus is never removed. Design-system.md §11: a dual ring, because a single
+     ring disappears against either sky or jungle. The transparent outline keeps
+     a visible ring in Windows High Contrast Mode, where box-shadow is dropped. */
+  :focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: var(--focus-ring-offset);
+    box-shadow: var(--focus-ring);
+    border-radius: inherit;
+  }
+
+  .on-dark :focus-visible,
+  [data-surface="dark"] :focus-visible {
+    box-shadow: var(--focus-ring-on-dark);
+  }
+
+  ::selection {
+    background-color: var(--color-amber-100);
+    color: var(--color-ink-900);
+  }
+
+  /* Reduced motion: the cinematic layer is decoration, so it is removed
+     entirely rather than merely shortened. Accessibility spec §reduced-motion. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Utilities — the recurring recipes from the design system, expressed once.
+   --------------------------------------------------------------------------- */
+@layer utilities {
+  /* Page gutter + max width. Used by every section wrapper. */
+  .np-container {
+    width: 100%;
+    max-width: calc(var(--container-max) + (var(--gutter) * 2));
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+  .np-container-wide {
+    width: 100%;
+    max-width: calc(var(--container-wide) + (var(--gutter) * 2));
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .np-section { padding-block: var(--section-y); }
+  .np-section-tight { padding-block: var(--section-y-tight); }
+
+  /* Frosted glass. backdrop-filter is progressive: where it is unsupported the
+     colour layer alone still carries the contrast, which is why the design
+     system requires the colour layer to meet the ratio on its own (§10.3). */
+  .np-glass {
+    background-color: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-glass);
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
+  }
+  .np-glass-text { background-color: var(--glass-bg-text); }
+  .np-glass-strong { background-color: var(--glass-bg-strong); }
+  .np-glass-light {
+    background-color: var(--glass-bg-light);
+    border-color: var(--glass-border-light);
+    color: var(--color-ink-900);
+  }
+
+  /* Glass degrades to a solid colour where the blur is unavailable or unwanted.
+     The colour layer already carries the text contrast on its own (§10.3), so
+     this is a visual fallback, not an accessibility one. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .np-glass { background-color: var(--glass-bg-strong); }
+    .np-glass-light { background-color: rgb(255 255 255 / 0.94); }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .np-glass {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background-color: var(--glass-bg-strong);
+    }
+    .np-glass-light { background-color: rgb(255 255 255 / 0.96); }
+  }
+
+  /* Horizontal snap rail used by the hero thumbnails below 768px. */
+  .np-rail {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline-start: var(--gutter);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .np-rail::-webkit-scrollbar { display: none; }
+  .np-rail > * { scroll-snap-align: start; }
+
+  /* Text sitting directly on photography. */
+  .np-on-image { color: var(--color-on-image); text-shadow: var(--text-shadow-on-image); }
+  .np-on-image-secondary { color: var(--color-on-image-secondary); text-shadow: var(--text-shadow-on-image); }
+  .np-on-image-muted { color: var(--color-on-image-muted); }
+
+  /* Scrim layers, as absolutely-positioned siblings of the image. */
+  .np-scrim-wash { background-color: var(--scrim-wash); }
+  .np-scrim-vertical { background-image: var(--scrim-vertical-sm); }
+  @media (min-width: 768px) { .np-scrim-vertical { background-image: var(--scrim-vertical); } }
+  .np-scrim-horizontal { background-image: var(--scrim-horizontal); }
+  .np-scrim-top { background-image: var(--scrim-top); }
+  .np-scrim-card { background-image: var(--scrim-card); }
+
+  .np-measure-body { max-width: var(--measure-body); }
+  .np-measure-lead { max-width: var(--measure-lead); }
+  .np-measure-hero { max-width: var(--measure-hero); }
+
+  /* Visually hidden but available to assistive technology. */
+  .np-sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Ken Burns — the slow push on the hero photograph. Paused under reduced
+     motion by the base layer rule above. */
+  .np-ken-burns {
+    animation: np-ken-burns var(--dur-ken) var(--ease-standard) infinite alternate;
+    will-change: transform;
+  }
+
+  /* The route line draws itself on once, then stays drawn. */
+  .np-route-draw {
+    stroke-dasharray: var(--np-route-length, 2000);
+    stroke-dashoffset: var(--np-route-length, 2000);
+    animation: np-route-draw var(--dur-route) var(--ease-cinematic) 0.3s forwards;
+  }
+
+  .np-fade-up {
+    animation: np-fade-up var(--dur-5) var(--ease-out) both;
+  }
+
+  /* A short spring when a stay is added to the plan or a tier is chosen. */
+  .np-pop {
+    animation: np-pop var(--dur-4) var(--ease-out) both;
+  }
+}
+
+@keyframes np-pop {
+  0%   { opacity: 0; transform: scale(0.6); }
+  60%  { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes np-ken-burns {
+  from { transform: scale(1) translate3d(0, 0, 0); }
+  to   { transform: scale(1.08) translate3d(0, -1.5%, 0); }
+}
+
+@keyframes np-route-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes np-fade-up {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* Under reduced motion the route line must render fully drawn rather than
+   invisible — the !important animation override above would otherwise leave it
+   stuck at its initial dashoffset. */
+@media (prefers-reduced-motion: reduce) {
+  .np-route-draw { stroke-dasharray: none; stroke-dashoffset: 0; animation: none !important; }
+  .np-ken-burns { animation: none !important; transform: none; }
+  .np-fade-up { animation: none !important; opacity: 1; transform: none; }
+  .np-pop { animation: none !important; opacity: 1; transform: none; }
+}

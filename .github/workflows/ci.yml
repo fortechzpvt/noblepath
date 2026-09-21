@@ -1,0 +1,94 @@
+# Noble Path — Continuous Integration
+#
+# Runs on every push and every pull request, including pull requests from forks.
+# This workflow deliberately requires NO secrets so that a fork PR gets the same
+# signal a branch PR does. If you ever need a secret here, stop and split the
+# secret-requiring job into a separate `pull_request_target`-free workflow and
+# have the DevOps Engineer review it.
+#
+# Documented in docs/deployment/deployment.md.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# Least privilege: CI only ever needs to read the repository contents.
+# Any job that needs more must raise it at the job level, not here.
+permissions:
+  contents: read
+
+# A newer push to the same branch/PR cancels the in-flight run. `main` is
+# excluded from cancellation so the deploy gate always has a completed run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  # Disable Next.js telemetry in CI — no build data leaves the runner.
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  verify:
+    name: Typecheck, lint, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies (lockfile-exact)
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+        env:
+          NODE_ENV: production
+          # Build-time public value only. Never a secret — see NFR-6 and
+          # docs/deployment/environment.md. The real per-environment value is
+          # set on the hosting platform, not here.
+          NEXT_PUBLIC_SITE_URL: https://ci.invalid
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies (lockfile-exact)
+        run: npm ci
+
+      # Fails the job on any advisory of severity high or critical.
+      # Do not add `|| true`. If an advisory is accepted as a known risk it must
+      # be recorded in docs/security/vulnerabilities.md by the Cybersecurity
+      # Engineer and suppressed explicitly, not by weakening this gate.
+      - name: npm audit (fail on high/critical)
+        run: npm audit --audit-level=high

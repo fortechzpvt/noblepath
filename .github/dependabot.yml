@@ -1,0 +1,141 @@
+# Noble Path — automated dependency updates
+#
+# Grouping policy: the team should see a handful of reviewable PRs per week, not
+# thirty. Updates are grouped by blast radius so a reviewer can reason about one
+# PR at a time:
+#
+#   next-framework   — Next.js/React/ESLint-config-next move together or not at
+#                      all; splitting them produces PRs that cannot build.
+#   tailwind         — Tailwind v4 and its PostCSS plugin are version-locked to
+#                      each other.
+#   types            — @types/* are low risk and noisy; one PR for all of them.
+#   production-minor — every other runtime dependency, minor/patch only.
+#   dev-minor        — every other dev dependency, minor/patch only.
+#
+# MAJOR updates are deliberately left OUT of the grouped PRs (`update-types`
+# restricted to minor/patch) so each major arrives as its own PR with its own
+# review and its own CI run. Next.js and React majors in particular must be
+# reviewed by the Full-Stack Engineer, and any major that changes the build
+# output must be reviewed by the DevOps Engineer.
+#
+# Dependabot PRs still run the full CI workflow (typecheck, lint, build,
+# npm audit). Do not merge a red one.
+
+version: 2
+
+updates:
+  # ---------------------------------------------------------------------------
+  # Application dependencies
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+      timezone: Asia/Colombo
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    labels:
+      - dependencies
+      - npm
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: scope
+    groups:
+      next-framework:
+        patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+          - "eslint-config-next"
+        update-types:
+          - minor
+          - patch
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+        update-types:
+          - minor
+          - patch
+      types:
+        patterns:
+          - "@types/*"
+        update-types:
+          - minor
+          - patch
+      production-minor:
+        dependency-type: production
+        exclude-patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+        update-types:
+          - minor
+          - patch
+      dev-minor:
+        dependency-type: development
+        exclude-patterns:
+          - "@types/*"
+          - "tailwindcss"
+          - "@tailwindcss/*"
+          - "eslint-config-next"
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Node type definitions must track the Node major the runtime actually
+      # uses (24). Bumping @types/node to 25 before the runtime moves produces
+      # type errors against APIs that are not there. Raise deliberately when the
+      # DevOps Engineer moves the runtime.
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
+
+  # ---------------------------------------------------------------------------
+  # GitHub Actions used by ci.yml and deploy.yml
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+      timezone: Asia/Colombo
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - github-actions
+      - infrastructure
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # ---------------------------------------------------------------------------
+  # Base image for Dockerfile (node:24-alpine). Patch-level only: a major bump
+  # is a runtime change and must be a deliberate DevOps decision recorded in
+  # docs/decisions/architecture-decisions.md.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+      timezone: Asia/Colombo
+    open-pull-requests-limit: 2
+    labels:
+      - dependencies
+      - docker
+      - infrastructure
+    commit-message:
+      prefix: "build(docker)"
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - version-update:semver-major
