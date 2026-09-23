@@ -784,4 +784,32 @@ Recommended implementation order for the Full-Stack Engineer (dependencies first
 9. Toast, Modal, Popover, Tabs, Accordion
 10. Page assembly per `page-specs.md`
 
+---
+
+## 16. Booking flow: cross-page selection patterns
+
+Added 2026-09-23 (UI/UX review of D-21, `../decisions/architecture-decisions.md`). These cover the traveller picks made on `/accommodation` and `/activities` that now carry into `/bookings`. All four reuse existing primitives (`Button`/`LinkButton`, `components/booking/ui.tsx`'s `Card`/`Entry`, the Block/Row pair in `booking-summary.tsx`) — nothing here is a new visual component, only a new arrangement of approved ones, which is why this is documented rather than spec'd in full.
+
+### 16.1 Add/remove trip toggle
+The pill-button toggle first specified for pre-planned packages (`components/booking/plan-section.tsx`'s "Add to my trip" on a `TripOption`) is now the general pattern for adding any single item to a trip from a card, and is reused verbatim on `ActivityCard`. One control, two states, using the standard `Button`:
+- Default — `size="sm"`, `variant="outline"`, leading `Plus` (16 px), label "Add to my trip".
+- Selected — `variant="solid"`, leading `Check` (16 px), label "Added to my trip", `aria-pressed="true"`.
+
+`aria-pressed` is the toggle semantic (never `role="checkbox"` on a `<button>` — see §9.4). Any future "add to trip" affordance (destination cards, experience cards) should reuse this exact control — same icon pair, same copy, same states — rather than introduce a variant.
+
+### 16.2 "Your [X]" saved-picks list
+Established by `/accommodation`'s "Your stays" section; `/activities`'s "Your activities" section mirrors it exactly. Anatomy: an `<h2>` with a leading 24 px Lucide icon in `--color-jungle-600`, a `<ul>` of `rounded-xl border border-border bg-surface p-4` rows (a meta line + the item name), each with a trailing 44×44 icon-only remove button (`X`, 18 px, `aria-hidden`, with a visually-hidden accessible name naming the removed item), a closing line of copy ("These will carry into your booking request.") and a `Continue to booking` `LinkButton` (`variant="outline"`, `size="sm"`) to `/bookings`. A visually-hidden `aria-live="polite"` region near the top of the page (present before content is injected, per `accessibility.md` §8.1) announces additions and removals. Any future page that lets a traveller build a pick list before booking should follow this same anatomy rather than invent one.
+
+### 16.3 "Picked elsewhere" entry legend
+When a `plan-section.tsx` `Entry` (a stay or activity row) was seeded from a specific `/accommodation` or `/activities` pick rather than entered by hand, its `<legend>` appends the picked item's name and its source in parentheses, e.g. `Stay 1 — Cinnamon Wild Yala (from Accommodation)`. This is additive text inside the existing legend — no new visual element, no change to the `Entry` primitive itself.
+
+### 16.4 Saved-itinerary summary
+Two read-only views of the same `plannedItinerary` data, both built from existing primitives:
+- **In the form** (`plan-section.tsx`) — a `rounded-xl border-2 border-jungle-700 bg-jungle-50` block (the same "chosen" treatment already used for a selected package, §6.3-equivalent selected-card styling), with a `Route` icon, the day count and route, a "View full itinerary" link to `/plan` (new tab) and a 44×44 remove control. Sits inside the section's existing `Card` — it is not its own card.
+- **In the review step** (`booking-summary.tsx`) — an ordinary `Block`/`Row` pair titled "Your saved itinerary". No new markup.
+
+Shown only when the traveller has a saved `/plan` itinerary; omitted entirely otherwise (an empty state is not rendered, consistent with the Trip/package card rule in §6.3).
+
+---
+
 **Related documents:** `design-system.md` · `user-flows.md` · `page-specs.md` · `accessibility.md`

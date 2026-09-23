@@ -241,3 +241,198 @@ Tests: `tsc --noEmit`, `eslint` and `next build` pass. No automated tests; not e
 Review needed: Cybersecurity - CSP change (OpenStreetMap tile origin). UI/UX - tier cards and motion. DevOps - confirm OSM tile usage is acceptable at expected traffic.
 
 Known issues: seed data unverified (docs/database/accommodation-content.md); saved stays are not linked to plans or bookings.
+
+## Handoff — Cross-page trip selections into the booking request (2026-09-23)
+
+**From:** Full-Stack Engineer. **To:** Cybersecurity Agent.
+
+**Task:** carry a specific accommodation pick (`/accommodation`), an activity pick
+(`/activities`) and a saved itinerary (`/plan`) into `/bookings` automatically, instead of
+the traveller having to re-enter what they already chose. See D-21 in
+`docs/decisions/architecture-decisions.md` for the full design and alternatives considered.
+
+**Completed:**
+- New shared client store `lib/trip-selections.ts` (`localStorage` key `np.selections.v1`)
+  for accommodation/activity picks; `/accommodation` and `/activities` write to it and each
+  gained a "Your stays" / "Your activities" list with a "Continue to booking" link.
+- `/plan`'s existing `np.plan.v1` storage/parsing was extracted, unchanged, out of
+  `plan-builder.tsx` into `lib/plan-storage.ts` so it can be read elsewhere.
+- `components/booking/booking-form.tsx` reads both stores once, on mount, and seeds
+  `BookingDraft.stays` / `.activities` / the new `.plannedItinerary` field, only where those
+  are still empty (never overwrites a request already in progress).
+- `StayEntry.accommodationSlug` and `ActivityEntry.sourceActivitySlug` (both additive,
+  default `""`) let the plan section and the review summary show the traveller's specific
+  pick and label the entry "from Accommodation" / "from Activities"; `validateDraft` is
+  unchanged. Entry ids now come from one shared counter, `makeEntryId` in
+  `lib/booking-request.ts`, replacing a counter that used to be private to
+  `plan-section.tsx` (seeded entries and traveller-added entries must not collide on the
+  same React key).
+- New `getActivityBySlug` accessor in `lib/content.ts`, mirroring the existing
+  `getExperienceBySlug`.
+
+**Files:** `lib/trip-selections.ts` (new), `lib/plan-storage.ts` (new), `lib/content.ts`,
+`lib/booking-request.ts`, `components/accommodation/stays-explorer.tsx`,
+`components/activities/activity-card.tsx`, `components/activities/activities-explorer.tsx`,
+`components/plan/plan-builder.tsx`, `components/booking/booking-form.tsx`,
+`components/booking/plan-section.tsx`, `components/booking/booking-summary.tsx`,
+`docs/decisions/architecture-decisions.md`, `docs/architecture/application-architecture.md`.
+
+**Tests:** `npm run lint`, `npm run typecheck` and `npm run build` all pass. No automated
+tests exist for this form (none pre-existed either — see `docs/testing/testing-strategy.md`).
+Not exercised in a real browser; only reviewed by reading the rendered logic.
+
+**Security-sensitive areas:** all of it is client-side `localStorage`, holding the
+traveller's stay/activity/itinerary picks (destination slugs, accommodation slugs,
+activity slugs, day counts, interests — no name, email, phone or other PII; those still
+live only in React state, never in `localStorage`, unchanged from D-19). Every read of
+`np.selections.v1` and `np.plan.v1` is parsed defensively as untrusted input, same trust
+model as the pre-existing `np.stays.v1`/`np.plan.v1` code this builds on: unknown shapes are
+dropped, a stale/removed content slug is silently skipped rather than trusted into the
+booking draft. `submitBookingRequest` in `lib/booking-request.ts` is still a stub
+(`DELIVERY_CONNECTED = false`) — this work does not touch submission, delivery, or any
+server boundary, so the outstanding D-19 note ("a Cybersecurity review is required before
+delivery is connected") is unchanged in scope, not newly triggered by this handoff.
+
+**Known limitations:** the seed only runs once, on the booking form's first mount in a
+session — if the traveller removes a seeded entry and later reloads `/bookings`, it
+reappears from `localStorage` unless they also remove it on the originating page. A saved
+`/plan` itinerary is carried as a read-only summary (days, destinations, interests), not
+exploded into individual stay/activity entries — see D-21 for why. `docs/design/page-specs.md`
+§8 already described a different, unimplemented `/bookings` flow before this change (noted
+in the existing Handoff 7B above); that drift is pre-existing and was not touched here.
+
+**Status:** Dispatched. Output must be reviewed by the Cybersecurity Agent before this task
+is considered complete (policy §8).
+
+## Handoff — UI/UX review of the cross-page trip-selection UI (2026-09-23)
+
+**From:** UI/UX Designer. **To:** Orchestrator, Full-Stack Engineer.
+
+**Task:** Review the UI added by the "Cross-page trip selections into the booking request"
+handoff above against `docs/design/design-system.md`, `components.md` and
+`accessibility.md`, per policy §10.
+
+**Reviewed:** `components/accommodation/stays-explorer.tsx`,
+`components/activities/activity-card.tsx`, `components/activities/activities-explorer.tsx`,
+`components/booking/plan-section.tsx`, `components/booking/booking-summary.tsx`,
+`components/booking/booking-form.tsx`, `lib/booking-request.ts`, `lib/content.ts`, and —
+because `git status`/`git diff` showed it modified in the same working tree —
+`components/site-header.tsx`.
+
+**Findings — the booking-integration UI itself:** consistent. The new activity
+add/remove toggle is the same control as the pre-existing package "Add to my trip"
+toggle in `plan-section.tsx` (`Button size="sm"`, `Plus`/`Check` 16 px, `aria-pressed`) —
+not a divergent one-off. `/activities`'s new "Your activities" list, its `aria-live`
+region, its 44×44 icon-only remove buttons and its "Continue to booking" CTA are a
+faithful mirror of the pre-existing `/accommodation` "Your stays" pattern. The
+"picked from Accommodation/Activities" entry-legend suffix and the saved-itinerary
+summary (both the editable card in the form and the read-only `Block`/`Row` in the
+review step) all reuse existing primitives (`Card`, `Entry`, `Button`/`LinkButton`,
+`Block`/`Row`) rather than inventing new ones, and reuse the codebase's existing
+"chosen" visual treatment (`border-jungle-700 bg-jungle-50`) for the saved-itinerary
+notice, which is the correct precedent to reuse. Copy tone ("Continue to booking",
+"These will carry into your booking request.") matches the rest of the form. No new
+accessibility gaps were introduced; where a gap exists (e.g. focus is not moved after
+an `Entry` or list item is removed, per `accessibility.md` §3.4), it is a pre-existing
+gap across every remove control in this codebase, not something newly introduced here.
+Documented the four new/reused patterns proportionately in `docs/design/components.md`
+§16 (add/remove trip toggle, "Your [X]" saved-picks list, "picked elsewhere" legend,
+saved-itinerary summary) per policy §10/§12.
+
+**Finding — out of scope but discovered in the same diff, NEEDS CHANGES:**
+`components/site-header.tsx:10-15` — the primary nav's `NAV` array (shared by both the
+desktop nav and the mobile drawer) has the `{ href: "/plan", label: "Plan" }` entry
+removed, uncommitted in this same working tree. This is **not** mentioned in the
+"Cross-page trip selections" handoff's file list or summary, is not recorded as a
+deviation anywhere (`design-system.md` §13 or an ADR), and contradicts the approved nav
+anatomy in `components.md` §1.1, which lists Destinations / Experiences / Trips / Plan /
+About Us. `/plan` is still reachable through several in-page CTAs (home hero,
+`plan-teaser`, `closing-cta`, `/trips`, `/trips/[slug]`, and now the booking form's
+"View full itinerary" link), so this is not a dead end, but it removes the only
+*persistent* entry point to the itinerary builder from every other page's nav — a
+traveller on `/destinations` or `/activities` now has no way back to `/plan` without
+returning to `/`. Either restore the nav entry, or, if this was an intentional decision
+(e.g. de-emphasising `/plan` in favour of the accommodation/activities/booking flow),
+record it as an ADR and a proper handoff before it ships — an undocumented, unexplained
+removal of a primary nav item is exactly what policy §18 and `accessibility.md`'s
+escalation rule (§15) exist to prevent.
+
+**Documentation:** `docs/design/components.md` §16 added.
+
+**Testing:** Read-only review; no build/lint/test run (no code changed other than the
+docs addition above).
+
+**Decisions:** None requiring a new ADR from this review; the `site-header.tsx` change
+needs one only if it is kept.
+
+**Status:** NEEDS CHANGES — blocking item is `components/site-header.tsx`'s undocumented
+nav removal, not the booking-integration UI itself (which is APPROVED as reviewed).
+
+## Handoff — Cybersecurity review result: cross-page trip selections (2026-09-23)
+
+**From:** Cybersecurity / Application Security Agent. **To:** Orchestrator.
+
+**Reviewing:** the handoff immediately above ("Cross-page trip selections into the
+booking request", Full-Stack Engineer → Cybersecurity Agent).
+
+**Completed:** read every file the handoff listed as changed (`git diff` against the
+working tree); checked the `localStorage` trust boundary, XSS/injection surface, data
+exposure (PII in storage, logging), DoS/resource-exhaustion via storage, and the
+`makeEntryId` id-collision fix; independently ran `npm run lint` and `npm run typecheck`
+rather than relying on the engineer's report of a clean state.
+
+**Verified:** lint and typecheck both pass, confirmed directly. Every stored slug that
+reaches a content lookup is existence-guarded before use. No `dangerouslySetInnerHTML` or
+raw HTML interpolation anywhere in the changed files; all localStorage-derived values
+render through normal (auto-escaping) JSX text. `np.selections.v1` and `np.plan.v1` hold
+only catalogue slugs and small counts — no traveller PII, consistent with D-19. No
+`console.log` of form/draft/storage content found. The `makeEntryId` fix is applied
+consistently at every entry-creation site (`plan-section.tsx`'s `addStay`/`addActivity`/
+`addTransport`, `booking-form.tsx`'s seeding effect); no leftover private counter found.
+
+**Findings:** two, both non-blocking — full detail in `docs/security/security-review.md`
+(review dated 2026-09-23):
+- **F-1 (Low):** the booking-form seeding effect does not cap seeded `stays`/`activities`
+  against `MAX_STAYS`/`MAX_ACTIVITIES`, and is reachable through ordinary use (picking
+  more than 8 stays or 15 activities across the full catalogues, then opening
+  `/bookings`), not only via a hand-edited `localStorage` value. Client-side-only impact.
+- **F-2 (Informational):** `lib/trip-selections.ts`'s parser drops a destination/
+  accommodation cross-check the code it replaces had. Cosmetic-only impact (a mismatched
+  destination/property pair could display); not reachable through the normal UI, only via
+  a hand-edited `localStorage` value.
+
+No High or Medium findings. Neither finding blocks this handoff.
+
+**Documentation:** `docs/security/security-review.md` created (first entry in that file;
+the directory was previously empty).
+
+**Status:** Reviewed. **READY** — no blocking findings. F-1 and F-2 left open for the
+Full-Stack Engineer to pick up at their discretion; both are low-impact, client-side-only,
+and do not require a re-review before the rest of this feature is considered complete.
+
+## Handoff — Orchestrator: F-1/F-2 remediated, site-header finding resolved (2026-09-23)
+
+**From:** Orchestrator. **To:** record (no further agent action required).
+
+**F-1 and F-2 fixed.** `components/booking/booking-form.tsx`'s seeding effect now slices
+both source lists to `MAX_STAYS`/`MAX_ACTIVITIES` before building entries (imported from
+`lib/booking-request.ts`, the same constants `plan-section.tsx`'s "Add" buttons already
+gate on). `lib/trip-selections.ts`'s `parse()` now re-checks
+`getAccommodationBySlug(accommodation)?.destinationSlug === destination` before keeping a
+stored stay, restoring the cross-check `np.stays.v1` had. Re-verified after both fixes:
+`npm run lint`, `npm run typecheck`, and `npm run build` all clean. Both findings updated
+to **Fixed** in `docs/security/security-review.md`.
+
+**`components/site-header.tsx` nav-removal finding: not a regression, resolved.** The
+UI/UX Designer's review flagged the removed `{ href: "/plan", label: "Plan" }` nav entry
+as undocumented and out of scope for the trip-selections handoff. That's correct as far
+as the reviewer could see — but the removal was in fact a separate, explicit request the
+user made directly to the Orchestrator earlier in the same working session, before the
+trip-selections feature was started; it only appeared "bundled" in the diff because both
+changes share an uncommitted working tree, not because it was silently introduced by the
+Full-Stack Engineer's work. No code change was needed. Noting it here, rather than
+silently dropping the finding, per policy §18 ("never leave... unresolved issues" hidden)
+— a reviewer flagging a real-looking gap it had no visibility into is the review process
+working correctly, not a false alarm to wave away without a record.
+
+**Status:** Feature complete. READY.
