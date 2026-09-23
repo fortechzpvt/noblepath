@@ -171,6 +171,19 @@ travel through `localStorage`, read once when the booking form mounts:
 - See D-21 in `docs/decisions/architecture-decisions.md` for the alternatives
   considered and the full reasoning.
 
+## 9.1 Destination detail page (D-22)
+
+`app/destinations/[slug]/page.tsx` is a server component, statically generated
+for all 21 destinations via `generateStaticParams` (same pattern as
+`/trips/[slug]`). It composes existing pieces rather than introducing new
+data: `DestinationHero` and `TravelLinks` (both written for this page ahead of
+the route existing), `getRelatedDestinations`/`getExperiencesForDestination`
+from `lib/content.ts`, and a new single-pin `components/destinations/
+destination-map.tsx` (Leaflet/OpenStreetMap, the same approach D-17 already
+established for `/accommodation` — no new map provider decision). Every
+`DestinationCard` across the site already linked to this route before it
+existed; this fills that in rather than adding new links. See D-22.
+
 ## 10. Conventions
 
 - Files are kebab-case; React components are PascalCase; types are PascalCase.
