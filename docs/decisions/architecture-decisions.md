@@ -729,7 +729,7 @@ Also: payment card data must never reach the Noble Path origin (provider-hosted 
 
 ## D-17 (ADR-007) - Standalone accommodation page with curated data and maps
 
-**Decision:** `/accommodation` asks a budget question (Budget / Mid-range / Luxury) first. The answer reveals, per destination, curated properties beside a map. "Stay here" saves a property to a "Your stays" list. It is independent of the trip planner and of bookings. Picks persist in `localStorage` (`np.stays.v1`).
+**Decision:** `/accommodation` asks a budget question (Budget / Mid-range / Luxury) first. The answer reveals, per destination, curated properties beside a map. "Stay here" saves a property to a "Your stays" list. It is independent of the trip planner. Picks persist in `localStorage`, and since D-21 they also carry into the booking request (see D-21).
 
 **Reason:** Requested product flow, kept separate from planning and booking.
 
@@ -743,7 +743,7 @@ Also: payment card data must never reach the Noble Path origin (provider-hosted 
 - The homepage "Accommodation" card links to `/accommodation`.
 - Dependencies added: `leaflet`, `@types/leaflet`.
 
-**Known limitations:** Data comes from a team-compiled list and is **unverified**. Coordinates are **approximate** (see docs/database/accommodation-content.md). About 165 properties across 18 destinations; other places in the source need a destination entry first. No prices or availability. Saved stays are not connected to the planner or to booking enquiries. An "All Sri Lanka" tab shows every stay in a tier on one map.
+**Known limitations:** Data comes from a team-compiled list and is **unverified**. Coordinates are **approximate** (see docs/database/accommodation-content.md). About 165 properties across 18 destinations; other places in the source need a destination entry first. No prices or availability. Still not connected to the trip planner (`/plan`). An "All Sri Lanka" tab shows every stay in a tier on one map.
 
 ---
 
@@ -798,9 +798,33 @@ Also: payment card data must never reach the Noble Path origin (provider-hosted 
 
 **Chosen solution:** `content/activities.ts` (typed data), `components/activities/*` (card and filter/search explorer), `app/activities/page.tsx`. Difficulty reuses the site's `easy / moderate / challenging` scale and meter; price reuses the `$ / $$ / $$$` bands.
 
-**Impact:** The header "Experiences" link now lands on `/activities`. The booking form's activity list still uses the 33 experiences; it does not yet offer these 92.
+**Impact:** The header "Experiences" link now lands on `/activities`. The booking form's own activity dropdown still only lists the 33 experiences; since D-21, a specific pick from this catalogue instead carries into the request via the dropdown's existing "Something else" free-text path (see D-21) rather than the dropdown gaining these 92 as options.
 
 **Known limitations:** **The details are draft.** Locations, durations, difficulty and price bands were drafted from general knowledge and are not confirmed by Noble Path or any operator; they must be reviewed before being treated as fact. Some are seasonal or need permits (for example Minneriya gatherings, whale watching, Adam's Peak season, national park entry) and no season or permit information is shown. No photographs. Not viewed in a browser (the extension was unavailable); data was checked by script (no duplicate slugs, every category used) and the page was checked server-side.
+
+---
+
+## D-21 - Picks on Accommodation, Activities and the Planner carry into the booking request
+
+**Decision:** A specific accommodation picked on `/accommodation`, an activity added on `/activities`, and a saved `/plan` itinerary now carry into `/bookings` automatically: the booking form seeds `Option B: Build my own trip` with matching entries (or a read-only itinerary summary) the first time it loads, instead of the traveller re-entering what they already chose elsewhere.
+
+**Reason:** Requested product feature. The three pages already let a traveller pick specific things while just browsing, before there is any traveller detail or a booking in progress; without this, those picks were silently discarded the moment the traveller opened the booking form (D-17's "independent of... bookings" and D-20's "does not yet offer these 92" were both symptoms of the same gap).
+
+**Alternatives considered:**
+- Passing picks as URL query parameters (rejected: `/accommodation` and `/activities` allow picking many items across an open-ended browsing session, not one value chosen right before navigating — a query string does not fit a growing list well, and it would leak the traveller's picks into browser history and shared links).
+- A server-side cart/session (rejected: there is no backend yet — `submitBookingRequest` in `lib/booking-request.ts` is still a stub per `DELIVERY_CONNECTED = false` — and a cart would be a large addition for what is, today, a same-browser handoff between three static pages).
+- Extending the booking form's activity dropdown with the 92-item `/activities` catalogue as real options, merging it with the 33-item `experiences` catalogue the dropdown already draws from (rejected: `content/activities.ts` is deliberately a separate, unreviewed-draft content domain from `content/experiences.ts`, per D-20 — merging them would mean either duplicating every activity into `experiences` or laundering unreviewed draft data into the planner's curated list. The dropdown's existing `"other"` + free-text `otherName` path already exists for exactly this case: a thing the traveller wants that is not in the curated list).
+- Exploding a saved itinerary into one stay/activity entry per day (rejected: the itinerary is a route, not a shopping list — the traveller did not pick each day's accommodation or activity individually, so turning it into a dozen editable entries would misrepresent it and multiply the fields to validate. A read-only summary that links back to `/plan` says what it actually is).
+
+**Chosen solution:** A new shared client-side store, `lib/trip-selections.ts` (`localStorage` key `np.selections.v1`), holds `{ stays: Record<destinationSlug, accommodationSlug>, activitySlugs: string[] }`. `/accommodation` (`stays-explorer.tsx`) and `/activities` (`activities-explorer.tsx`, a new "Add to my trip" control on each `ActivityCard`) write to it; both keep an on-page "Your stays" / "Your activities" list with a "Continue to booking" link, same pattern as before. `/plan`'s existing `np.plan.v1` storage was extracted, unchanged, from `plan-builder.tsx` into `lib/plan-storage.ts` so it can be read from elsewhere too. `components/booking/booking-form.tsx` reads both on mount (once, like the restore effects the other pages already use) and seeds `BookingDraft.stays` / `.activities` / the new `.plannedItinerary` field — only when those are still empty, so it never overwrites a request already in progress. A specific accommodation pick keeps its slug on the seeded `StayEntry` (`accommodationSlug`) so the plan section and summary can show the actual property name; a specific activity pick is seeded through the dropdown's existing `"other"` + `otherName` path with a new `sourceActivitySlug` bookkeeping field, so no validation or option-list change was needed. Entry ids are now minted by one shared counter, `makeEntryId` in `lib/booking-request.ts`, instead of a private counter local to `plan-section.tsx`, because seeded entries and traveller-added entries must never collide on the same React key.
+
+**Impact:**
+- `StayEntry` gains `accommodationSlug: string` (`""` when not from a specific pick) and `ActivityEntry` gains `sourceActivitySlug: string` — both additive, `validateDraft` is unchanged.
+- `BookingDraft` gains `plannedItinerary: { days, destinationSlugs, interests } | null`, shown in `plan-section.tsx` (with a "View full itinerary" link to `/plan` and a remove control) and in `booking-summary.tsx`, regardless of which plan option the traveller chose — it is informational, not itself validated.
+- D-17's "independent of... bookings" and D-20's "does not yet offer these 92" are superseded by this entry; both were updated in place above rather than left describing the old behaviour.
+- `/plan` is unaffected in itself (D-18's note that its generated day-by-day plan was removed from the page still stands — this reads `np.plan.v1`, which `/plan` still writes via `PlanBuilder`, wherever that page's own UI currently stands).
+
+**Known limitations:** Everything here is still front-end only, like the rest of the booking form (D-19) — no server receives or stores these picks; `submitBookingRequest` is unchanged. The seed only fires once, on the booking form's first mount in a session: if the traveller removes a seeded entry and then reloads `/bookings`, it reappears from `localStorage` unless they also un-pick it on the originating page. A specific accommodation/activity slug that no longer exists in the content data (a stale `localStorage` entry from a previous deploy) is silently skipped rather than shown as an error.
 
 ---
 

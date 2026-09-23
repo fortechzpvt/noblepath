@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 
 import { BookingSummary } from "@/components/booking/booking-summary";
@@ -15,16 +15,26 @@ import { TravellerSection } from "@/components/booking/traveller-section";
 import { Card } from "@/components/booking/ui";
 import { Button } from "@/components/ui/button";
 import { ErrorSummary } from "@/components/ui/field";
+import { getAccommodationBySlug, getActivityBySlug } from "@/lib/content";
+import { generateItinerary } from "@/lib/itinerary";
 import {
   DELIVERY_CONNECTED,
+  MAX_ACTIVITIES,
+  MAX_STAYS,
   createEmptyDraft,
   ids,
+  makeEntryId,
   submitBookingRequest,
+  totalTravellers,
   validateDraft,
   validateTerms,
   type BookingDraft,
   type FormError,
+  type StayEntry,
+  type ActivityEntry,
 } from "@/lib/booking-request";
+import { readStoredPlan } from "@/lib/plan-storage";
+import { readTripSelections } from "@/lib/trip-selections";
 
 type Step = "form" | "review" | "done";
 
@@ -60,6 +70,103 @@ export function BookingForm({
   const topRef = useRef<HTMLDivElement>(null);
 
   const update = (patch: Partial<BookingDraft>) => setDraft((current) => ({ ...current, ...patch }));
+
+  // Mount-only: carry in whatever the traveller already picked on /accommodation,
+  // /activities and /plan, so they never have to re-enter it here. Runs once, like
+  // the restore effects on those pages, and only fills fields that are still
+  // empty — it must never clobber a request the traveller is already editing.
+  // The `setDraft` call is made from a named function invoked in the effect body
+  // (not written inline) to keep it a single, deliberate sync point rather than
+  // a bare statement — same convention as the restore effects on those pages.
+  useEffect(() => {
+    const seedFromElsewhere = () => {
+      const selections = readTripSelections();
+      const storedPlan = readStoredPlan();
+
+      setDraft((current) => {
+        const party = String(Math.max(totalTravellers(current.traveller), 1));
+        let stays = current.stays;
+        let activities = current.activities;
+        let plannedItinerary = current.plannedItinerary;
+        let seededEntries = false;
+        let changed = false;
+
+        if (current.stays.length === 0) {
+          const seeded: StayEntry[] = [];
+          // Capped at MAX_STAYS: a traveller who picked a stay in more
+          // destinations than the form allows still gets a valid draft,
+          // just not every pick — the rest stay chosen on /accommodation.
+          for (const [destinationSlug, accommodationSlug] of Object.entries(
+            selections.stays,
+          ).slice(0, MAX_STAYS)) {
+            const accommodation = getAccommodationBySlug(accommodationSlug);
+            if (!accommodation) continue;
+            seeded.push({
+              id: makeEntryId("stay"),
+              destination: destinationSlug,
+              tier: accommodation.tier,
+              kind: /villa/i.test(accommodation.kind) ? "villa" : "hotel",
+              checkIn: current.dates.arrivalDate,
+              checkOut: "",
+              roomType: "Double",
+              guests: party,
+              accommodationSlug,
+            });
+          }
+          if (seeded.length > 0) {
+            stays = seeded;
+            changed = true;
+            seededEntries = true;
+          }
+        }
+
+        if (current.activities.length === 0) {
+          const seeded: ActivityEntry[] = [];
+          // Capped at MAX_ACTIVITIES for the same reason as stays above.
+          for (const slug of selections.activitySlugs.slice(0, MAX_ACTIVITIES)) {
+            const activity = getActivityBySlug(slug);
+            if (!activity) continue;
+            seeded.push({
+              id: makeEntryId("act"),
+              activity: "other",
+              otherName: `${activity.name} (${activity.location})`.slice(0, 100),
+              date: current.dates.arrivalDate,
+              participants: party,
+              sourceActivitySlug: slug,
+            });
+          }
+          if (seeded.length > 0) {
+            activities = seeded;
+            changed = true;
+            seededEntries = true;
+          }
+        }
+
+        if (current.plannedItinerary === null && storedPlan) {
+          const itinerary = generateItinerary(storedPlan.input);
+          plannedItinerary = {
+            days: itinerary.input.days,
+            destinationSlugs: itinerary.destinationSlugs,
+            interests: itinerary.input.interests,
+          };
+          changed = true;
+        }
+
+        if (!changed) return current;
+
+        return {
+          ...current,
+          stays,
+          activities,
+          plannedItinerary,
+          planChoice: seededEntries && current.planChoice === null ? "custom" : current.planChoice,
+          customMode: seededEntries ? "choose" : current.customMode,
+        };
+      });
+    };
+
+    seedFromElsewhere();
+  }, []);
 
   const scrollToTop = () =>
     window.requestAnimationFrame(() => topRef.current?.scrollIntoView({ block: "start" }));

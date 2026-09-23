@@ -1,14 +1,24 @@
-import { Clock, MapPin, Wallet } from "lucide-react";
+import { Check, Clock, MapPin, Plus, Wallet } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { IntensityMeter } from "@/components/ui/intensity-meter";
 import type { Activity } from "@/content/activities";
 import { formatIntensity, formatPriceBand } from "@/lib/format";
 
 /**
  * Activity card: name, location, duration, difficulty and an indicative price
- * band. The band is a label, never a figure (requirements §7.4).
+ * band. The band is a label, never a figure (requirements §7.4). "Add to my
+ * trip" saves the pick so it can carry into the booking form later.
  */
-export function ActivityCard({ activity }: { readonly activity: Activity }) {
+export function ActivityCard({
+  activity,
+  selected,
+  onToggle,
+}: {
+  readonly activity: Activity;
+  readonly selected: boolean;
+  readonly onToggle: () => void;
+}) {
   return (
     <article className="flex h-full flex-col gap-4 rounded-xl border border-border bg-surface p-5 shadow-sm">
       <h3 className="text-h5 text-ink-900">{activity.name}</h3>
@@ -45,6 +55,18 @@ export function ActivityCard({ activity }: { readonly activity: Activity }) {
           </div>
         </div>
       </dl>
+
+      <Button
+        type="button"
+        size="sm"
+        variant={selected ? "solid" : "outline"}
+        aria-pressed={selected}
+        onClick={onToggle}
+        className="mt-auto"
+      >
+        {selected ? <Check size={16} aria-hidden /> : <Plus size={16} aria-hidden />}
+        {selected ? "Added to my trip" : "Add to my trip"}
+      </Button>
     </article>
   );
 }

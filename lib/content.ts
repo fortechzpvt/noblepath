@@ -1,4 +1,5 @@
 import { accommodations } from "@/content/accommodations";
+import { activities, type Activity } from "@/content/activities";
 import { destinations } from "@/content/destinations";
 import { experiences } from "@/content/experiences";
 import { regions } from "@/content/regions";
@@ -26,6 +27,7 @@ import type {
 const destinationBySlug = new Map(destinations.map((d) => [d.slug, d]));
 const experienceBySlug = new Map(experiences.map((e) => [e.slug, e]));
 const accommodationBySlug = new Map(accommodations.map((a) => [a.slug, a]));
+const activityBySlug = new Map(activities.map((a) => [a.slug, a]));
 const tripBySlug = new Map(trips.map((t) => [t.slug, t]));
 const regionBySlugMap = new Map(regions.map((r) => [r.slug, r]));
 
@@ -184,6 +186,18 @@ export function getExperiencesForDestination(slug: string): readonly Experience[
     }
   }
   return result;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Activities                                                                 */
+/*                                                                             */
+/* Deliberately separate from Experiences above: `content/activities.ts` is   */
+/* the broad catalogue behind `/activities`, not the seasonal, photographed   */
+/* set the planner uses. See that file's header comment.                     */
+/* -------------------------------------------------------------------------- */
+
+export function getActivityBySlug(slug: string): Activity | undefined {
+  return activityBySlug.get(slug);
 }
 
 /* -------------------------------------------------------------------------- */

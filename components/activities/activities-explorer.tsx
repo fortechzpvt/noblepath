@@ -1,13 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { CalendarCheck, X } from "lucide-react";
 
 import { ActivityCard } from "@/components/activities/activity-card";
 import { FilterChip } from "@/components/filters/filter-chip";
+import { LinkButton } from "@/components/ui/button";
 import { TextField } from "@/components/ui/field";
 import type { Activity, ActivityCategory } from "@/content/activities";
+import { useTripSelections } from "@/lib/trip-selections";
 
-/** Category chips, a search box, and the activities grouped under their category. */
+/**
+ * Category chips, a search box, and the activities grouped under their
+ * category. "Add to my trip" picks are shared with the booking form: they
+ * are kept in `np.selections.v1` (`useTripSelections`), and `/bookings`
+ * reads that on load and carries them into the request.
+ */
 export function ActivitiesExplorer({
   categories,
   activities,
@@ -17,6 +25,25 @@ export function ActivitiesExplorer({
 }) {
   const [categoryId, setCategoryId] = useState<string>("all");
   const [query, setQuery] = useState("");
+  const [announcement, setAnnouncement] = useState("");
+  const { selections, toggleActivity, removeActivity } = useTripSelections();
+  const activityBySlug = useMemo(
+    () => new Map(activities.map((activity) => [activity.slug, activity])),
+    [activities],
+  );
+
+  const handleToggle = (activity: Activity) => {
+    const wasSelected = selections.activitySlugs.includes(activity.slug);
+    toggleActivity(activity.slug);
+    setAnnouncement(
+      wasSelected ? `${activity.name} removed from your list.` : `${activity.name} saved to your list.`,
+    );
+  };
+
+  const handleRemove = (activity: Activity) => {
+    removeActivity(activity.slug);
+    setAnnouncement(`${activity.name} removed from your list.`);
+  };
 
   const matches = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -36,8 +63,16 @@ export function ActivitiesExplorer({
     matches.some((activity) => activity.categoryId === category.id),
   );
 
+  const chosen = selections.activitySlugs
+    .map((slug) => activityBySlug.get(slug))
+    .filter((activity): activity is Activity => activity !== undefined);
+
   return (
     <div className="flex flex-col gap-8">
+      <div aria-live="polite" className="np-sr-only">
+        {announcement}
+      </div>
+
       <TextField
         id="activity-search"
         label="Search activities"
@@ -91,13 +126,55 @@ export function ActivitiesExplorer({
                 .filter((activity) => activity.categoryId === category.id)
                 .map((activity) => (
                   <li key={activity.slug}>
-                    <ActivityCard activity={activity} />
+                    <ActivityCard
+                      activity={activity}
+                      selected={selections.activitySlugs.includes(activity.slug)}
+                      onToggle={() => handleToggle(activity)}
+                    />
                   </li>
                 ))}
             </ul>
           </section>
         ))
       )}
+
+      {chosen.length > 0 ? (
+        <section aria-labelledby="your-activities-heading" className="mt-6">
+          <h2 id="your-activities-heading" className="flex items-center gap-2 text-h3 text-ink-900">
+            <CalendarCheck size={24} aria-hidden className="text-jungle-600" />
+            Your activities
+          </h2>
+          <ul className="mt-4 grid gap-3 md:grid-cols-2">
+            {chosen.map((activity) => (
+              <li
+                key={activity.slug}
+                className="flex items-start justify-between gap-3 rounded-xl border border-border bg-surface p-4"
+              >
+                <div>
+                  <p className="text-small text-text-meta">{activity.location}</p>
+                  <p className="text-h5 text-ink-900">{activity.name}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemove(activity)}
+                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-pill text-ink-600 hover:bg-sand-100"
+                >
+                  <X size={18} aria-hidden />
+                  <span className="np-sr-only">Remove {activity.name} from my activities</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <p className="text-small text-text-meta">
+              These will carry into your booking request.
+            </p>
+            <LinkButton href="/bookings" variant="outline" size="sm">
+              Continue to booking
+            </LinkButton>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

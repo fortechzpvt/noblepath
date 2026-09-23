@@ -11,6 +11,7 @@ import {
   type AirportLeg,
   type BookingDraft,
 } from "@/lib/booking-request";
+import { getAccommodationBySlug } from "@/lib/content";
 import { interestName } from "@/lib/format";
 import { vehicleLabel } from "@/lib/transfers";
 
@@ -95,6 +96,24 @@ export function BookingSummary({
         <Row label="Drop" value={legText(draft.drop, `${d.departureDate} at ${d.departureTime}`)} />
       </Block>
 
+      {draft.plannedItinerary ? (
+        <Block title="Your saved itinerary">
+          <Row label="Length" value={`${draft.plannedItinerary.days} days`} />
+          <Row
+            label="Route"
+            value={draft.plannedItinerary.destinationSlugs
+              .map((slug) => nameOf(destinations, slug))
+              .join(" · ")}
+          />
+          {draft.plannedItinerary.interests.length > 0 ? (
+            <Row
+              label="Interests"
+              value={draft.plannedItinerary.interests.map(interestName).join(", ")}
+            />
+          ) : null}
+        </Block>
+      ) : null}
+
       {draft.planChoice === "package" ? (
         <Block title="Pre-planned trip">
           <Row label="Package" value={trip ? `${trip.name} (${trip.durationDays} days)` : "None"} />
@@ -103,13 +122,17 @@ export function BookingSummary({
         <>
           <Block title="Accommodation">
             {draft.stays.length === 0 ? <p>None chosen.</p> : null}
-            {draft.stays.map((s, i) => (
-              <p key={s.id}>
-                {i + 1}. {nameOf(destinations, s.destination)}: {tierLabel(s.tier)}{" "}
-                {kindLabel(s.kind).toLowerCase()}, {s.roomType} room, {s.guests} guests,{" "}
-                {s.checkIn} to {s.checkOut}
-              </p>
-            ))}
+            {draft.stays.map((s, i) => {
+              const property = s.accommodationSlug ? getAccommodationBySlug(s.accommodationSlug) : undefined;
+              return (
+                <p key={s.id}>
+                  {i + 1}. {property ? `“${property.name}”, ` : ""}
+                  {nameOf(destinations, s.destination)}: {tierLabel(s.tier)}{" "}
+                  {kindLabel(s.kind).toLowerCase()}, {s.roomType} room, {s.guests} guests,{" "}
+                  {s.checkIn} to {s.checkOut}
+                </p>
+              );
+            })}
           </Block>
           <Block title="Activities">
             {draft.activities.length === 0 ? <p>None chosen.</p> : null}
