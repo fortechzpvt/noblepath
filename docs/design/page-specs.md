@@ -127,30 +127,37 @@ Six short region cards (name, one line, count) linking to a pre-filtered view. G
 
 ## 3. Destination detail — `/destinations/[slug]`
 
+**Implementation status (D-22):** built, scoped down from this spec. S2, S4, S5 and S6 are implemented as
+specified (S4/S6 as a simple grid rather than the described rail/three-column layout — see D-22). S1 is
+implemented minus the **Add to trip**/**Share** actions (no defined meaning for a bare destination elsewhere
+in the app). S3 (gallery) and S7 (sticky action bar) are **not built** — `Destination` carries one `image`,
+not a gallery, and S7's bar exists to keep an action reachable that this pass has no action for. Revisit
+both if/when a photo gallery and a real "add to trip" concept exist.
+
 ### S1 · Hero (medium, full-bleed)
 Height `min(72svh, 640px)` at ≥1024; `min(60svh, 520px)` at <768. Transparent nav variant.
 Content bottom-left: breadcrumb (≥768), overline = region (`--color-amber-500`), H1 = destination name, meta row (`map-pin` nearest town · `sun` best season · `clock` suggested time) in `--color-on-image-secondary`.
-Actions bottom-right at ≥1024 / below the meta at <1024: **Add to trip** (primary-invert) + **Share** (ghost-on-dark, icon+label).
+Actions bottom-right at ≥1024 / below the meta at <1024: **Add to trip** (primary-invert) + **Share** (ghost-on-dark, icon+label). *Deferred — see status note above.*
 
 ### S2 · Overview
 Two-column at ≥1024 (`7fr / 5fr`, gap 64 px); stacked below with the fact panel first at <768 (the facts are what a phone user wants immediately).
 Left: `--text-lead` intro then `--text-body` at `--measure-body`, with `<h2>`/`<h3>` subheads. Max 600 words.
-Right: **Fact panel** — white card, `--radius-xl`, `--shadow-sm`, 24 px padding, a `<dl>` of: Region · Best months · Typical visit · Entry fee (with currency and an "as of" date) · Nearest airport · Accessibility notes. Sticky at ≥1024 (`top: 128px`).
+Right: **Fact panel** — white card, `--radius-xl`, `--shadow-sm`, 24 px padding, a `<dl>` of: Region · Best months · Typical visit · Entry fee (with currency and an "as of" date) · Nearest airport · Accessibility notes. Sticky at ≥1024 (`top: 128px`). *Built with the three fields `Destination` actually carries (Region, Best months, Typical visit) plus the season note; Entry fee, Nearest airport and Accessibility notes are not in the content model and were not invented (D-22).*
 
-### S3 · Gallery
+### S3 · Gallery — not built (D-22)
 4–8 images. Grid: 1 col snap rail (<768) · 2 cols (768–1023) · a 3-col masonry-style arrangement with one 2 × 2 feature cell (≥1024). Radius `--radius-lg`, gap 16 px.
 Opening an image launches a lightbox dialog (`components.md` §14 modal rules): arrow-key navigation, `Esc` closes, counter "3 of 8", caption + descriptive alt, focus returns to the thumbnail. **Not** an infinite carousel.
 
 ### S4 · Getting there & around
-Three-column (≥768) info blocks: *By road* · *By train* · *Nearby*. Each with a 20 px icon, `--text-h4`, and a short body. Distances use tabular numerals and always state the unit.
+Three-column (≥768) info blocks: *By road* · *By train* · *Nearby*. Each with a 20 px icon, `--text-h4`, and a short body. Distances use tabular numerals and always state the unit. *Built via the existing `TravelLinks` component, which already grouped by mode this way before this page existed.*
 
 ### S5 · Experiences here
 Experience cards filtered to this destination. Grid 1 · 2 · 3 · 3. Empty state: *"We haven't added experiences here yet"* + link to `/experiences`.
 
 ### S6 · Nearby destinations
-Destination cards, snap rail, max 6. Includes the dotted route-line motif as a horizontal connector beneath the rail at ≥1024 (decorative).
+Destination cards, snap rail, max 6. Includes the dotted route-line motif as a horizontal connector beneath the rail at ≥1024 (decorative). *Built as a static grid of up to 3 (`getRelatedDestinations`'s existing default), not a snap rail; the route-line connector was not added.*
 
-### S7 · Sticky action bar (<1024 only)
+### S7 · Sticky action bar (<1024 only) — not built (D-22)
 Fixed bottom, `--z-sticky`, white surface, `0 -8px 24px -8px rgba(10,15,13,0.16)`, 72 px + `env(safe-area-inset-bottom)`. Contains the destination name (truncated) + **Add to trip** primary pill. Appears once S1's CTA scrolls out of view.
 
 ---

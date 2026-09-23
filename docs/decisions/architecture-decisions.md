@@ -828,6 +828,27 @@ Also: payment card data must never reach the Noble Path origin (provider-hosted 
 
 ---
 
+## D-22 - Destination detail page (`/destinations/[slug]`) built, scoped down from page-specs.md §3
+
+**Decision:** `/destinations/[slug]` now exists — previously every `DestinationCard` across the site already linked to it, but the route itself 404'd. The page shows the destination's existing long-form `description` copy as its body, a compact fact panel (region, best months, suggested stay, season note), a single-pin location map, "Getting there" (the destination's authored `travel` links), experiences based there, nearby destinations, and a closing plan/enquire CTA — all from content that already existed in `content/destinations.ts`, no new data authored.
+
+**Reason:** Requested product feature ("a small blog with a map" for every destination). `docs/requirements/requirements.md` FR-1.4 and `page-specs.md` §3 already fully specified this page; it had components partly built (`DestinationHero`, `TravelLinks`) but no route ever assembled them.
+
+**Alternatives considered:**
+- Building the full §3 spec as written (rejected for this pass: §3 S3 is a 4–8 image lightbox gallery, but `Destination.image` in `lib/types.ts` is a single `ImageAsset`, not a gallery — building S3 would mean inventing photographs or picking arbitrary stand-ins, which is exactly what D-1's photo-credit discipline and requirements §7.3/§7.4 exist to prevent. S1's "Add to trip"/"Share" actions and S7's sticky mobile action bar were also deferred: "add to trip" has no defined meaning for a destination by itself elsewhere in the app — trips, packages and stays are addable, a place is not — and a sticky bar for an action that does not exist yet would be UI with nothing behind it.).
+- A shorter page with no fact panel or "Getting there" section (rejected: `TravelLinks` and the destination's authored `travel` array already existed specifically for this, and the fact panel needed only fields the content model already has — Region, Best months, Suggested stay — omitting them would throw away curated data for no reason).
+
+**Chosen solution:** `app/destinations/[slug]/page.tsx`, `generateStaticParams`-driven like `/trips/[slug]`. Reuses `DestinationHero` and `TravelLinks` as originally built for this page; `getRelatedDestinations` (already written for "FR-1.4 detail page") drives "Nearby destinations"; `getExperiencesForDestination` drives "Experiences here" with the exact empty-state copy `page-specs.md` §3 S5 specifies. A new `components/destinations/destination-map.tsx` renders the location: same Leaflet/OpenStreetMap approach D-17 already chose for `/accommodation` (no new provider decision, no CSP change — `tile.openstreetmap.org` is already allowed), simplified to one always-labelled marker instead of `StayMap`'s multi-pin picker. `TouristDestination` JSON-LD is emitted (coordinates are the one field on this page not already covered by the `article`-flavoured `openGraph` block).
+
+**Impact:**
+- Every existing `DestinationCard`/`DestinationCardOverlay` link across the site (home, `/destinations`, `/trips/[slug]`, `TravelLinks`'s own destination links) now resolves instead of 404ing.
+- New component: `components/destinations/destination-map.tsx`. No new dependency — reuses `leaflet`, already added for D-17.
+- `page-specs.md` §3 is annotated inline to mark S1 (partial — hero built, "Add to trip"/"Share" actions and S7's sticky bar deferred), S2, S4, S5, S6 as built and S3 (gallery) as deferred, so the spec does not silently drift from what exists the way D-17/D-20 had before D-21 fixed their stale wording.
+
+**Known limitations:** No photo gallery (data model constraint, see alternatives above). No "Add to trip" or "Share" action — the closing CTA links to `/plan` and `/bookings` instead, the same two destinations D-17/D-19's existing funnels already use. Fact panel omits "Entry fee", "Nearest airport" and "Accessibility notes" from the original S2 spec because `Destination` carries none of those fields today; inventing them would violate requirements §7.4 the same way a fabricated price would.
+
+---
+
 ## Pending decisions (not yet made)
 
 These are open and must be decided before the relevant work starts. Listed so they are visible rather than rediscovered mid-build.
