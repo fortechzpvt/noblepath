@@ -1,7 +1,7 @@
 # Noble Path — Application Architecture
 
 **Status:** Approved for v1
-**Last updated:** 2026-09-19
+**Last updated:** 2026-09-23
 
 Companion to `system-architecture.md`. That document explains the runtime shape;
 this one explains how the code inside the application is organised and why.
@@ -17,9 +17,11 @@ app/                      Routes. Server components unless marked otherwise.
   page.tsx                Home
   destinations/           Index + [slug] detail
   experiences/            Index
+  accommodation/          Standalone accommodation picker
+  activities/             Standalone activity catalogue
   trips/                  Index + [slug] detail
   plan/                   The itinerary builder
-  bookings/               Enquiry form
+  bookings/               Booking request form
   about/                  About Us
   api/bookings/route.ts   The only write endpoint
   api/health/route.ts     Liveness probe
@@ -30,11 +32,16 @@ components/               Presentational and interactive UI
   ui/                     Primitives: button, chip, field, glass panel
   home/                   Home-page sections, including the hero
   cards/                  Destination, experience and trip cards
+  accommodation/          Accommodation picker (client)
+  activities/             Activity catalogue, with "Add to my trip" (client)
   plan/                   Itinerary builder (client)
   booking/                Booking form (client)
 
 content/                  The editorial source of truth (typed data)
 lib/                      Domain logic: types, content queries, itinerary, validation
+  trip-selections.ts      Shared `/accommodation` + `/activities` picks (client store)
+  plan-storage.ts         `/plan`'s saved-itinerary storage, read/written from elsewhere too
+  booking-request.ts      Booking draft model, validation, shared entry-id counter
 public/images/            Owned photography and the route-pin vector
 docs/                     Documentation — the project's memory
 ```
@@ -45,14 +52,16 @@ This is the single most important rule in the codebase, because it is what keeps
 the performance budget (ADR-001).
 
 **Server by default.** A component is only a client component when it needs state,
-an effect, or a browser API. Currently that is exactly five places:
+an effect, or a browser API. Currently that is these places:
 
 | Client component | Why it must be |
 | --- | --- |
 | `site-header` | Reacts to scroll position; owns the mobile menu |
 | `home/hero` | Scroll-linked parallax and the route-line draw-on |
 | `plan/*` | The itinerary builder is stateful and persists to `localStorage` |
-| `booking/booking-form` | Form state, client-side validation, submission |
+| `accommodation/stays-explorer` | Stateful; picks persist to `localStorage` (shared with `booking-form`) |
+| `activities/activities-explorer` | Stateful; picks persist to `localStorage` (shared with `booking-form`) |
+| `booking/booking-form` | Form state, client-side validation, submission; reads the two stores above on mount |
 | Filter controls on index pages | Selection state |
 
 Everything else — every page, every card, every section — renders on the server and
@@ -129,7 +138,40 @@ where a value is genuinely dynamic (a computed parallax transform, an SVG path l
 - Content integrity failures surface at **build** time via `lib/content.ts`, not at
   runtime. A broken cross-reference fails CI instead of reaching a visitor.
 
-## 9. Conventions
+## 9. Cross-page trip selections (D-21)
+
+`/accommodation`, `/activities` and `/plan` each let a traveller pick specific
+things while just browsing, with no traveller details and no booking in
+progress yet. Those picks need to reach `/bookings` without a server, so they
+travel through `localStorage`, read once when the booking form mounts:
+
+```
+/accommodation (stays-explorer.tsx) ─┐
+                                      ├─▶ lib/trip-selections.ts  (np.selections.v1)
+/activities (activities-explorer.tsx)┘         │
+                                                 │  read once, on mount
+/plan (plan-builder.tsx) ─▶ lib/plan-storage.ts │
+        (np.plan.v1)                            ▼
+                                    components/booking/booking-form.tsx
+                                    seeds BookingDraft.stays / .activities /
+                                    .plannedItinerary, only where still empty
+```
+
+- `lib/trip-selections.ts` owns `np.selections.v1` (specific accommodation and
+  activity picks). `lib/plan-storage.ts` owns `np.plan.v1` (the saved
+  itinerary) — extracted out of `plan-builder.tsx` so `booking-form.tsx` can
+  read it too, without `/plan`'s own behaviour changing.
+- Both are parsed defensively wherever they are read: `localStorage` is
+  editable by the visitor, so a malformed or stale payload is dropped rather
+  than trusted, the same trust model as every other `localStorage` read in
+  this codebase.
+- The booking form's seed runs once, on mount, and only fills fields that are
+  still empty — it must never overwrite a request the traveller is already
+  editing.
+- See D-21 in `docs/decisions/architecture-decisions.md` for the alternatives
+  considered and the full reasoning.
+
+## 10. Conventions
 
 - Files are kebab-case; React components are PascalCase; types are PascalCase.
 - String-literal unions over TypeScript `enum` — better inference, no runtime artefact.

@@ -5,22 +5,14 @@ import Link from "next/link";
 import { AlertTriangle, Car, Info, MapPin, Route, RotateCcw, Undo2 } from "lucide-react";
 
 import { ItineraryDay } from "@/components/plan/itinerary-day";
-import { INTERESTS, PlanIntake } from "@/components/plan/plan-intake";
+import { PlanIntake } from "@/components/plan/plan-intake";
 import { TransferPicker } from "@/components/transfers/transfer-picker";
 import { Button, LinkButton } from "@/components/ui/button";
 import { getDestinationBySlug, getExperienceBySlug } from "@/lib/content";
 import { formatDuration, interestName, regionName } from "@/lib/format";
 import { generateItinerary } from "@/lib/itinerary";
-import type { Interest, Itinerary, Pace, PlanInput, Region } from "@/lib/types";
-
-/**
- * `localStorage` key and payload version.
- *
- * The version is part of the key rather than the payload so that a future,
- * incompatible shape simply does not collide with this one — an old payload is
- * then ignored by construction instead of needing a migration path.
- */
-const STORAGE_KEY = "np.plan.v1";
+import { PLAN_STORAGE_KEY, parseStoredPlan, type StoredPlan } from "@/lib/plan-storage";
+import type { Itinerary, PlanInput, Region } from "@/lib/types";
 
 const MONTH_NAMES = [
   "January",
@@ -36,75 +28,6 @@ const MONTH_NAMES = [
   "November",
   "December",
 ] as const;
-
-interface StoredPlan {
-  readonly input: PlanInput;
-  /** Engine that produced the day order below. Edits are dropped if it changed. */
-  readonly engineVersion: string;
-  /** Original day numbers in the traveller's chosen order; `null` when untouched. */
-  readonly dayOrder: readonly number[] | null;
-}
-
-function isPace(value: unknown): value is Pace {
-  return value === "relaxed" || value === "balanced" || value === "packed";
-}
-
-function isInterest(value: unknown): value is Interest {
-  return typeof value === "string" && INTERESTS.includes(value as Interest);
-}
-
-/**
- * Parse a stored plan defensively.
- *
- * Anything in `localStorage` is editable by the visitor and survives across
- * deployments, so it is treated as untrusted input: every field is checked, and
- * a single bad value discards the whole payload rather than producing a
- * half-valid `PlanInput` that the engine then has to cope with.
- */
-function parseStoredPlan(raw: string): StoredPlan | null {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return null;
-  }
-
-  if (typeof parsed !== "object" || parsed === null) return null;
-  const record = parsed as Record<string, unknown>;
-
-  const input = record.input;
-  if (typeof input !== "object" || input === null) return null;
-  const inputRecord = input as Record<string, unknown>;
-
-  const days = inputRecord.days;
-  const arrivalMonth = inputRecord.arrivalMonth;
-  if (typeof days !== "number" || !Number.isFinite(days)) return null;
-  if (typeof arrivalMonth !== "number" || !Number.isFinite(arrivalMonth)) return null;
-
-  const interests = Array.isArray(inputRecord.interests)
-    ? inputRecord.interests.filter(isInterest)
-    : [];
-
-  const dayOrder =
-    Array.isArray(record.dayOrder) &&
-    record.dayOrder.every((value) => typeof value === "number" && Number.isFinite(value))
-      ? (record.dayOrder as readonly number[])
-      : null;
-
-  return {
-    input: {
-      days,
-      arrivalMonth,
-      interests,
-      ...(isPace(inputRecord.pace) ? { pace: inputRecord.pace } : {}),
-      ...(typeof inputRecord.startingPoint === "string"
-        ? { startingPoint: inputRecord.startingPoint }
-        : {}),
-    },
-    engineVersion: typeof record.engineVersion === "string" ? record.engineVersion : "",
-    dayOrder,
-  };
-}
 
 function describeClamping(itinerary: Itinerary, requested: PlanInput): readonly string[] {
   const notes: string[] = [];
@@ -164,7 +87,7 @@ export function PlanBuilder() {
     // callbacks invoked from the effect rather than bare statements in its
     // body — each is a single, deliberate sync point, not cascading renders.
     const restore = () => {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const raw = window.localStorage.getItem(PLAN_STORAGE_KEY);
       if (raw === null) return;
       const stored = parseStoredPlan(raw);
       if (!stored) return;
@@ -197,7 +120,7 @@ export function PlanBuilder() {
         engineVersion: generateItinerary(input).engineVersion,
         dayOrder,
       };
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      window.localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(payload));
     } catch {
       markUnavailable();
     }

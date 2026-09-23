@@ -100,6 +100,8 @@ export interface StayEntry {
   checkOut: string;
   roomType: string;
   guests: string;
+  /** Set when this entry was carried in from a specific pick on `/accommodation`; `""` otherwise. */
+  accommodationSlug: string;
 }
 
 export interface ActivityEntry {
@@ -109,6 +111,15 @@ export interface ActivityEntry {
   otherName: string;
   date: string;
   participants: string;
+  /** Set when this entry was carried in from a specific pick on `/activities`; `""` otherwise. */
+  sourceActivitySlug: string;
+}
+
+/** A read-only snapshot of a saved `/plan` itinerary, carried into a request. */
+export interface PlannedItineraryNote {
+  readonly days: number;
+  readonly destinationSlugs: readonly string[];
+  readonly interests: readonly Interest[];
 }
 
 export interface TransportEntry {
@@ -143,6 +154,8 @@ export interface BookingDraft {
   activities: ActivityEntry[];
   transport: TransportEntry[];
   preferences: Preferences;
+  /** A saved `/plan` itinerary, if the traveller had one when the form loaded. */
+  plannedItinerary: PlannedItineraryNote | null;
 }
 
 const emptyLeg: AirportLeg = {
@@ -184,7 +197,23 @@ export function createEmptyDraft(): BookingDraft {
       days: "",
       requests: "",
     },
+    plannedItinerary: null,
   };
+}
+
+/**
+ * Shared id generator for repeatable entries (stays, activities, transport).
+ *
+ * One counter for the whole form, not one per call site: entries can be added
+ * either by the traveller (`plan-section.tsx`) or seeded automatically from
+ * picks made on `/accommodation` and `/activities` (`booking-form.tsx`). Two
+ * independent counters would both start at 0 and could mint the same React
+ * key (e.g. two entries called `"stay1"`), so there is exactly one.
+ */
+let entryCounter = 0;
+export function makeEntryId(prefix: string): string {
+  entryCounter += 1;
+  return `${prefix}${entryCounter}`;
 }
 
 /* -------------------------------------------------------------------------- */

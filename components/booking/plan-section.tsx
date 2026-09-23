@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, ExternalLink, Plus } from "lucide-react";
+import { Check, ExternalLink, Plus, Route, X } from "lucide-react";
 
 import { Card, Chip, Entry } from "@/components/booking/ui";
 import { VehicleGrid } from "@/components/transfers/vehicle-grid";
@@ -15,6 +15,7 @@ import {
   STAY_KINDS,
   TIERS,
   ids,
+  makeEntryId,
   todayIso,
   totalTravellers,
   type ActivityEntry,
@@ -25,6 +26,7 @@ import {
   type StayEntry,
   type TransportEntry,
 } from "@/lib/booking-request";
+import { getAccommodationBySlug, getActivityBySlug } from "@/lib/content";
 import { formatPriceBand, interestName } from "@/lib/format";
 import type { PriceBand } from "@/lib/types";
 
@@ -39,9 +41,6 @@ export interface NamedOption {
   readonly slug: string;
   readonly name: string;
 }
-
-let counter = 0;
-const nextId = (prefix: string) => `${prefix}${(counter += 1)}`;
 
 const cardBase =
   "flex h-full flex-col gap-2 rounded-xl border-2 p-5 text-left " +
@@ -110,7 +109,7 @@ export function PlanSection({
       stays: [
         ...draft.stays,
         {
-          id: nextId("stay"),
+          id: makeEntryId("stay"),
           destination: "",
           tier: "mid-range",
           kind: "hotel",
@@ -118,6 +117,7 @@ export function PlanSection({
           checkOut: "",
           roomType: "Double",
           guests: party,
+          accommodationSlug: "",
         },
       ],
     });
@@ -130,11 +130,12 @@ export function PlanSection({
       activities: [
         ...draft.activities,
         {
-          id: nextId("act"),
+          id: makeEntryId("act"),
           activity: "",
           otherName: "",
           date: draft.dates.arrivalDate,
           participants: party,
+          sourceActivitySlug: "",
         },
       ],
     });
@@ -147,7 +148,7 @@ export function PlanSection({
       transport: [
         ...draft.transport,
         {
-          id: nextId("trn"),
+          id: makeEntryId("trn"),
           vehicle: null,
           mode: "private",
           pickup: "",
@@ -186,6 +187,47 @@ export function PlanSection({
       </div>
       {errorFor(ids.planChoice) ? (
         <p className="text-small text-error-600">{errorFor(ids.planChoice)}</p>
+      ) : null}
+
+      {draft.plannedItinerary ? (
+        <div className="flex flex-col gap-3 rounded-xl border-2 border-jungle-700 bg-jungle-50 p-5 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-start gap-3">
+            <Route size={22} aria-hidden className="mt-0.5 shrink-0 text-jungle-600" />
+            <div>
+              <p className="text-h5 text-ink-900">
+                Your saved itinerary: {draft.plannedItinerary.days}-day route
+              </p>
+              <p className="mt-1 text-body-sm text-ink-700">
+                {draft.plannedItinerary.destinationSlugs
+                  .map((slug) => destinations.find((d) => d.slug === slug)?.name ?? slug)
+                  .join(" · ")}
+                {draft.plannedItinerary.interests.length > 0
+                  ? ` — interests: ${draft.plannedItinerary.interests.map(interestName).join(", ")}`
+                  : ""}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-4">
+            <Link
+              href="/plan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xs text-body-sm text-jungle-600 underline underline-offset-4"
+            >
+              View full itinerary
+              <ExternalLink size={14} aria-hidden />
+              <span className="np-sr-only">(opens in a new tab)</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => update({ plannedItinerary: null })}
+              className="inline-flex size-11 shrink-0 items-center justify-center rounded-pill text-ink-600 hover:bg-sand-100"
+            >
+              <X size={18} aria-hidden />
+              <span className="np-sr-only">Remove saved itinerary from this request</span>
+            </button>
+          </div>
+        </div>
       ) : null}
 
       {draft.planChoice === "package" ? (
@@ -275,7 +317,11 @@ export function PlanSection({
                 {draft.stays.map((stay, index) => (
                   <Entry
                     key={stay.id}
-                    legend={`Stay ${index + 1}`}
+                    legend={
+                      stay.accommodationSlug
+                        ? `Stay ${index + 1} — ${getAccommodationBySlug(stay.accommodationSlug)?.name ?? "picked"} (from Accommodation)`
+                        : `Stay ${index + 1}`
+                    }
                     removeLabel={`Remove stay ${index + 1}`}
                     onRemove={() => update({ stays: draft.stays.filter((s) => s.id !== stay.id) })}
                   >
@@ -382,7 +428,11 @@ export function PlanSection({
                 {draft.activities.map((activity, index) => (
                   <Entry
                     key={activity.id}
-                    legend={`Activity ${index + 1}`}
+                    legend={
+                      activity.sourceActivitySlug
+                        ? `Activity ${index + 1} — ${getActivityBySlug(activity.sourceActivitySlug)?.name ?? "picked"} (from Activities)`
+                        : `Activity ${index + 1}`
+                    }
                     removeLabel={`Remove activity ${index + 1}`}
                     onRemove={() =>
                       update({ activities: draft.activities.filter((a) => a.id !== activity.id) })
