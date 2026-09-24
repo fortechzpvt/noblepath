@@ -65,6 +65,18 @@ jobs:
           # docs/deployment/environment.md. The real per-environment value is
           # set on the hosting platform, not here.
           NEXT_PUBLIC_SITE_URL: https://ci.invalid
+          # lib/env.ts (D-19, D-23) hard-fails a production build if these are
+          # unset, so this build-only check needs *something* present. These
+          # are obviously-fake placeholders, not secrets: RESEND_API_KEY only
+          # needs to be a non-empty string and BOOKINGS_NOTIFICATION_EMAIL only
+          # needs to look like an address — this job never calls Resend, it
+          # only proves the build compiles with the env schema satisfied. Real
+          # values live only on the hosting platform (docs/deployment/environment.md)
+          # and must never be added here — this workflow runs on fork PRs too
+          # (see the file header), and a real secret in this `env:` block would
+          # be exposed to them.
+          BOOKINGS_NOTIFICATION_EMAIL: ci@example.invalid
+          RESEND_API_KEY: ci-placeholder-not-a-real-key
 
   audit:
     name: Dependency audit

@@ -335,47 +335,40 @@ export interface Itinerary {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Bookings (FR-5)                                                            */
+/* Bookings (FR-5, D-19, D-23)                                                */
 /* -------------------------------------------------------------------------- */
 
-/** What the enquiry is about. `custom-plan` carries a planner-built itinerary. */
-export type BookingType = "package" | "experience" | "custom-plan";
-
 /**
- * A validated booking enquiry.
+ * A validated booking request.
  *
- * This is the *output* of `bookingRequestSchema`; the canonical definition lives
- * in `lib/validation.ts` and is inferred from the schema, so the schema and the
- * type can never drift. This interface documents the shape for readers and for
- * the API documentation. Every field here is PII-adjacent: see the handling
- * rules in docs/api/api-overview.md.
+ * This is the *output* of `bookingDraftRequestSchema` — the canonical
+ * definition lives in `lib/validation.ts` (`ValidatedBookingDraftRequest`,
+ * `BookingDraftEnquiry`) and is inferred from the schema, so the schema and
+ * the type can never drift; no separate interface is duplicated here for that
+ * reason. This section previously documented an older, simpler enquiry shape
+ * (`BookingRequest`/`BookingType`) that predated `BookingDraft` in
+ * `lib/booking-request.ts` and was never sent anywhere — removed rather than
+ * left to describe a shape nothing builds any more (Fortechz policy §18).
+ * Every field is PII-adjacent: see the handling rules in
+ * `docs/api/endpoints.md`.
  */
-export interface BookingRequest {
-  readonly name: string;
-  readonly email: string;
-  readonly phone?: string;
-  readonly partySize: number;
-  /** ISO `YYYY-MM-DD`, today or later, at most two years out. */
-  readonly arrivalDate: string;
-  readonly bookingType: BookingType;
-  /** Package or experience slug. Required for `package` and `experience`. */
-  readonly itemSlug?: string;
-  readonly notes?: string;
-}
 
-/** 201 response body for a successful enquiry (FR-5.4). */
+/** 200 response body for a successful submission (FR-5.4). */
 export interface BookingResponse {
-  /** Human-quotable reference of the form `NP-XXXXXX`. */
-  readonly reference: string;
+  /** Human-quotable reference of the form `NP-YYYYMMDD-XXXXXX`. */
+  readonly id: string;
 }
 
 /** Machine-readable error codes returned by the API. */
 export type ApiErrorCode =
   | "invalid_content_type"
   | "invalid_json"
+  | "payload_too_large"
   | "validation_failed"
   | "rate_limited"
   | "method_not_allowed"
+  | "delivery_unavailable"
+  | "delivery_failed"
   | "internal_error";
 
 /**

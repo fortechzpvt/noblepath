@@ -5,18 +5,20 @@ import type { VehicleId } from "@/lib/transfers";
 /**
  * Booking request model, client-side validation and helpers.
  *
- * FRONT END ONLY. Nothing here talks to a server: `submitBookingRequest` makes a
- * reference ID in the browser and stops. Until delivery is connected (see
- * `DELIVERY_CONNECTED`) a submitted request reaches nobody, and the UI says so.
- * When the server route exists, validation must be repeated there: this file is
- * a convenience for the traveller, not a security control.
+ * `submitBookingRequest` posts to `POST /api/bookings` (D-23), which repeats
+ * every check here server-side (`lib/validation.ts`) before sending — this
+ * file's validation is, as ever, "a convenience for the traveller, not a
+ * security control." A request rejected by the server throws
+ * `BookingSubmissionError`, which `components/booking/booking-form.tsx`
+ * catches and shows through the same `ErrorSummary` used for client-side
+ * validation errors.
  *
  * Form values are held as strings (what an <input> gives us) and converted only
  * where they are checked or shown.
  */
 
-/** Flip to `true` only once submission is delivered to the team (email or database). */
-export const DELIVERY_CONNECTED = false;
+/** Flip to `false` only if delivery is disconnected again (e.g. mid-incident). */
+export const DELIVERY_CONNECTED = true;
 
 export type PlanChoice = "package" | "custom";
 export type CustomMode = "choose" | "preferences";
@@ -156,6 +158,13 @@ export interface BookingDraft {
   preferences: Preferences;
   /** A saved `/plan` itinerary, if the traveller had one when the form loaded. */
   plannedItinerary: PlannedItineraryNote | null;
+  /**
+   * Honeypot. Always `""` for a real traveller — the field it binds to is
+   * hidden from sighted and assistive-technology users alike
+   * (`components/booking/booking-form.tsx`). A filled value tells the server
+   * the request is automated; see `lib/validation.ts`.
+   */
+  website: string;
 }
 
 const emptyLeg: AirportLeg = {
@@ -198,6 +207,7 @@ export function createEmptyDraft(): BookingDraft {
       requests: "",
     },
     plannedItinerary: null,
+    website: "",
   };
 }
 
@@ -326,6 +336,7 @@ export const ids = {
   prefDays: "bk-prefDays",
   prefBudget: "bk-prefBudget",
   terms: "bk-terms",
+  submit: "bk-submit",
   leg: (leg: "pickup" | "drop", field: string) => `bk-${leg}-${field}`,
   stay: (index: number, field: string) => `bk-stay-${index}-${field}`,
   activity: (index: number, field: string) => `bk-activity-${index}-${field}`,
@@ -481,13 +492,71 @@ export function generateBookingRequestId(now: Date = new Date()): string {
 }
 
 /**
- * The one place submission happens. Today it only makes an ID. Replace the body
- * with a `fetch` to the server route when delivery is connected, and set
- * `DELIVERY_CONNECTED` to `true`.
+ * Thrown by `submitBookingRequest` when the server rejects or cannot deliver
+ * the request. `message` is always written for the traveller to read.
+ * `fieldErrors` is populated only for a server-side validation failure — a
+ * case that should be rare, since the client already ran `validateDraft`
+ * first, and would only fire from something like a slug that existed when
+ * the page loaded and was removed from the content data before submission.
+ */
+export class BookingSubmissionError extends Error {
+  readonly fieldErrors?: readonly FormError[];
+
+  constructor(message: string, fieldErrors?: readonly FormError[]) {
+    super(message);
+    this.name = "BookingSubmissionError";
+    this.fieldErrors = fieldErrors;
+  }
+}
+
+const GENERIC_SUBMIT_ERROR =
+  "We could not send your request right now. Please try again or contact us directly.";
+
+/**
+ * The one place submission happens: `POST /api/bookings` (D-23). `draft`
+ * already matches the server's request shape field-for-field (both model the
+ * same form, see `lib/validation.ts`), so it is sent as-is rather than
+ * remapped into a second shape.
  */
 export async function submitBookingRequest(
   draft: BookingDraft,
 ): Promise<{ readonly id: string }> {
-  void draft;
-  return { id: generateBookingRequestId() };
+  let response: Response;
+  try {
+    response = await fetch("/api/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(draft),
+    });
+  } catch {
+    throw new BookingSubmissionError(
+      "We could not reach the server. Check your connection and try again.",
+    );
+  }
+
+  const body: unknown = await response.json().catch(() => null);
+
+  if (response.ok) {
+    const id = (body as { id?: unknown } | null)?.id;
+    if (typeof id === "string" && id.length > 0) return { id };
+    throw new BookingSubmissionError(GENERIC_SUBMIT_ERROR);
+  }
+
+  const error = (body as { error?: { message?: unknown; fields?: unknown } } | null)?.error;
+  const message =
+    typeof error?.message === "string" && error.message.trim() !== "" ? error.message : GENERIC_SUBMIT_ERROR;
+
+  if (
+    response.status === 400 &&
+    error?.fields &&
+    typeof error.fields === "object" &&
+    !Array.isArray(error.fields)
+  ) {
+    const fieldErrors = Object.entries(error.fields as Record<string, unknown>)
+      .filter((entry): entry is [string, string] => typeof entry[1] === "string")
+      .map(([field, fieldMessage]): FormError => ({ fieldId: `server:${field}`, message: fieldMessage }));
+    throw new BookingSubmissionError(message, fieldErrors.length > 0 ? fieldErrors : undefined);
+  }
+
+  throw new BookingSubmissionError(message);
 }

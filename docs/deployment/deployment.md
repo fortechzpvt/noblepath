@@ -417,7 +417,7 @@ does not own these files and has not modified them.
 | 2 | Implement a health route returning 200 with a small JSON body, `no-store`, no secrets and no internal version detail | `app/api/health/route.ts` | Full-Stack Engineer | **Deploy smoke check and container HEALTHCHECK — blocking for both** |
 | 3 | Emit `noindex` on non-production environments (§9) | app layer | Full-Stack Engineer | Blocking for production launch |
 | 4 | Record the hosting decision as an ADR (Vercel over containers, §1) | `docs/decisions/architecture-decisions.md` | Orchestrator / owning agent | Fortechz policy |
-| 5 | Set `Cache-Control: no-store` on `/api/bookings` and `/api/health` | app layer | Full-Stack Engineer | Correctness |
+| 5 | Set `Cache-Control: no-store` on `/api/bookings` and `/api/health` | app layer | Full-Stack Engineer | Correctness — **`/api/bookings` done (D-23)**, via a `/api/:path*` header rule in `next.config.ts` rather than a route-specific one, so `/api/health` will inherit it for free once item 2 builds that route. Item 2 itself is still open. |
 | 6 | Remove or relocate `untitled folder/` before the repository is pushed | repo root | Human | Hygiene — it is git-ignored and docker-ignored, but it is unlicensed photography sitting in the project root |
 
 ---
@@ -427,3 +427,4 @@ does not own these files and has not modified them.
 | Date | Change | By |
 | --- | --- | --- |
 | 2026-09-19 | Initial deployment design: Vercel recommendation, CI/CD pipelines, GitHub Environment approval gate, container escape hatch, DNS/TLS and caching plan. Nothing provisioned. | DevOps Engineer |
+| 2026-09-23 | `POST /api/bookings` built and delivery connected (D-23). Closed §11 item 5 for `/api/bookings` (the `/api/health` half stays open with item 2). Production `next build` now requires `RESEND_API_KEY` and `BOOKINGS_NOTIFICATION_EMAIL` to be set — this was already the documented intent but had never actually been enforced before this change (see `docs/deployment/environment.md` §7 item 1). | Full-Stack Engineer |
