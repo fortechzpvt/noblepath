@@ -85,6 +85,33 @@ Every variable in `.env.example`, plus the pipeline variables.
 | **Production** | The real Noble Path bookings mailbox |
 | **Consequence if wrong/unset** | Enquiries are accepted and the visitor sees a reference code (FR-5.4) but nobody is notified — **silent lead loss**. This is the highest-impact misconfiguration in the project. The app should fail loudly at startup in production if this is unset; raised as a required action in §7. |
 
+### 2.2.1 `RESEND_API_KEY`
+
+| Property | Value |
+| --- | --- |
+| **Purpose** | Secret API key for [Resend](https://resend.com), used by `POST /api/bookings` (D-23) to send the notification email. |
+| **Exposure** | **SERVER-ONLY, SECRET.** Never expose to the client, never commit, never log. Treat exactly like the pipeline's `VERCEL_TOKEN` in §3. |
+| **Required** | Yes in production (`lib/env.ts` throws at startup if unset — same treatment as `BOOKINGS_NOTIFICATION_EMAIL`). Optional locally: `/api/bookings` answers `503 delivery_unavailable` instead of sending when unset, so the rest of the app stays usable without a Resend account. |
+| **Default** | None. |
+| **Format** | A Resend secret key, `re_...`, created in the [Resend dashboard](https://resend.com/api-keys). |
+| **Local** | A developer's own Resend key, or leave empty to exercise the 503 path |
+| **Staging** | A separate Resend key/project from production, if staging is expected to actually send mail during testing |
+| **Production** | The real Noble Path Resend key |
+| **Consequence if wrong/unset** | In production: the app refuses to start (see §7 item 1 — now enforced, not just designed). At runtime with a revoked/invalid key: Resend's API call fails, `/api/bookings` returns `502 delivery_failed`, and the failure (never the key itself) is logged server-side with a correlation id. |
+
+### 2.2.2 `RESEND_FROM_EMAIL`
+
+| Property | Value |
+| --- | --- |
+| **Purpose** | The "from" address Resend sends the notification email as. |
+| **Exposure** | **SERVER-ONLY.** Not a secret, but not meaningful to expose either. |
+| **Required** | No — defaults to Resend's shared sandbox sender. |
+| **Default** | `onboarding@resend.dev` |
+| **Format** | A single valid email address. |
+| **Local / Staging** | The default is fine — sandbox sending only reaches the Resend account's own verified address anyway. |
+| **Production** | An address on a domain verified in the Resend dashboard. **Operational step, not a code change**: until a sending domain is verified, Resend will not deliver to `BOOKINGS_NOTIFICATION_EMAIL` at all if it differs from the account's own address, regardless of what this variable is set to. |
+| **Consequence if wrong/unset** | Sandbox sender stays in effect, silently limiting real-world delivery to the account owner's own address — see D-23's known limitations. Not an application error; Resend accepts the send and simply does not deliver it further. |
+
 ### 2.3 `BOOKING_RATE_LIMIT_MAX`
 
 | Property | Value |
@@ -240,7 +267,7 @@ deploy → verify canonical tags and Open Graph URLs → update this document.
 
 | # | Gap | Impact | Owner |
 | --- | --- | --- | --- |
-| 1 | No startup validation of environment variables. A missing `BOOKINGS_NOTIFICATION_EMAIL` in production fails **silently** — visitors get a reference code, staff get nothing. | High — silent loss of business leads | Full-Stack Engineer: validate required vars with Zod at module load in the server config, and throw in production when one is missing. Zod is already a dependency. |
+| 1 | **Resolved (D-23).** `lib/env.ts` validates required vars with Zod at module load and throws in production when one is missing. It existed before D-23 but was dead code — nothing under `app/` imported it, since `/api/bookings` did not exist, so it had never actually run. `RESEND_API_KEY` was added under the same treatment. | Was High — silent loss of business leads | Closed. Now genuinely enforced: `next build` fails immediately if `BOOKINGS_NOTIFICATION_EMAIL` or `RESEND_API_KEY` is unset, because Next evaluates route modules during build-time page-data collection, not only at request time. |
 | 2 | No automated check that a server-only variable has not leaked into the client bundle. | Medium — NFR-6 is enforced by convention only | Full-Stack / DevOps: add a post-build grep step (see §1) to `ci.yml` once the variable list is stable. |
 | 3 | The rate-limit variables have no effect across instances (in-memory limiter). | Medium — NFR-8 is weaker in practice than the configured value implies | Documented limitation for v1; revisit when a datastore exists. |
 | 4 | Vercel token expiry is a calendar reminder, not an automated alert. | Low — an expired token breaks deploys, not the site | DevOps: revisit if deploy frequency increases. |
@@ -252,3 +279,4 @@ deploy → verify canonical tags and Open Graph URLs → update this document.
 | Date | Change | By |
 | --- | --- | --- |
 | 2026-09-19 | Initial specification of all four application variables from `.env.example`, pipeline secrets, per-environment storage, rotation procedures and known gaps. Nothing provisioned. | DevOps Engineer |
+| 2026-09-23 | Added `RESEND_API_KEY` and `RESEND_FROM_EMAIL` (D-23, booking delivery). Closed gap #1 — `lib/env.ts`'s startup validation is now actually exercised by `POST /api/bookings`, not dead code. | Full-Stack Engineer |

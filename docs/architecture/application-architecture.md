@@ -184,6 +184,45 @@ established for `/accommodation` — no new map provider decision). Every
 `DestinationCard` across the site already linked to this route before it
 existed; this fills that in rather than adding new links. See D-22.
 
+## 9.2 Booking delivery (D-23)
+
+`/bookings` is the client; `POST /api/bookings` is the only place a request
+actually leaves the browser. Every check runs again server-side — the client
+validating first is a convenience, never a substitute:
+
+```
+components/booking/booking-form.tsx (client)
+  │  fetch POST, BookingDraft as JSON
+  ▼
+app/api/bookings/route.ts
+  │  1. Content-Length guard (≤ 50 KB)
+  │  2. checkRateLimit() — lib/rate-limit.ts
+  │  3. Content-Type check, JSON.parse
+  │  4. bookingDraftRequestSchema.safeParse() — lib/validation.ts
+  │  5. honeypot check (website !== "") → fake 200, no email sent
+  ▼
+lib/booking-email.ts          lib/content.ts
+  builds the plain-text        resolves every slug in the
+  notification (mirrors        request to a name — the
+  booking-summary.tsx's        same content module the rest
+  on-screen grouping)          of the site reads from
+  │
+  ▼
+Resend (resend.com) — new Resend(RESEND_API_KEY).emails.send({...})
+  │  to: BOOKINGS_NOTIFICATION_EMAIL · replyTo: the traveller's own address
+  ▼
+Staff inbox
+```
+
+Every error path — validation failure, rate limit, oversized body, wrong
+content type, delivery failure, delivery not configured, wrong HTTP method —
+returns the same `ApiErrorBody`/`ApiErrorCode` envelope (`lib/types.ts`), with
+a `correlationId` also written to the server log, so a traveller can quote one
+short id to support instead of a raw error message. See D-23 in
+`docs/decisions/architecture-decisions.md` for the alternatives considered and
+the full reasoning, and `docs/agents/handoffs.md` for this feature's
+Cybersecurity review.
+
 ## 10. Conventions
 
 - Files are kebab-case; React components are PascalCase; types are PascalCase.

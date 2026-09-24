@@ -18,7 +18,7 @@ import { ErrorSummary } from "@/components/ui/field";
 import { getAccommodationBySlug, getActivityBySlug } from "@/lib/content";
 import { generateItinerary } from "@/lib/itinerary";
 import {
-  DELIVERY_CONNECTED,
+  BookingSubmissionError,
   MAX_ACTIVITIES,
   MAX_STAYS,
   createEmptyDraft,
@@ -197,6 +197,19 @@ export function BookingForm({
       setRequestId(result.id);
       setStep("done");
       scrollToTop();
+    } catch (error) {
+      // The traveller stays on the review step with their draft intact, so
+      // they can retry without re-entering anything.
+      const submitError: FormError = {
+        fieldId: ids.submit,
+        message:
+          error instanceof BookingSubmissionError
+            ? error.message
+            : "Something went wrong sending your request. Please try again.",
+      };
+      const fieldErrors = error instanceof BookingSubmissionError ? (error.fieldErrors ?? []) : [];
+      setErrors([submitError, ...fieldErrors]);
+      window.requestAnimationFrame(() => summaryRef.current?.focus());
     } finally {
       setSubmitting(false);
     }
@@ -228,17 +241,10 @@ export function BookingForm({
               {copied ? "Copied" : "Copy ID"}
             </Button>
           </div>
-          {DELIVERY_CONNECTED ? (
-            <p className="text-body text-ink-700">
-              Thank you. We will reply to {draft.traveller.email} with availability and a
-              quotation. Quote this ID if you contact us.
-            </p>
-          ) : (
-            <p role="status" className="rounded-lg bg-warning-50 p-4 text-body-sm text-warning-700">
-              This request has not been sent to our team yet: sending is still being connected.
-              Keep this ID and contact us directly to confirm we have your request.
-            </p>
-          )}
+          <p className="text-body text-ink-700">
+            Thank you. We will reply to {draft.traveller.email} with availability and a
+            quotation. Quote this ID if you contact us.
+          </p>
         </Card>
       </div>
     );
@@ -250,6 +256,26 @@ export function BookingForm({
 
       {step === "form" ? (
         <form noValidate onSubmit={handleReview} className="mt-0 flex flex-col gap-6">
+          {/* Honeypot (lib/validation.ts). Off-screen and out of both the tab
+              order and the accessibility tree — a real traveller, sighted or
+              using assistive technology, never encounters it; a bot filling
+              every field it finds does. */}
+          <div
+            aria-hidden="true"
+            style={{ position: "absolute", left: "-9999px", top: "-9999px", width: 1, height: 1, overflow: "hidden" }}
+          >
+            <label htmlFor="bk-website">Leave this field empty</label>
+            <input
+              id="bk-website"
+              type="text"
+              name="bk-website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={draft.website}
+              onChange={(event) => update({ website: event.target.value })}
+            />
+          </div>
+
           <TravellerSection
             value={draft.traveller}
             onChange={(traveller) => update({ traveller })}

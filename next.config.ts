@@ -38,6 +38,14 @@ const securityHeaders = [
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 ];
 
+/**
+ * A cached write endpoint is a correctness *and* security bug (D-23,
+ * docs/deployment/deployment.md §8). Matches `/api/:path*` rather than the
+ * single literal `/api/bookings` so a future `/api/health` (or any other API
+ * route) inherits `no-store` for free instead of needing its own entry here.
+ */
+const apiHeaders = [{ key: "Cache-Control", value: "no-store" }];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -53,7 +61,10 @@ const nextConfig: NextConfig = {
     qualities: [72, 75],
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      { source: "/api/:path*", headers: apiHeaders },
+    ];
   },
 };
 

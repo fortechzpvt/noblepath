@@ -436,3 +436,235 @@ silently dropping the finding, per policy §18 ("never leave... unresolved issue
 working correctly, not a false alarm to wave away without a record.
 
 **Status:** Feature complete. READY.
+
+## Handoff — Full-Stack Engineer → Cybersecurity Agent: booking delivery connected (2026-09-23)
+
+**From:** Full-Stack Engineer. **To:** Cybersecurity Agent.
+
+**Task:** connect real delivery for `/bookings` (D-23) — build `POST /api/bookings`, wire
+`submitBookingRequest` to it, send the notification email via Resend. Requested by the
+user with the explicit condition "it needs to be secured very well."
+
+**Why this handoff matters more than most of the ones above it:** every prior handoff in
+this file touched client-side state (`localStorage`) or read-only content pages. This is
+the first change since D-19 that (a) sends real traveller PII over the network to a real
+third-party service, and (b) adds a newly-public write surface — `POST /api/bookings`
+accepts unauthenticated input from anyone on the internet, not just a browser navigating
+this site. D-19 named this exact gap explicitly: *"a Cybersecurity review is required
+before delivery is connected."* Please review this as that review, not as a formality —
+nothing in this entry should be read as self-certifying its own security.
+
+**Completed:**
+- `lib/validation.ts`: `bookingDraftRequestSchema`, a Zod schema mirroring `BookingDraft`
+  field-for-field, replacing an older, unused schema for a different (simpler, predating
+  `BookingDraft`) enquiry shape. Every slug the client sends is re-checked against
+  `lib/content.ts`'s live data. `strictObject` throughout — unknown keys are rejected.
+- `app/api/bookings/route.ts`: size guard (50 KB) → rate limit (`lib/rate-limit.ts`,
+  pre-existing, previously unused) → `Content-Type` check → JSON parse → schema
+  validation → honeypot branch → compose (`lib/booking-email.ts`) → send via Resend.
+  `replyTo` set to the traveller's own email. Every error path returns the pre-existing,
+  previously-unused `ApiErrorBody`/`ApiErrorCode` envelope from `lib/types.ts`, with a
+  `correlationId` also logged server-side — the client never sees a raw provider error.
+- `lib/env.ts`: `RESEND_API_KEY` (secret, hard-fails production startup if unset, same
+  treatment as `BOOKINGS_NOTIFICATION_EMAIL`) and `RESEND_FROM_EMAIL`.
+- `components/booking/booking-form.tsx`: an off-screen, `aria-hidden`, `tabIndex={-1}`
+  honeypot input bound to a new `BookingDraft.website` field; `handleSubmit` now catches
+  a thrown `BookingSubmissionError` and surfaces it through the existing `ErrorSummary`,
+  keeping the traveller's draft intact for a retry.
+- `next.config.ts`: `Cache-Control: no-store` on `/api/:path*`.
+- Full detail and every alternative considered: D-23 in
+  `docs/decisions/architecture-decisions.md`.
+
+**Files changed:**
+- New: `app/api/bookings/route.ts`, `lib/booking-email.ts`, `docs/api/endpoints.md`,
+  `docs/api/api-overview.md`
+- Modified: `lib/validation.ts` (near-total rewrite), `lib/env.ts`, `lib/booking-request.ts`,
+  `lib/types.ts`, `components/booking/booking-form.tsx`, `next.config.ts`, `.env.example`,
+  `package.json`/`package-lock.json` (added `resend`), `docs/decisions/architecture-decisions.md`
+  (new D-23, D-19 updated in place), `docs/architecture/application-architecture.md` (new
+  §9.2), `docs/deployment/environment.md` (§2.2.1/§2.2.2, §7 item 1 closed),
+  `docs/deployment/deployment.md` (§11 item 5 partially closed — `/api/bookings` only,
+  `/api/health` still open per item 2, out of scope for this task)
+
+**Testing:** `npm run lint`, `npm run typecheck`, `npm run build` all clean —
+**important:** the build required `BOOKINGS_NOTIFICATION_EMAIL`/`RESEND_API_KEY` supplied
+inline for the verification run only (`BOOKINGS_NOTIFICATION_EMAIL=... RESEND_API_KEY=...
+npm run build`), never written to any file; see "known issues" below, this is now a real
+production requirement, not a test artefact. Manually exercised every response path against
+a running dev server with `curl`: `200` genuine success path confirmed valid *up to* the
+delivery step (verified it fails at `503` only because no Resend key exists locally, not
+because validation rejected it), `200` honeypot-faked success (confirmed distinct from the
+genuine path only in that no email is attempted), `400` malformed JSON, `400` validation
+failure with per-field messages, `413` oversized body, `415` wrong content type, `429` rate
+limited with a `Retry-After` header (confirmed the configured `BOOKING_RATE_LIMIT_MAX=5`
+was enforced exactly), `503` delivery not configured, `405` with an `Allow: POST` header on
+every other method. **A real bug was caught and fixed during this testing**, not before it:
+the honeypot's first implementation failed schema validation on a filled `website` field
+and returned `400` naming that exact field and rule — a textbook honeypot leak, since the
+entire point is that a bot learns nothing about which check it tripped. Fixed by letting
+the field parse successfully and branching on it in the route handler instead. Please treat
+this as a signal to look hard at the honeypot and rate-limit logic specifically, not as
+"already caught, so it's fine now" — I found this one; there is no guarantee it is the only
+one of its kind.
+
+**Security-sensitive areas — please look specifically at:**
+- **The honeypot fix above** — confirm the new design (schema accepts, route branches)
+  really does leak nothing else (timing differences, response header differences, etc.
+  between the honeypot path and a genuine success).
+- **Every slug cross-check** in `lib/validation.ts` (destination/accommodation pairing,
+  package/experience/activity existence) — confirm there's no path where an unvalidated
+  slug still reaches `lib/booking-email.ts` and, from there, the notification email.
+- **Rate limiting**, given it now protects a real external API call with real (if small)
+  cost implications, not just a `localStorage` write. The per-instance limitation is
+  pre-existing and documented (`lib/rate-limit.ts`, `docs/api/api-overview.md`) — confirm
+  the 50 KB body cap and the `MAX_STAYS`/`MAX_ACTIVITIES`/`MAX_TRANSPORT` array caps
+  (inherited from `lib/booking-request.ts`, applied in the new schema) are enough to bound
+  the cost of a single accepted request even under sustained abuse within the rate limit.
+- **Error responses never leaking provider detail** — I wrote this deliberately (`502`/`503`
+  never forward Resend's own error text), but I have not seen Resend's real error shapes
+  under a real API key; confirm nothing in a real failure response would need a second look.
+- **The email content itself** (`lib/booking-email.ts`) — plain text only, by design (see
+  D-23's alternatives), specifically to avoid needing an HTML-escaping discipline across a
+  field set this large. Confirm that reasoning holds and that nothing about a plain-text
+  body sent through Resend's API reopens a risk I assumed plain text closed.
+- **PII handling generally**: traveller name/email/phone/nationality now leave the system
+  for the first time, to Resend, over HTTPS, carrying no other destination. Confirm this
+  is what "PII handling" should mean here given there is still no database, no logging of
+  request bodies, and no third party besides Resend involved.
+
+**Known issues / limitations (all also recorded in D-23):**
+- No database — the email is the only record of a submitted request.
+- Resend's sandbox-mode restriction (real delivery needs a verified sending domain first;
+  until then Resend only delivers to the account's own address).
+- Production `next build` now genuinely requires `RESEND_API_KEY` and
+  `BOOKINGS_NOTIFICATION_EMAIL` to be set — previously true in theory, never enforced in
+  practice, because nothing under `app/` imported `lib/env.ts` before this change.
+- A request missing an entire top-level object (not just an invalid field within one)
+  surfaces a generic Zod message rather than a traveller-friendly one. Not reachable
+  through the real form, which always sends every key.
+- **Not verified**: an actual Resend delivery. No real `RESEND_API_KEY` was available
+  during this work. The `resend.emails.send` call, and Resend's real error shapes on
+  failure, are unverified beyond what the published SDK types document.
+
+**Required action:** Application security review before this is considered fully
+reviewed, per D-19's original condition and the user's explicit request. Please record
+findings the same way the previous review did — `docs/security/security-review.md`
+(append, do not overwrite the existing D-21 entry) and a reply handoff here.
+
+**Status:** Awaiting Cybersecurity review. NOT YET READY to be considered complete without it.
+
+## Handoff — Cybersecurity review result: booking delivery connected, D-23 (2026-09-23)
+
+**From:** Cybersecurity / Application Security Agent. **To:** Orchestrator.
+
+**Reviewing:** the handoff immediately above ("Full-Stack Engineer → Cybersecurity Agent:
+booking delivery connected"). Reviewed adversarially, against a running `npm run dev`
+instance seeded with a fake-but-syntactically-valid Resend key, not by reading the diff
+and trusting the engineer's own test report — every response path and every claim in that
+handoff was independently re-sent and re-checked. Full detail, every request sent and
+every response received, is in `docs/security/security-review.md` (review dated
+2026-09-23, "Booking delivery connected"); this entry summarises it.
+
+**Completed:** read `docs/decisions/architecture-decisions.md` D-23 and D-19 in full, then
+the complete diff of every changed/new file in scope, before any testing. Ran
+`npm run lint`, `npm run typecheck`, `npm run build` directly. Started the dev server
+myself and adversarially exercised: the 50 KB size guard (including a raw-socket request
+with a lied `Content-Length` header and a real ~1 MB body, missing `Content-Length`,
+`Transfer-Encoding: chunked` with no length, and pathological deeply-nested/wide JSON
+right under the byte cap); the honeypot path (response shape, response status, server-side
+email-send code path, and response timing); the rate limiter (repeated requests with a
+freshly spoofed `X-Forwarded-For` per request); schema completeness (fabricated
+destination/accommodation slugs, an oversized array, an unrecognised key, a client-
+supplied `id`); CORS (cross-origin preflight and POST); and every documented response code
+(`200` genuine and honeypot, `400` × 3 varieties, `413`, `415`, `429` with `Retry-After`,
+`502`, `405` on every non-`POST` method).
+
+**Findings — full detail in `docs/security/security-review.md`:**
+
+- **F-3 (High), CONFIRMED and FIXED in this review.** `clientKey()` in
+  `app/api/bookings/route.ts` keyed the rate limiter on the *first* entry of
+  `X-Forwarded-For` — entirely attacker-controlled. Demonstrated: 8 consecutive requests
+  from one process, one real source, each with a freshly fabricated `X-Forwarded-For`
+  value, all bypassed the limiter completely (no `429` at all). This is a materially
+  worse hole than the "per-instance" limitation `lib/rate-limit.ts` and
+  `docs/api/api-overview.md` already disclose — it is a single-process, zero-
+  infrastructure, complete bypass of the one control bounding the cost/abuse surface of a
+  real paid external API call, not a proportional weakening under horizontal scaling.
+  **Fixed:** now keys on the *last* entry — the value a single trusted reverse-proxy hop
+  (Vercel's edge, this project's deployment target) appends based on the connection it
+  actually observed. Re-verified directly: the same spoofing attack, repeated post-fix,
+  now correctly throttles at request 6. `docs/api/endpoints.md` updated to match.
+  **Flagged, not silently assumed:** this fix's safety depends on Vercel's edge network
+  actually appending rather than forwarding the client's header unchanged — unverified,
+  since no production Vercel deployment exists yet. DevOps should confirm this at or
+  before first real deploy; the code comment and `docs/api/endpoints.md` both say so.
+- **F-4 (Low/Informational), CONFIRMED, left open.** The honeypot path responds in
+  single-digit-to-low-double-digit milliseconds; a genuine submission that reaches the
+  Resend call takes roughly 300–900 ms even on failure, because it makes a real outbound
+  HTTPS call first. Measured directly (5 runs each side). A scripted bot could use this
+  timing gap to identify the honeypot field, similar in effect to the field-naming leak
+  already found and fixed by the Full-Stack Engineer, just through a slower channel.
+  Bounded impact — does not expose PII, does not bypass rate limiting or validation, and
+  the realistic payoff to an attacker is small. **Not fixed** — the available
+  countermeasure (artificial delay on the honeypot branch) is a product/performance
+  trade-off, not an unambiguous bug fix, so it is flagged for the team to decide rather
+  than silently applied.
+
+**Confirmed clean (adversarially tested, not just read):**
+- The 50 KB size guard: a lied `Content-Length` header cannot be used to smuggle an
+  unbounded body past the app — Node's own HTTP layer rejects the mismatched framing with
+  a `400` after a bounded overrun (well under 1 MB observed), before the app's own check
+  even runs. Missing/invalid `Content-Length` and chunked transfer without one are both
+  rejected immediately, fail closed. Deeply-nested and wide JSON payloads right under the
+  byte cap parse and get rejected in well under 100 ms with no crash and no measurable
+  server impact.
+- Honeypot: a filled `website` field returns byte-for-byte the same `{ "id": ... }`
+  `200` shape a genuine success uses, confirmed both by request and by reading the code —
+  the honeypot branch returns before `buildBookingEmail` or `resend.emails.send` is ever
+  reached, so no email is composed, not merely undelivered.
+- Email injection: the Resend call passes structured JSON fields, never a concatenated
+  raw header block; `text` only, no `html`; the subject line strips `\r`/`\n`; every
+  free-text field that reaches the email body has an explicit, server-enforced `.max()`.
+- Schema completeness: `strictObject` at every level; every array capped at
+  `MAX_STAYS`/`MAX_ACTIVITIES`/`MAX_TRANSPORT` imported (not restated) from
+  `lib/booking-request.ts`; every slug cross-checked against live `lib/content.ts` data,
+  including the destination/accommodation pairing carried over from the prior review's
+  F-2 fix. Verified with real fabricated-slug and oversized-array requests, all rejected.
+- Secret hygiene: `RESEND_API_KEY` never appears in a log line, a response body, or any
+  client-reachable path — grepped the full diff. `.env.local` is gitignored, holds no
+  real credentials, and was never part of this diff. Every `502`/`503` response carries
+  only a generic message and a `correlationId`; server-side logs carry Resend's own
+  `error.name`/`error.message`, never the key or a raw stack trace.
+- CORS: no `Access-Control-*` header anywhere, confirmed with a real cross-origin
+  preflight and POST.
+- ID integrity: the returned `id` is always server-generated
+  (`generateBookingRequestId()`, CSPRNG); a client-supplied `id` field is rejected by
+  `strictObject` before the handler logic runs, and the handler never reads one from the
+  body regardless.
+
+**Not verified (disclosed, not silently skipped):** actual Resend delivery — no real
+`RESEND_API_KEY` was available to this review either, matching the engineer's own
+disclosure. All delivery-path testing reached Resend's own auth check and failed there
+(`502`), which confirms the request path and error-hygiene behaviour but not a real
+message ever landing in an inbox, nor Resend's error shape for failure modes other than an
+invalid key. Vercel's actual `X-Forwarded-For` handling, per F-3 above, is also unverified
+— no production deployment exists yet.
+
+**Files changed by this review:** `app/api/bookings/route.ts` (F-3 fix — `clientKey()`
+now keys on the last `X-Forwarded-For` entry, with an expanded comment on the trust
+assumption), `docs/api/endpoints.md` (rate-limiting section updated to match),
+`docs/security/security-review.md` (this review appended), `docs/agents/handoffs.md`
+(this entry). F-4 was deliberately **not** code-fixed — see above.
+
+**Testing after the fix:** `npm run lint`, `npm run typecheck`, `npm run build` all
+re-run clean. The rate-limit-bypass test was re-run against the fixed code and now
+correctly returns `429` at the configured `BOOKING_RATE_LIMIT_MAX`.
+
+**Status:** Reviewed. **NEEDS CHANGES → now READY**, conditional on DevOps confirming the
+`X-Forwarded-For` trust assumption in F-3 before or at first real deploy (no production
+Vercel environment exists yet to verify it against today, so it cannot be closed out
+further from here). F-4 is left open at Low/Informational severity for the team to decide
+whether it's worth closing; it does not block shipping. This review found and fixed one
+real, concretely exploitable High-severity hole rather than rubber-stamping the engineer's
+own (thorough, and mostly accurate) self-testing — see D-23's own text: "nothing in this
+entry should be read as self-certifying its own security," which held true here.
