@@ -729,3 +729,79 @@ separately from a full trip, from the booking section.
 2. Send one real ride request to confirm the staff email.
 3. Optionally, ask the Cybersecurity Agent to re-review the F-5–F-8 fixes.
 4. Commit and open a PR.
+
+---
+
+## Handoff — D-25 single trip with map, search and current location (2026-09-25)
+
+**Task:** "Single trip": pick pickup and destination from a map or search (e.g. Mannar → Jaffna),
+use the current location for the pickup. Like Uber, but simpler and one trip only.
+
+**Agents involved:**
+- Orchestrator + Full-Stack Engineer: design, implementation, tests, API/architecture/ADR docs.
+- Cybersecurity Agent: review, F-9–F-13, written up in `docs/security/security-review.md`.
+- UI/UX Designer: review, 12 issues; `docs/design/user-flows.md` §F10 and `page-specs.md` §8.1/§11.
+- DevOps: no separate review this round. The infra and alert changes (outbound Photon,
+  `Permissions-Policy`) were recorded by the Orchestrator in
+  `docs/architecture/infrastructure-architecture.md`.
+
+**Completed:**
+- "A single trip" on `/bookings`:
+  - search fields (ARIA combobox) with instant built-in towns and live Photon results;
+  - A/B pins that can be set by tapping the map or dragging;
+  - "Use my current location";
+  - a line between the pins and a rough distance/time;
+  - pins in the summary and in the staff email, with Google Maps and directions links.
+- `GET /api/places/search`, `GET /api/places/reverse`: a server-side proxy to Photon with a
+  cache, an upstream cap, a per-client limit and a cross-site block.
+- UI/UX issues 1–9 and 11 fixed. Naming (item 12) kept as "A single trip", as the requester
+  asked; recorded as an open question.
+- Security findings F-9 to F-13 fixed. F-9 (a place lookup could reset the booking rate
+  limit) was fixed by giving each limiter its own store, and the fix was checked with a
+  regression script.
+
+**Files:**
+- New:
+  - `app/api/places/search/route.ts`, `app/api/places/reverse/route.ts`
+  - `lib/places.ts`, `lib/places-endpoint.ts`, `lib/place-lookup.ts`, `lib/geo.ts`, `lib/known-places.ts`
+  - `components/booking/place-search-field.tsx`, `components/booking/trip-map.tsx`
+- Changed:
+  - `components/booking/ride-form.tsx`, `ride-summary.tsx`, `booking-options.tsx`
+  - `lib/ride-request.ts`, `lib/ride-validation.ts`, `lib/ride-email.ts`
+  - `lib/rate-limit.ts` (per-limiter stores), `lib/enquiry-endpoint.ts` (exports), `lib/types.ts`
+    (error codes), `lib/content.ts` (road constants moved to `lib/geo.ts`)
+  - `app/bookings/page.tsx` (copy), `app/globals.css` (pin styles), `next.config.ts`
+    (`geolocation=(self)`), docs.
+
+**Tests:**
+- lint, `tsc` and `next build` (CI placeholder env) pass.
+- curl against a dev server with an invalid Resend key, so no mail was sent. Covered:
+  - search, cache hit, reverse lookup;
+  - 400 on bad, long or non-single-line queries and on points outside Sri Lanka;
+  - 403 on cross-site requests; 405 on non-GET;
+  - `no-store` and `Permissions-Policy` headers;
+  - trips with and without pins, pins outside Sri Lanka, string pins, extra keys, pins too
+    close together.
+- The staff email was rendered offline and its links checked.
+- A rate-limiter regression script ran 8 checks, including the F-9 scenario.
+- The Cybersecurity Agent's live abuse tests are recorded in the security review.
+- **Not done:**
+  - Any browser test: the map, the suggestion list, the geolocation prompt, and mobile
+    scroll behaviour. The Chrome extension was not connected, and both reviewers worked
+    from code and HTML only.
+  - A real email delivery.
+  - A re-review by either reviewer after the fixes.
+
+**Known issues / open items:**
+- The public Photon service has no SLA; self-host it or use a paid provider at volume.
+- Rate limits and the place cache are per server instance.
+- There is no privacy page (F-11), and the platform's access-log retention is unconfirmed (DevOps).
+- The distance is a straight-line estimate. Map pins cannot be dragged by keyboard; search covers it.
+- The naming question (single trip vs full trip) is open in page-specs §11.
+
+**Required action (human):**
+1. Try `/bookings?service=ride` on a phone. Check search, "Use my current location",
+   tapping and dragging pins, and page scroll over the map. Then check desktop.
+2. Send one real trip request and check the links in the staff email.
+3. Decide on the naming and on a privacy page.
+4. Commit and open a PR.

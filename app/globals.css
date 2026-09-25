@@ -486,6 +486,26 @@
     animation: np-fade-up var(--dur-5) var(--ease-out) both;
   }
 
+  /* Single-trip map pins (D-25): A = pickup, B = drop-off. Leaflet divIcons,
+     so no marker image assets or extra CSP origins are needed. White text on
+     jungle-700 / clay-600 both clear 4.5:1. */
+  .np-trip-pin {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 2px solid #fff;
+    border-radius: 9999px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1;
+    box-shadow: 0 2px 6px rgb(10 15 13 / 0.35);
+    cursor: grab;
+  }
+  .np-trip-pin--a { background: var(--color-jungle-700); }
+  .np-trip-pin--b { background: var(--color-clay-600); }
+
   /* A short spring when a stay is added to the plan or a tier is chosen. */
   .np-pop {
     animation: np-pop var(--dur-4) var(--ease-out) both;

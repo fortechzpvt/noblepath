@@ -24,15 +24,15 @@ const OPTIONS: ReadonlyArray<{
   },
   {
     value: "ride",
-    title: "A single ride",
-    text: "One journey with a driver, for example Matara to Kandy. One way or return.",
+    title: "A single trip",
+    text: "One journey with a driver, for example Mannar to Jaffna. Search or pin both places on a map.",
     icon: <CarFront size={20} aria-hidden />,
   },
 ];
 
 /**
- * What is being booked: a full trip (`BookingForm`) or a single ride
- * (`RideForm`, D-24).
+ * What is being booked: a full trip (`BookingForm`) or a single trip
+ * (`RideForm`, D-24, with the map from D-25).
  *
  * Both forms stay mounted and the inactive one is `hidden`, so switching back
  * and forth never throws away what the traveller has already typed. The

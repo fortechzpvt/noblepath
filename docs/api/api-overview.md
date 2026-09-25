@@ -1,6 +1,6 @@
 # Noble Path — API Overview
 
-**Status:** Current as of D-24 (2026-09-25). Two routes exist; see
+**Status:** Current as of D-25 (2026-09-25). Four routes exist; see
 `docs/api/endpoints.md` for their full contracts. This page holds the
 conventions that apply across every route on this API, referenced by name
 from a couple of source comments (`lib/rate-limit.ts`, `lib/validation.ts`)
@@ -20,7 +20,10 @@ so those constraints have a documented home rather than living only in code.
   provider's own error text to the client — only a generic, traveller-facing
   message and a correlation id for the matching server log line.
 - **Rate limiting is in-memory and per server instance**
-  (`lib/rate-limit.ts`). The real-world ceiling in a horizontally-scaled
+  (`lib/rate-limit.ts`), with one independent limiter per limit
+  (`createRateLimiter`: bookings, place lookups per client, the place-search
+  upstream cap) so they cannot sweep or evict each other's keys (D-25, F-9).
+  The real-world ceiling in a horizontally-scaled
   deployment is `MAX × live instances`, not the configured `MAX`. This is an
   accepted v1 trade-off (see D-23) for an endpoint that creates an enquiry,
   not an account or a payment; before scaling horizontally, move this to a
@@ -40,4 +43,6 @@ so those constraints have a documented home rather than living only in code.
 | Method | Path | Purpose | Docs |
 | --- | --- | --- | --- |
 | `POST` | `/api/bookings` | Submit a full-trip booking request (FR-5) | `docs/api/endpoints.md` |
-| `POST` | `/api/rides` | Submit a single-ride request (FR-5.6, D-24) | `docs/api/endpoints.md` |
+| `POST` | `/api/rides` | Submit a single-trip request (FR-5.6, D-24, D-25) | `docs/api/endpoints.md` |
+| `GET` | `/api/places/search` | Search Sri Lankan places for pickup/drop-off (FR-5.7, D-25) | `docs/api/endpoints.md` |
+| `GET` | `/api/places/reverse` | Name the nearest place to a map pin (FR-5.7, D-25) | `docs/api/endpoints.md` |

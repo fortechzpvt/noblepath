@@ -36,7 +36,7 @@ function errorBody(
   return { error: { code, message, ...(fields ? { fields } : {}) }, correlationId };
 }
 
-function errorResponse(
+export function errorResponse(
   status: number,
   code: ApiErrorCode,
   message: string,
@@ -74,17 +74,17 @@ function errorResponse(
  * bucket rather than skipping the limiter — failing toward *more*
  * restrictive behaviour, not less.
  */
-function clientKey(request: NextRequest): string {
+export function clientKey(request: NextRequest): string {
   const forwarded = request.headers.get("x-forwarded-for");
   const parts = forwarded?.split(",").map((part) => part.trim()).filter(Boolean) ?? [];
   const last = parts[parts.length - 1];
   return last && last.length > 0 ? last : "unknown";
 }
 
-export function methodNotAllowed(): NextResponse {
+export function methodNotAllowed(allow: "POST" | "GET" = "POST"): NextResponse {
   const correlationId = crypto.randomUUID();
-  const response = errorResponse(405, "method_not_allowed", "This endpoint only accepts POST.", correlationId);
-  response.headers.set("Allow", "POST");
+  const response = errorResponse(405, "method_not_allowed", `This endpoint only accepts ${allow}.`, correlationId);
+  response.headers.set("Allow", allow);
   return response;
 }
 

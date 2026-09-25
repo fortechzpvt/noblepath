@@ -8,7 +8,7 @@ import { getAllDestinations, getAllExperiences, getAllTrips } from "@/lib/conten
 export const metadata: Metadata = {
   title: "Plan your trip",
   description:
-    "Send a booking request: choose a pre-planned trip or build your own, or book a single ride with a driver, and get a quotation.",
+    "Send a booking request: choose a pre-planned trip or build your own, or book a single trip with a driver, and get a quotation.",
   alternates: { canonical: "/bookings" },
 };
 
@@ -17,7 +17,7 @@ export default async function BookingsPage({
 }: {
   readonly searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  // `?service=ride` opens the single-ride form (D-24); anything else is the trip form.
+  // `?service=ride` opens the single-trip form (D-24, D-25); anything else is the trip form.
   const initialService = (await searchParams).service === "ride" ? "ride" : "trip";
   // Only plain data crosses into the client component.
   const trips = getAllTrips().map((trip) => ({
@@ -35,7 +35,7 @@ export default async function BookingsPage({
       <PageHeader
         imageSrc="/images/destinations/ella.jpg"
         title="Plan your trip"
-        lead="Book a full trip or just a single ride with a driver. Tell us what you need and we will reply with a quotation."
+        lead="Book a full trip or just a single trip with a driver. Tell us what you need and we will reply with a quotation."
       />
       <Section className="bg-sand-50">
         <Container>

@@ -4,6 +4,7 @@ import { destinations } from "@/content/destinations";
 import { experiences } from "@/content/experiences";
 import { regions } from "@/content/regions";
 import { trips } from "@/content/trips";
+import { ROAD_SPEED_KMH, ROAD_WINDING_FACTOR, haversineKm } from "@/lib/geo";
 import type {
   Accommodation,
   AccommodationTier,
@@ -243,9 +244,6 @@ export function isKnownTripSlug(slug: string): boolean {
  */
 const UNKNOWN_TRAVEL_MINUTES = 300;
 
-/** Average effective road speed in km/h, and the factor that turns straight-line distance into road distance. */
-const ROAD_SPEED_KMH = 40;
-const ROAD_WINDING_FACTOR = 1.3;
 
 const slugOrder: readonly string[] = destinations.map((d) => d.slug);
 const indexBySlug = new Map(slugOrder.map((slug, i) => [slug, i]));
@@ -301,21 +299,6 @@ function buildTravelMatrix(): number[][] {
   }
 
   return matrix;
-}
-
-function haversineKm(
-  a: { lat: number; lng: number },
-  b: { lat: number; lng: number },
-): number {
-  const toRad = (deg: number): number => (deg * Math.PI) / 180;
-  const earthRadiusKm = 6371;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-  return 2 * earthRadiusKm * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
 /**

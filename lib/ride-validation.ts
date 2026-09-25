@@ -1,12 +1,14 @@
 import { z } from "zod";
 
 import { MAX_TRAVELLERS } from "@/lib/booking-request";
+import { isInSriLanka, roundPoint } from "@/lib/geo";
 import {
   MAX_DATE_YEARS_AHEAD,
   MAX_LUGGAGE,
   MAX_PLACE_LENGTH,
   MAX_RETURN_DAYS,
   MAX_RIDE_NOTES,
+  pinsTooClose,
 } from "@/lib/ride-request";
 import { DIGITS_ONLY, honeypotSchema, isSingleLineText } from "@/lib/safe-text";
 import { VEHICLE_IDS } from "@/lib/transfers";
@@ -73,6 +75,21 @@ function placeField(message: string) {
     .refine(isSingleLineText, { message });
 }
 
+/**
+ * An optional map pin (D-25): finite numbers inside Sri Lanka, rounded to
+ * 5 decimals (~1 m). Only these validated numbers ever reach the staff email's
+ * map links.
+ */
+const pointSchema = z
+  .strictObject({
+    lat: z.number({ message: "Choose a place in Sri Lanka." }),
+    lng: z.number({ message: "Choose a place in Sri Lanka." }),
+  })
+  .refine(isInSriLanka, { message: "Choose a place in Sri Lanka." })
+  .transform(roundPoint)
+  .nullable()
+  .default(null);
+
 const samePlace = (a: string, b: string) =>
   a.replace(/\s+/g, " ").toLowerCase() === b.replace(/\s+/g, " ").toLowerCase();
 
@@ -102,7 +119,9 @@ const rideDetailsSchema = z
   .strictObject({
     pickup: placeField("Enter where we should pick you up."),
     dropoff: placeField("Enter where you are going."),
-    date: z.string({ message: "Choose the date of your ride." }).trim().max(10),
+    pickupPoint: pointSchema,
+    dropoffPoint: pointSchema,
+    date: z.string({ message: "Choose the date of your trip." }).trim().max(10),
     time: z.string({ message: "Choose a pickup time." }).regex(TIME_PATTERN, { message: "Choose a pickup time." }),
     tripType: z.enum(["one-way", "return"], { message: "Choose one way or return." }),
     returnDate: z.string().trim().max(10).default(""),
@@ -118,13 +137,13 @@ const rideDetailsSchema = z
       .default(""),
   })
   .superRefine((ride, ctx) => {
-    if (samePlace(ride.pickup, ride.dropoff)) {
+    if (samePlace(ride.pickup, ride.dropoff) || pinsTooClose(ride.pickupPoint, ride.dropoffPoint)) {
       ctx.addIssue({ code: "custom", path: ["dropoff"], message: "The drop-off must be different from the pickup." });
     }
 
     const outward = parseIsoDateUtc(ride.date);
     if (outward === null) {
-      ctx.addIssue({ code: "custom", path: ["date"], message: "Choose the date of your ride." });
+      ctx.addIssue({ code: "custom", path: ["date"], message: "Choose the date of your trip." });
     } else {
       const now = new Date();
       const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
@@ -136,7 +155,7 @@ const rideDetailsSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["date"],
-          message: `We take ride requests up to ${MAX_DATE_YEARS_AHEAD} years ahead. Please choose an earlier date.`,
+          message: `We take trip requests up to ${MAX_DATE_YEARS_AHEAD} years ahead. Please choose an earlier date.`,
         });
       }
     }
@@ -145,18 +164,18 @@ const rideDetailsSchema = z
       // The client clears these for a one-way ride; anything else is not a
       // value the traveller could see, so it must not reach the email.
       if (ride.returnDate !== "" || ride.returnTime !== "") {
-        ctx.addIssue({ code: "custom", path: ["returnDate"], message: "A one-way ride has no return." });
+        ctx.addIssue({ code: "custom", path: ["returnDate"], message: "A one-way trip has no return." });
       }
       return;
     }
 
     const back = parseIsoDateUtc(ride.returnDate);
     if (back === null) {
-      ctx.addIssue({ code: "custom", path: ["returnDate"], message: "Choose the date of your return ride." });
+      ctx.addIssue({ code: "custom", path: ["returnDate"], message: "Choose the date of your return journey." });
     } else if (outward !== null && back < outward) {
-      ctx.addIssue({ code: "custom", path: ["returnDate"], message: "The return must be on or after the outward ride." });
+      ctx.addIssue({ code: "custom", path: ["returnDate"], message: "The return must be on or after the outward journey." });
     } else if (outward !== null && back - outward > MAX_RETURN_DAYS * DAY_MS) {
-      ctx.addIssue({ code: "custom", path: ["returnDate"], message: "The return must be within a year of the outward ride." });
+      ctx.addIssue({ code: "custom", path: ["returnDate"], message: "The return must be within a year of the outward journey." });
     }
     if (!TIME_PATTERN.test(ride.returnTime)) {
       ctx.addIssue({ code: "custom", path: ["returnTime"], message: "Choose a pickup time for your return." });

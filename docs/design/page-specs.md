@@ -260,30 +260,58 @@ No hero. `--color-sand-50` page.
 
 Layout: single column, max 860 px, centred.
 
-**Implementation status (D-23, D-24):** built as a **request form**, not the entry/checkout split above.
+**Implementation status (D-23, D-24, D-25):** built as a **request form**, not the entry/checkout split above.
 There is no checkout, payment, account or "Your bookings" list yet; §8.2–8.4 are **not built**. What exists:
 
 - **Page header** (compact, image `ella.jpg`): H1 *"Plan your trip"*, lead *"Book a full trip or just a single
-  ride with a driver. Tell us what you need and we will reply with a quotation."* Then a `--color-sand-50`
-  section with one column at `--container-prose`, centred.
+  ride with a driver. Tell us what you need and we will reply with a quotation."* (the lead and the metadata
+  description still say "single ride"; the option itself is now *A single trip* — see §11 item 5). Then a
+  `--color-sand-50` section with one column at `--container-prose`, centred.
 - **Service switch** (`BookingOptions`): a `<fieldset>` whose `<legend>` *"What would you like to book?"* is
   styled `--text-h4` (a legend, not a heading — the form cards below remain the page's `<h2>`s). Two radio
-  cards — **A full trip** (`map` icon) and **A single ride** (`car-front` icon) — each a visually hidden native
+  cards — **A full trip** (`map` icon) and **A single trip** (`car-front` icon; line *"One journey with a
+  driver, for example Mannar to Jaffna. Search or pin both places on a map."*) — each a visually hidden native
   radio inside a `<label>`, `--radius-xl`, 2 px border, 20 px padding, `--text-h5` title + `--text-body-sm`
   line. Checked = `--color-jungle-700` border on `--color-jungle-50`; focus ring on the card via
-  `peer-focus-visible`. Stacked at <768, two columns at ≥768. `?service=ride` preselects the ride card; the
-  choice is written back to the URL with `replaceState`.
+  `peer-focus-visible`. Stacked at <768, two columns at ≥768. `?service=ride` preselects the single-trip card
+  (the URL value is still `ride`); the choice is written back to the URL with `replaceState`.
 - **Below the switch**, both forms are rendered and the inactive one is `hidden` (state is kept across
   switches):
   - *A full trip* — the D-23 request form: Traveller details · Trip dates · Airport transfers · Your trip
     plan → review → request ID.
-  - *A single ride* — `RideForm` (flow `user-flows.md` §F10): cards *Your ride* · *Vehicle and passengers* ·
+  - *A single trip* — `RideForm` (flow `user-flows.md` §F10): cards *Your trip* · *Vehicle and passengers* ·
     *Your details* (each `Card`: `<h2>` at `--text-h4`, white, `--radius-xl`, 24/32 px padding), then
-    **Review my ride** (solid, `lg`, full-width <768). Paired fields sit two-up at ≥768 and stack below.
-    Trip type uses the 44 px pill chips; vehicles use the shared `VehicleGrid` (2 columns <768, 4 at ≥768).
-    Review step: H2 *"Check your ride"* at `--text-h2`, summary blocks (`<h3>` at `--text-h5`), terms card,
-    **Submit ride request** + **Edit my ride** (stacked <768, in a row at ≥768). Done step: *"Your ride
-    request"* card with the monospace ID and **Copy ID**.
+    **Review my trip** (solid, `lg`, full-width <768). Paired fields sit two-up at ≥768 and stack below.
+    - *Your trip* card order: Pickup location and Drop-off location (two-up at ≥768) · **Swap pickup and
+      drop-off** text button (only once either field has text) · fieldset *"Pin it on the map"* (optional) ·
+      estimate box (only when both ends are pinned) · Trip type chips · Pickup date/time (+ Return date/time).
+    - **Place fields** (`PlaceSearchField`): a `TextField` with `role="combobox"`, `aria-autocomplete="list"`,
+      `aria-expanded`, `aria-controls` and `aria-activedescendant` (focus stays in the input). The listbox is
+      absolutely positioned at the bottom of the field's wrapper (`z-[1000]`, `--radius-lg`, border, `shadow-lg`,
+      max 320 px tall, scrolls), up to 8 options of ≥44 px (`map-pin` icon, name at `--text-body-sm`
+      semibold, detail in `--text-small` meta). Active option = `--color-jungle-50`; hover = `--color-sand-100`.
+      Under the field: a polite live status line (*"Searching…"*, *"N places found. Use the arrow keys to
+      choose."*, *"No places found…"*, *"Search is unavailable right now…"*); when pinned, a `--color-jungle-700`
+      line *"Pinned on the map (lat, lng)"* with a 44 px **Remove pin** text button.
+    - **Use my current location** — 44 px text button (`locate-fixed` icon) under the pickup field only, with
+      its own polite live message line.
+    - **Map fieldset** (wrapper `#rd-map`, `tabindex=-1`): legend *"Pin it on the map"*, description
+      *"Optional. Choose which pin you are setting, then tap the map. Drag a pin to fine-tune it."*; two
+      44 px radio chips **Setting pickup** / **Setting drop-off**, each led by a 24 px pin badge (the
+      `.np-trip-pin` class shrunk with `!h-6 !w-6 !border-0 !text-[12px] !shadow-none`); then `TripMap`
+      (Leaflet + OSM tiles), `h-72` (288 px) <768 and `h-96` (384 px) at ≥768, `--radius-lg`, border,
+      scroll-wheel zoom off. Pins are 32 px `divIcon` circles with a 2 px white ring and shadow — **A**
+      pickup on `--color-jungle-700`, **B** drop-off on `--color-clay-600`, white 14 px bold letter; joined
+      by a dashed `#15544A` line. If Leaflet fails to load, the map is replaced by a sand-50 notice
+      (`map-pin-off`): *"The map could not load. Search for your pickup and drop-off above instead."*
+    - **Estimate box**: `--color-jungle-50`, `--radius-lg`, 16 px padding, `route` icon, polite live region:
+      *"About **N km** by road, roughly **H h M min**. This is an estimate from the straight-line distance;
+      your quotation confirms the route and price."*
+    - Trip type uses the 44 px pill chips; vehicles use the shared `VehicleGrid` (2 columns <768, 4 at ≥768).
+    Review step: H2 *"Check your trip"* at `--text-h2`, summary blocks (`<h3>` at `--text-h5`; *Your trip*
+    adds *Pickup pin* / *Drop-off pin* rows — coordinates or "Not pinned" — and an *Estimate* row when both
+    are pinned), terms card, **Submit trip request** + **Edit my trip** (stacked <768, in a row at ≥768).
+    Done step: *"Your trip request"* card with *"Trip request ID"* in monospace and **Copy ID**.
 - Metadata description mentions both options; the page is dynamically rendered because it reads
   `?service=`.
 
@@ -348,5 +376,6 @@ Listed here so they are not lost; each needs a product decision before the relev
 2. **Reviews / ratings source** — the rating component is specified, but where ratings come from (first-party vs. aggregated) is undecided. Until decided, do not render ratings.
 3. **Multi-currency** — all prices are specified as explicit currency. Whether a currency switcher exists is undecided; if added, it is a nav-level control and needs a spec addendum.
 4. **Localisation** — the type system is Latin-subset only. Sinhala/Tamil UI would need a third font and an RTL/complex-script review. Out of scope for v1.
+5. **"A full trip" vs "A single trip" (D-25)** — both options now use "trip", and the single-trip form also has a *Trip type* (one way / return) control and a *Your trip* card like the full-trip form. The page lead, metadata description and some validation messages still say "ride". A naming decision (e.g. keep "single trip" or use "A single journey" / "A private transfer") is needed, then all copy aligned.
 
 **Related documents:** `design-system.md` · `components.md` · `user-flows.md` · `accessibility.md`

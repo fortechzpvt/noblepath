@@ -1,19 +1,29 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowLeftRight, Check, Copy } from "lucide-react";
+import { ArrowLeftRight, Check, Copy, LocateFixed, Route } from "lucide-react";
 
+import { PlaceSearchField } from "@/components/booking/place-search-field";
 import { RideSummary } from "@/components/booking/ride-summary";
+import { TripMap, type TripEnd } from "@/components/booking/trip-map";
 import { Card, Chip } from "@/components/booking/ui";
 import { VehicleGrid } from "@/components/transfers/vehicle-grid";
 import { Button } from "@/components/ui/button";
 import { ErrorSummary, FieldGroup, TextField, TextareaField } from "@/components/ui/field";
 import { BookingSubmissionError, MAX_TRAVELLERS, todayIso, type FormError } from "@/lib/booking-request";
 import {
+  estimateRoadTrip,
+  formatDuration,
+  formatPoint,
+  isInSriLanka,
+  roundPoint,
+  type GeoPoint,
+} from "@/lib/geo";
+import { fetchPlaceAt, placeLabel } from "@/lib/place-lookup";
+import {
   MAX_LUGGAGE,
   MAX_PLACE_LENGTH,
   MAX_RIDE_NOTES,
-  PLACE_SUGGESTIONS,
   RIDE_TRIP_TYPES,
   createEmptyRide,
   rideIds,
@@ -33,23 +43,28 @@ type Step = "form" | "review" | "done";
  * summary link goes somewhere; otherwise at the submit button.
  */
 function toPageFieldError(error: FormError): FormError {
-  const field = error.fieldId.replace(/^server:(ride|contact)\./, "");
+  const field = error.fieldId
+    .replace(/^server:(ride|contact)\./, "")
+    .replace(/^(pickup|dropoff)Point(\..*)?$/, "$1");
   const target = (rideIds as Record<string, string>)[field];
   return { ...error, fieldId: target ?? rideIds.submit };
 }
 
-const PLACES_LIST_ID = "rd-place-suggestions";
+const POINT_KEY = { pickup: "pickupPoint", dropoff: "dropoffPoint" } as const;
 
 /** Same draft-wording caveat as `TERMS` in `booking-form.tsx`: review before go-live. */
 const TERMS: readonly string[] = [
-  "This is a ride request, not a confirmed booking. No vehicle is reserved and no payment is taken at this stage.",
-  "We reply with availability and a written quotation, and the ride is confirmed only when you accept that quotation.",
-  "The details you give are used only to reply to your request and to arrange your ride.",
+  "This is a trip request, not a confirmed booking. No vehicle is reserved and no payment is taken at this stage.",
+  "We reply with availability and a written quotation, and the trip is confirmed only when you accept that quotation.",
+  "The details you give, including any map pins or location you share, are used only to reply to your request and to arrange your trip.",
+  "Place searches and map pins are looked up through our server with Photon (komoot), and map images come from OpenStreetMap. Your IP address is not passed to Photon.",
   "Please check that your pickup, drop-off, date, time and contact details are correct.",
 ];
 
 /**
- * Single point-to-point ride request (D-24), e.g. Matara to Kandy.
+ * Single point-to-point ride request (D-24), e.g. Matara to Kandy. Shown to
+ * travellers as "A single trip". D-25 made pickup and drop-off searchable and
+ * pinnable on a map, with "Use my current location" for the pickup.
  *
  * Deliberately separate from `BookingForm`: a ride needs no arrival/departure
  * dates, nationality or trip plan, so it is a short form of its own with its
@@ -67,12 +82,123 @@ export function RideForm() {
   const summaryRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const [activeEnd, setActiveEnd] = useState<TripEnd>("pickup");
+  const [locating, setLocating] = useState(false);
+  const [locateMessage, setLocateMessage] = useState("");
+  const labelLookupRef = useRef<Partial<Record<TripEnd, AbortController>>>({});
+  /** Labels we generated for a pin ("Pinned location (…)", "Near …"), so removing the pin can remove them too. */
+  const autoLabelsRef = useRef<Record<TripEnd, Set<string>>>({ pickup: new Set(), dropoff: new Set() });
 
   const setRide = (patch: Partial<RideDetails>) =>
     setDraft((current) => ({ ...current, ride: { ...current.ride, ...patch } }));
   const setContact = (patch: Partial<RideContact>) =>
     setDraft((current) => ({ ...current, contact: { ...current.contact, ...patch } }));
   const errorFor = (id: string) => errors.find((error) => error.fieldId === id)?.message;
+
+  /** Typing replaces the pin: the text is a search, and a stale pin would disagree with it. */
+  function typePlace(end: TripEnd, text: string): void {
+    labelLookupRef.current[end]?.abort();
+    setRide({ [end]: text, [POINT_KEY[end]]: null } as Partial<RideDetails>);
+  }
+
+  function choosePlace(end: TripEnd, label: string, point: GeoPoint): void {
+    labelLookupRef.current[end]?.abort();
+    setRide({ [end]: label, [POINT_KEY[end]]: roundPoint(point) } as Partial<RideDetails>);
+    if (end === "pickup") setActiveEnd("dropoff");
+  }
+
+  /**
+   * A pin placed without a name (map tap, drag, current location). The field
+   * shows a placeholder label at once, then the nearest named place from
+   * `/api/places/reverse` — but only if the traveller has not typed over the
+   * placeholder in the meantime.
+   */
+  function pinPlace(end: TripEnd, point: GeoPoint, placeholder = `Pinned location (${formatPoint(point)})`): void {
+    labelLookupRef.current[end]?.abort();
+    autoLabelsRef.current[end].add(placeholder);
+    setRide({ [end]: placeholder, [POINT_KEY[end]]: point } as Partial<RideDetails>);
+    if (end === "pickup" && draft.ride.dropoffPoint === null) setActiveEnd("dropoff");
+
+    const controller = new AbortController();
+    labelLookupRef.current[end] = controller;
+    fetchPlaceAt(point, controller.signal)
+      .then((place) => {
+        if (!place) return;
+        const label = `Near ${placeLabel(place)}`.slice(0, MAX_PLACE_LENGTH);
+        autoLabelsRef.current[end].add(label);
+        setDraft((current) =>
+          current.ride[end] === placeholder ? { ...current, ride: { ...current.ride, [end]: label } } : current,
+        );
+      })
+      .catch(() => {
+        // The placeholder already names the exact coordinates; nothing to fix.
+      });
+  }
+
+  /** Removing a pin also removes a label that only described that pin; typed text stays. */
+  function removePin(end: TripEnd): void {
+    labelLookupRef.current[end]?.abort();
+    setDraft((current) => {
+      const text = current.ride[end];
+      const generated = autoLabelsRef.current[end].has(text);
+      return {
+        ...current,
+        ride: { ...current.ride, [POINT_KEY[end]]: null, ...(generated ? { [end]: "" } : {}) },
+      };
+    });
+  }
+
+  function swapEnds(): void {
+    // A lookup still in flight would write its label into the wrong field.
+    labelLookupRef.current.pickup?.abort();
+    labelLookupRef.current.dropoff?.abort();
+    const labels = autoLabelsRef.current;
+    autoLabelsRef.current = { pickup: labels.dropoff, dropoff: labels.pickup };
+    setRide({
+      pickup: r.dropoff,
+      dropoff: r.pickup,
+      pickupPoint: r.dropoffPoint,
+      dropoffPoint: r.pickupPoint,
+    });
+  }
+
+  function locateMe(): void {
+    if (!("geolocation" in navigator)) {
+      setLocateMessage("This browser cannot share its location. Search for your pickup or tap the map instead.");
+      return;
+    }
+    setLocating(true);
+    setLocateMessage("Finding your location…");
+    // Only ever asked for on this button press, never on page load.
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocating(false);
+        const point = roundPoint({ lat: position.coords.latitude, lng: position.coords.longitude });
+        if (!isInSriLanka(point)) {
+          setLocateMessage(
+            "Your location looks to be outside Sri Lanka. Search for your pickup or tap the map instead.",
+          );
+          return;
+        }
+        pinPlace("pickup", point, "My current location");
+        setLocateMessage(
+          `Pickup set to your current location, accurate to about ${Math.max(1, Math.round(position.coords.accuracy))} m. ` +
+            "Drag pin A on the map if it is not quite right.",
+        );
+      },
+      (error) => {
+        setLocating(false);
+        setLocateMessage(
+          error.code === error.PERMISSION_DENIED
+            ? "Location access was not allowed. Search for your pickup or tap the map instead."
+            : error.code === error.TIMEOUT
+              ? "Finding your location took too long. Try again, search, or tap the map."
+              : "Your location is not available right now. Search for your pickup or tap the map instead.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 60_000 },
+    );
+  }
 
   // The button that had focus is gone after a step change, so move focus to the
   // new step's heading (or the top of the form when returning to edit).
@@ -135,14 +261,16 @@ export function RideForm() {
   const summaryTitle =
     errors.length === 1 ? "One thing needs your attention" : `${errors.length} things need your attention`;
   const r = draft.ride;
+  const estimate =
+    r.pickupPoint && r.dropoffPoint ? estimateRoadTrip(r.pickupPoint, r.dropoffPoint) : null;
 
   if (step === "done") {
     return (
       <div ref={topRef}>
-        <Card title="Your ride request">
+        <Card title="Your trip request">
           <div className="rounded-lg bg-jungle-50 p-5">
             <h3 ref={headingRef} tabIndex={-1} className="text-small font-normal text-text-meta">
-              Ride request ID
+              Trip request ID
             </h3>
             <p className="mt-1 font-mono text-h3 text-ink-900" data-testid="ride-id">
               {requestId}
@@ -154,7 +282,7 @@ export function RideForm() {
           </div>
           <p className="text-body text-ink-700">
             Thank you. We will reply to {draft.contact.email} with availability and a quotation
-            for your ride. Quote this ID if you contact us.
+            for your trip. Quote this ID if you contact us.
           </p>
         </Card>
       </div>
@@ -184,45 +312,59 @@ export function RideForm() {
             />
           </div>
 
-          <datalist id={PLACES_LIST_ID}>
-            {PLACE_SUGGESTIONS.map((place) => (
-              <option key={place} value={place} />
-            ))}
-          </datalist>
-
           <Card
-            title="Your ride"
-            description="A private vehicle with a driver, from one place to another. Use local Sri Lanka time."
+            title="Your trip"
+            description="A private vehicle with a driver, from one place to another. Search each place or pin it on the map. Use local Sri Lanka time."
           >
             <div className="grid gap-5 md:grid-cols-2">
-              <TextField
+              <PlaceSearchField
                 id={rideIds.pickup}
                 label="Pickup location"
-                description="A town, hotel, airport or address."
-                list={PLACES_LIST_ID}
-                autoComplete="off"
+                description="Search a town, hotel, airport or address."
                 value={r.pickup}
-                onChange={(event) => setRide({ pickup: event.target.value })}
+                point={r.pickupPoint}
+                onTextChange={(text) => typePlace("pickup", text)}
+                onSelect={(label, point) => choosePlace("pickup", label, point)}
+                onClearPin={() => removePin("pickup")}
+                onFocus={() => setActiveEnd("pickup")}
                 error={errorFor(rideIds.pickup)}
-                maxLength={MAX_PLACE_LENGTH}
-              />
-              <TextField
+              >
+                <div>
+                  <button
+                    type="button"
+                    onClick={locateMe}
+                    disabled={locating}
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xs text-body-sm font-semibold text-jungle-600 underline underline-offset-4 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <LocateFixed size={16} aria-hidden />
+                    Use my current location
+                  </button>
+                  <p className="text-small text-text-meta">
+                    Your browser asks first. The location is used only for this pickup.
+                  </p>
+                  <p aria-live="polite" className="text-small text-text-meta empty:hidden">
+                    {locateMessage}
+                  </p>
+                </div>
+              </PlaceSearchField>
+              <PlaceSearchField
                 id={rideIds.dropoff}
                 label="Drop-off location"
                 description="Where the driver should take you."
-                list={PLACES_LIST_ID}
-                autoComplete="off"
                 value={r.dropoff}
-                onChange={(event) => setRide({ dropoff: event.target.value })}
+                point={r.dropoffPoint}
+                onTextChange={(text) => typePlace("dropoff", text)}
+                onSelect={(label, point) => choosePlace("dropoff", label, point)}
+                onClearPin={() => removePin("dropoff")}
+                onFocus={() => setActiveEnd("dropoff")}
                 error={errorFor(rideIds.dropoff)}
-                maxLength={MAX_PLACE_LENGTH}
               />
             </div>
             {r.pickup.trim() !== "" || r.dropoff.trim() !== "" ? (
               <div>
                 <button
                   type="button"
-                  onClick={() => setRide({ pickup: r.dropoff, dropoff: r.pickup })}
+                  onClick={swapEnds}
                   className="inline-flex min-h-11 items-center gap-1.5 rounded-xs text-body-sm text-jungle-600 underline underline-offset-4"
                 >
                   <ArrowLeftRight size={16} aria-hidden />
@@ -230,6 +372,59 @@ export function RideForm() {
                 </button>
               </div>
             ) : null}
+
+            <div id={rideIds.map} tabIndex={-1}>
+              <FieldGroup
+                legend="Pin it on the map"
+                description="Optional. Choose which pin you are setting, then tap the map. Drag a pin to fine-tune it."
+              >
+                <div className="flex flex-wrap gap-2">
+                  <Chip
+                    type="radio"
+                    name="rd-active-end"
+                    checked={activeEnd === "pickup"}
+                    onChange={() => setActiveEnd("pickup")}
+                  >
+                    <span className="np-trip-pin np-trip-pin--a !h-6 !w-6 !border-2 !text-[12px] !shadow-none" aria-hidden>
+                      A
+                    </span>
+                    Setting pickup
+                  </Chip>
+                  <Chip
+                    type="radio"
+                    name="rd-active-end"
+                    checked={activeEnd === "dropoff"}
+                    onChange={() => setActiveEnd("dropoff")}
+                  >
+                    <span className="np-trip-pin np-trip-pin--b !h-6 !w-6 !border-2 !text-[12px] !shadow-none" aria-hidden>
+                      B
+                    </span>
+                    Setting drop-off
+                  </Chip>
+                </div>
+                <TripMap
+                  className="mt-3"
+                  pickup={r.pickupPoint}
+                  dropoff={r.dropoffPoint}
+                  activeEnd={activeEnd}
+                  onPlace={(end, point) => pinPlace(end, point)}
+                />
+              </FieldGroup>
+            </div>
+
+            {/* The live region stays mounted so the estimate is announced when it appears. */}
+            <div aria-live="polite">
+              {estimate ? (
+                <p className="flex items-start gap-2 rounded-lg bg-jungle-50 p-4 text-body-sm text-ink-900">
+                  <Route size={18} aria-hidden className="mt-0.5 shrink-0 text-jungle-700" />
+                  <span>
+                    Roughly <strong>{estimate.km} km</strong> and{" "}
+                    <strong>{formatDuration(estimate.minutes)}</strong> by road, estimated from the
+                    straight-line distance. Your quotation confirms the route and price.
+                  </span>
+                </p>
+              ) : null}
+            </div>
 
             <FieldGroup legend="Trip type">
               <div id={rideIds.tripType} className="flex flex-wrap gap-2">
@@ -373,7 +568,7 @@ export function RideForm() {
 
           <div>
             <Button type="submit" variant="solid" size="lg" className="w-full md:w-auto">
-              Review my ride
+              Review my trip
             </Button>
             <p className="mt-3 text-small text-text-meta">
               You will see a full summary before anything is submitted.
@@ -384,7 +579,7 @@ export function RideForm() {
         <div className="flex flex-col gap-6">
           <div>
             <h2 ref={headingRef} tabIndex={-1} className="font-display text-h2 text-ink-900">
-              Check your ride
+              Check your trip
             </h2>
             <p className="mt-2 text-body text-ink-600">
               Make sure everything is right, then accept the terms and submit.
@@ -423,7 +618,7 @@ export function RideForm() {
               disabled={submitting}
               onClick={handleSubmit}
             >
-              Submit ride request
+              Submit trip request
             </Button>
             <Button
               type="button"
@@ -436,7 +631,7 @@ export function RideForm() {
                 scrollToTop();
               }}
             >
-              Edit my ride
+              Edit my trip
             </Button>
           </div>
         </div>

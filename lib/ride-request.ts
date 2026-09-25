@@ -5,11 +5,14 @@ import {
   todayIso,
   type FormError,
 } from "@/lib/booking-request";
+import { haversineKm, isInSriLanka, type GeoPoint } from "@/lib/geo";
 import type { VehicleId } from "@/lib/transfers";
 
 /**
  * Single-ride request model (D-24): one point-to-point journey with a driver,
- * for example Matara to Kandy, booked on its own without a full trip.
+ * for example Matara to Kandy, booked on its own without a full trip. Shown
+ * to travellers as "A single trip"; D-25 added map pins for pickup and
+ * drop-off (`pickupPoint`, `dropoffPoint`).
  *
  * Mirrors `lib/booking-request.ts`: values are held as strings (what an
  * `<input>` gives us), the client-side `validateRide` is a convenience for the
@@ -37,44 +40,6 @@ function yearsAhead(iso: string, years: number): string {
   return `${Number(iso.slice(0, 4)) + years}${iso.slice(4)}`;
 }
 
-/**
- * Suggestions for the pickup and drop-off fields. Free text is still accepted —
- * a driver can collect from any address — so this list only speeds up typing
- * the common towns, airports and destinations. Plain strings, not slugs: they
- * are never looked up, only shown back to staff.
- */
-export const PLACE_SUGGESTIONS: readonly string[] = [
-  "Bandaranaike International Airport (CMB)",
-  "Mattala Rajapaksa International Airport (HRI)",
-  "Colombo",
-  "Negombo",
-  "Kandy",
-  "Nuwara Eliya",
-  "Ella",
-  "Sigiriya",
-  "Dambulla",
-  "Habarana",
-  "Polonnaruwa",
-  "Anuradhapura",
-  "Trincomalee",
-  "Jaffna",
-  "Arugam Bay",
-  "Galle",
-  "Unawatuna",
-  "Hikkaduwa",
-  "Bentota",
-  "Mirissa",
-  "Weligama",
-  "Matara",
-  "Tangalle",
-  "Hambantota",
-  "Tissamaharama (Yala)",
-  "Udawalawe",
-  "Kitulgala",
-  "Kurunegala",
-  "Batticaloa",
-];
-
 export interface RideContact {
   fullName: string;
   email: string;
@@ -82,8 +47,16 @@ export interface RideContact {
 }
 
 export interface RideDetails {
+  /** What the traveller calls the place. Always required; the pin is optional. */
   pickup: string;
   dropoff: string;
+  /**
+   * Exact spot, set by choosing a search result, tapping the map, dragging a
+   * pin or "Use my current location" (D-25). Typing in the field clears it,
+   * so a pin can never silently disagree with the text the traveller sees.
+   */
+  pickupPoint: GeoPoint | null;
+  dropoffPoint: GeoPoint | null;
   date: string;
   time: string;
   tripType: RideTripType;
@@ -108,6 +81,8 @@ export function createEmptyRide(): RideDraft {
     ride: {
       pickup: "",
       dropoff: "",
+      pickupPoint: null,
+      dropoffPoint: null,
       date: "",
       time: "",
       tripType: "one-way",
@@ -126,6 +101,7 @@ export function createEmptyRide(): RideDraft {
 export const rideIds = {
   pickup: "rd-pickup",
   dropoff: "rd-dropoff",
+  map: "rd-map",
   date: "rd-date",
   time: "rd-time",
   tripType: "rd-tripType",
@@ -153,6 +129,13 @@ function wholeNumberOk(value: string, min: number, max: number): boolean {
   return Number.isInteger(parsed) && parsed >= min && parsed <= max;
 }
 
+/** Pins under 100 m apart are the same place for a trip. Shared with the server schema. */
+export const MIN_TRIP_KM = 0.1;
+
+export function pinsTooClose(a: GeoPoint | null, b: GeoPoint | null): boolean {
+  return a !== null && b !== null && haversineKm(a, b) < MIN_TRIP_KM;
+}
+
 /** Case- and space-insensitive, so "Kandy" and " kandy " count as the same place. */
 export function samePlace(a: string, b: string): boolean {
   const norm = (value: string) => value.trim().replace(/\s+/g, " ").toLowerCase();
@@ -171,24 +154,30 @@ export function validateRide(draft: RideDraft, today: string = todayIso()): Form
 
   if (r.pickup.trim().length < 2) add(rideIds.pickup, "Enter where we should pick you up.");
   if (r.dropoff.trim().length < 2) add(rideIds.dropoff, "Enter where you are going.");
-  else if (samePlace(r.pickup, r.dropoff)) {
+  else if (samePlace(r.pickup, r.dropoff) || pinsTooClose(r.pickupPoint, r.dropoffPoint)) {
     add(rideIds.dropoff, "The drop-off must be different from the pickup.");
+  }
+  for (const [point, id] of [
+    [r.pickupPoint, rideIds.pickup],
+    [r.dropoffPoint, rideIds.dropoff],
+  ] as const) {
+    if (point !== null && !isInSriLanka(point)) add(id, "Choose a place in Sri Lanka.");
   }
 
   const outward = parseIsoDate(r.date);
-  if (outward === null) add(rideIds.date, "Choose the date of your ride.");
+  if (outward === null) add(rideIds.date, "Choose the date of your trip.");
   else if (r.date < today) add(rideIds.date, "Choose a date in the future.");
   else if (r.date > yearsAhead(today, MAX_DATE_YEARS_AHEAD)) {
-    add(rideIds.date, `We take ride requests up to ${MAX_DATE_YEARS_AHEAD} years ahead. Please choose an earlier date.`);
+    add(rideIds.date, `We take trip requests up to ${MAX_DATE_YEARS_AHEAD} years ahead. Please choose an earlier date.`);
   }
   if (!TIME_PATTERN.test(r.time)) add(rideIds.time, "Choose a pickup time.");
 
   if (r.tripType === "return") {
-    if (parseIsoDate(r.returnDate) === null) add(rideIds.returnDate, "Choose the date of your return ride.");
+    if (parseIsoDate(r.returnDate) === null) add(rideIds.returnDate, "Choose the date of your return journey.");
     else if (outward !== null && r.returnDate < r.date) {
-      add(rideIds.returnDate, "The return must be on or after the outward ride.");
+      add(rideIds.returnDate, "The return must be on or after the outward journey.");
     } else if (outward !== null && parseIsoDate(r.returnDate)! - outward > MAX_RETURN_DAYS * DAY_MS) {
-      add(rideIds.returnDate, "The return must be within a year of the outward ride.");
+      add(rideIds.returnDate, "The return must be within a year of the outward journey.");
     }
     if (!TIME_PATTERN.test(r.returnTime)) add(rideIds.returnTime, "Choose a pickup time for your return.");
     else if (

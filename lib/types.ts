@@ -369,6 +369,10 @@ export type ApiErrorCode =
   | "method_not_allowed"
   | "delivery_unavailable"
   | "delivery_failed"
+  /** A cross-site request to a same-origin-only endpoint (D-25, F-10). */
+  | "forbidden"
+  /** The place-search provider is unreachable, slow or busy (D-25). */
+  | "lookup_unavailable"
   | "internal_error";
 
 /**

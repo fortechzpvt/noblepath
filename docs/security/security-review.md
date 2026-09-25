@@ -6,6 +6,246 @@ requires it.
 
 ---
 
+## D-25 — Single-trip map and place search review (2026-09-25)
+
+**Reviewer:** Cybersecurity / Application Security Agent
+**Change reviewed:** D-25 map-based pickup/drop-off for the single-trip form, uncommitted on
+`feature/single-trip-map` (base: the D-24 commit `5352e89`). Reviewed by reading the code and
+by sending requests to a running dev instance (`localhost:3123`, deliberately invalid Resend
+key, booking limit configured at 200 per 10 min, so a valid ride POST returns `502` and no
+email is sent). About 10 requests in total reached the public Photon service; every abuse
+test otherwise used invalid inputs or cached queries. No source code was changed by this
+review.
+
+### Scope
+
+`app/api/places/search/route.ts`, `app/api/places/reverse/route.ts`,
+`lib/places-endpoint.ts`, `lib/places.ts`, `lib/place-lookup.ts`, `lib/geo.ts`,
+`lib/known-places.ts` (all new); `lib/ride-validation.ts`, `lib/ride-request.ts`,
+`lib/ride-email.ts`, `lib/enquiry-endpoint.ts` (now exports `clientKey`/`errorResponse`),
+`lib/types.ts`, `next.config.ts` (Permissions-Policy); client
+`components/booking/place-search-field.tsx`, `trip-map.tsx` (new), `ride-form.tsx`,
+`ride-summary.tsx`. Read again because the new endpoints share it: `lib/rate-limit.ts`.
+Also read the D-25 additions to `docs/api/endpoints.md`.
+
+### Checks performed
+
+1. **SSRF / parameter injection.** Read the upstream call: host and path are constants
+   (`PHOTON_BASE`, literal `"/api/"`/`"/reverse"`), and every parameter goes through
+   `URLSearchParams`. Sent `q=kandy&bbox=0,0,1,1&limit=50` URL-encoded as one value →
+   `200 {"places":[]}`: it was treated as literal search text, and our own `bbox`/`limit`
+   were kept.
+2. **Input validation (live, no upstream calls).** Reverse: `0,0`, `1e1`, `NaN`, `0x7`,
+   `11.0` (outside the box), 11 decimals → all `400`. Duplicate `lng` → the first value is
+   used (valid, `200`). Padded `" 7.1 "` → trimmed and accepted. Search: 1 char, 81 chars,
+   `%0A`, U+202E, missing `q` → all `400`. `POST` → `405`.
+3. **Per-client limit.** 65 invalid searches from one address → 60 × `400`, then `429`.
+4. **Whole-app upstream cap.** Sent 8 concurrent, uncached searches from different
+   addresses → 5 × `200`, 3 × `503 lookup_unavailable`. The cap works and fails closed.
+5. **Cache.** `kandy`, `kandy` and `"  KANDY "` returned identical results, so
+   normalisation shares one cache key. Read the code: only the provider's filtered output
+   is cached, errors are not, and the size is capped at 2,000 entries, removing the oldest
+   first.
+6. **Rate-limit interaction with the booking bucket.** See F-9: the booking limit was
+   filled for one address, the server left idle for 75 s, then one invalid
+   `/api/places/search` request was sent from an **unrelated** address. Control: the same
+   fill-and-wait where the first request after idle was a booking POST → still `429`.
+7. **Response-data trust (code reading).** Provider strings are rendered only as React
+   text (`place-search-field.tsx`). Nothing uses `dangerouslySetInnerHTML`. The Leaflet
+   `divIcon` HTML is a constant with one of `"A"`/`"B"`, with no interpolated data.
+   Provider coordinates are re-checked against the bounds on the server, and the typed
+   `pickup` text still goes through `placeField` (`isSingleLineText`, 120 chars).
+8. **Email links.** `mapLinkFor`/`directionsLinkFor` (`lib/geo.ts`) interpolate only
+   `toFixed(5)` of numbers that `pointSchema` has already checked (strict object,
+   `z.number`, inside the Sri Lanka bounds). No traveller text reaches a URL.
+9. **Headers.** Live `/bookings`: `Permissions-Policy: … geolocation=(self) …`. CSP
+   `connect-src 'self'` has not changed. The lookup API returns `Cache-Control: no-store`
+   and no `Access-Control-*` headers.
+10. **Privacy (code reading).** Geolocation runs only when the button is pressed.
+    Coordinates are rounded to 5 dp on the client and again on the server, and to 4 dp
+    before they go to Photon. `lookupFailed` logs only the reason and the correlation id.
+    No query and no coordinates are logged by the app.
+11. `npm run typecheck`: 0 errors in source. `npm run lint`: clean. `npm run build` was
+    **not** run.
+
+### Verification results
+
+- **Booking limit reset by a lookup request (F-9):** 205 POSTs to `/api/rides` → 200 ×
+  `400`, 5 × `429`. After 75 s idle, one `GET /api/places/search?q=a` from another address
+  (itself a `400`). The next 5 POSTs from the first address → **5 × `400`, not `429`**. The
+  booking bucket had been deleted. In the control run, the bucket survived.
+- Everything else listed under "Checks performed" behaved as described there.
+
+### Findings
+
+**F-9 (Medium) — REMEDIATED 2026-09-25 — the place endpoints make the in-memory sweep delete booking
+rate-limit buckets early, so an attacker can reset their booking limit.**
+`sweep(now, windowMs)` (`lib/rate-limit.ts:56-65`, called at `:92`) deletes **every** key
+whose last hit is older than the *calling* request's window. Before D-25, only the booking
+limit (600 s) called it. Now `places:<ip>` (60 s, `lib/places-endpoint.ts:16-20`) and
+`places:upstream` (1 s, `lib/places.ts:111`) call it too, so any lookup request that
+happens to run the sweep (at most once every 60 s) deletes booking buckets that have been
+quiet for more than 60 s, or more than 1 s. An attacker can fill their booking quota, wait
+about 60 s, send any request to `/api/places/*` (even an invalid one) and get a fresh quota:
+about 10 times the intended `/api/bookings` + `/api/rides` rate (each allowed request is a
+Resend send to the staff inbox). Confirmed live (see above). A second, lesser effect: the
+new lookup keys share the 5,000-key cap (`:47`), so ordinary search traffic now evicts
+booking buckets sooner too, and a denied request does not re-insert its key (`:100`), so the
+busiest bucket, `places:upstream`, is the first to be evicted.
+*Remediation:* store the window alongside each key and sweep with the key's own window,
+e.g. `hits: Map<string, {windowMs:number; ts:number[]}>`, deleting when
+`last <= now - entry.windowMs`. Better still, give each limiter its own `Map` and cap
+(`createRateLimiter(options)`), so lookup traffic can never evict or sweep booking buckets.
+Add a unit test: fill a 600 s bucket, advance time by 61 s, call a 60 s limiter, and assert
+that the booking bucket is still limited. *Status:* open. **Fix before release.**
+
+**F-10 (Low) — REMEDIATED 2026-09-25 — the lookup endpoints can be called from any site, so visitors'
+browsers can be used to exhaust the shared upstream cap.** `GET /api/places/*`
+(`app/api/places/search/route.ts:23`, `reverse/route.ts:24`) accepts cross-site requests.
+A request with `Origin: https://evil.example` and `Sec-Fetch-Site: cross-site` → `200`.
+CORS stops another site *reading* the result, but it can still *send* requests
+(`<img>`/`fetch(no-cors)`) with unique `q` values from each of its visitors' real IPs.
+Every one is a cache miss. That bypasses the per-IP limit, keeps the 5 req/s app-wide cap
+full (real travellers get `503`; the form still works without search), and makes Noble Path
+the source of the load on a volunteer-run service. From one IP, the per-client limit
+(60/min) means about 5 addresses are needed to fill the cap.
+*Remediation:* in `placesRateLimited` (or a small guard before it), reject with `403` when
+`Sec-Fetch-Site` is present and is not `same-origin`, or when `Origin` is present and is not
+the site origin. Optionally, only allow a cache miss when the request also carries a custom
+header such as `X-Requested-With: fetch` (`lib/place-lookup.ts` would send it), which forces
+a CORS preflight that a cross-site page cannot pass. *Status:* open. Recommended before
+release.
+
+**F-11 (Low) — REMEDIATED 2026-09-25 — privacy wording does not mention the third-party geocoder, and
+query strings carry location data into access logs.**
+(a) The consent text (`components/booking/ride-form.tsx:59`) says pins and location "are
+used only to reply to your request and to arrange your trip". In fact, search text and
+pins coarsened to about 11 m are sent to Photon (komoot, Germany), and map tiles come from
+OpenStreetMap, which sees the visitor's IP. Leaving these recipients out is inaccurate
+under GDPR Art. 13 / Sri Lanka PDPA transparency rules. The site has no privacy page to
+point to. (b) `fetchPlaceAt` sends 5-dp coordinates in the query string
+(`lib/place-lookup.ts:52`), and `q` is also in the URL. Hosting or proxy access logs will
+record a traveller's approximate current location (often their hotel or home) with their
+IP, even though the app itself logs neither. The docs' "Neither the query nor the point is
+logged" is true of the app only.
+*Remediation:* add a line near "Use my current location" and the search fields such as
+"Place searches and map pins are looked up via Photon/OpenStreetMap; your IP address is not
+shared with them" (and add a privacy page that names Photon, the OSM tiles and Resend).
+Send `toFixed(4)` from `fetchPlaceAt`, because the server discards the 5th decimal anyway.
+Qualify the endpoints.md sentence to "not logged by the application; platform access logs
+may record request URLs". Confirm the Vercel log retention with DevOps. *Status:* open.
+
+**F-12 (Informational) — REMEDIATED 2026-09-25 — provider strings are not checked for control, format or
+bidi characters, so a chosen suggestion can fail server validation.** `str()`
+(`lib/places.ts:86-87`) only collapses whitespace and truncates. OSM `name`/`street`
+values can contain `\p{Cf}` characters (U+200E/U+200F, soft hyphen U+00AD, bidi embeds).
+`placeLabel` copies them into `pickup`/`dropoff`, and `placeField` then rejects them with
+"Enter where we should pick you up", which confuses the traveller. This is not an injection:
+the values render as React text, and the server check stops them from reaching the email.
+Separately, anyone who edits OSM can choose a place name that then appears in search
+results (e.g. a misleading name with a phone number). It still has to be *picked* by the
+traveller, who could type the same text anyway.
+*Remediation:* in `str()`, apply `sanitiseSubjectFragment` (from `lib/safe-text.ts`, which
+keeps ZWJ/ZWNJ for Sinhala and Tamil) before trimming. *Status:* open.
+
+**F-13 (Informational) — REMEDIATED 2026-09-25 — a search query over 80 characters gets the message "Type at
+least 2 characters to search."** (`app/api/places/search/route.ts`). This is cosmetic. The
+client caps input at 120, so a long paste returns a 400 with a misleading message.
+*Remediation:* cap the fetch at 80 characters in `fetchPlaces`, or give each case its own
+message. *Status:* open.
+
+### Checks that came back clean
+
+- **No SSRF.** The upstream host and path are fixed, parameters are encoded, the timeout is
+  4 s, `cache: "no-store"`, and upstream errors are never forwarded (generic `503`).
+- **Output minimisation.** Only `name`/`detail` (≤ 100 characters per part) and rounded,
+  bounds-checked `lat`/`lng` are returned. Results must be `countrycode === "LK"` and
+  inside the box, and duplicates are removed. The client validates the shape again
+  (`isPlace`).
+- **Memory is bounded.** The cache holds 2,000 entries of ≤ 6 small results (about a few
+  MB at most), and the reverse cache key is a 4-dp grid inside the box. An attacker can at
+  most flush it, at ≤ 5 misses/s.
+- **The cache cannot be poisoned by users.** Keys come from the normalised query or point,
+  and values come only from the provider.
+- **Booking schema:** `pickupPoint`/`dropoffPoint` are strict objects of JSON numbers,
+  bounds-checked and rounded before use. Unknown keys and strings are rejected. The email
+  map links contain only formatted numbers.
+- **`divIcon` HTML is static.** The OSM attribution HTML is a constant.
+- **Permissions-Policy `geolocation=(self)`** is the narrowest setting that still allows the
+  feature. `X-Frame-Options: DENY` and `frame-ancestors 'none'` mean no frame can inherit
+  it. The browser prompt plus a user-initiated call is appropriate consent.
+- **Separate per-client lookup bucket.** Searching does not *consume* booking quota (the
+  sweep side effect is F-9).
+- **The traveller's IP and User-Agent never reach Photon.** Only our fixed User-Agent is
+  sent.
+
+### Residual risks (accepted or out of scope)
+
+- Photon's public instance has no SLA or contract. Its availability, data accuracy and
+  usage-policy changes are outside our control. The form degrades to built-in towns and
+  free text (by design, D-25). A self-hosted or paid provider is the long-term answer for
+  real volume.
+- The in-memory cache and caps are per instance (same limitation as D-23/F-3). With N
+  instances, Photon sees up to 5·N req/s.
+- The server does not check that a pin matches the typed place (e.g. "Colombo" with a pin
+  in Jaffna). Staff should treat the pin and the text as two claims and confirm with the
+  traveller. The email already says pins are advisory when missing.
+- Precise pickup coordinates (≈1 m) of a traveller's home or hotel are personal data held
+  in the staff inbox and at Resend. This is inherent to the feature. Retention is covered by
+  the general email-retention policy (to be defined).
+
+### Not verified (disclosed)
+
+The map, the combobox and geolocation in a real browser (including the permission prompt
+and the behaviour of Leaflet with keyboard and screen reader); how the new email lines render
+in a real inbox; behaviour behind Vercel's proxy (the `X-Forwarded-For` assumption from F-3
+applies to the new bucket too); Photon's handling of unusual Unicode queries (not sent, to
+limit load); `npm run build`.
+
+### Overall severity
+
+One Medium (F-9, confirmed live), two Low (F-10, F-11) and two Informational (F-12, F-13).
+**Verdict: approve with changes.** F-9 must be fixed before release: it weakens the booking
+spam control that F-3 restored. F-10 and F-11(a) are recommended before release. The rest
+can follow.
+
+---
+
+### Remediation (Full-Stack Engineer, 2026-09-25)
+
+- **F-9:** `lib/rate-limit.ts` now has `createRateLimiter(options, maxKeys)`, so each limiter
+  has its **own store**, window, sweep and key cap. The booking limiter
+  (`checkRateLimit`, used by `/api/bookings` and `/api/rides`), the per-client lookup
+  limiter (`lib/places-endpoint.ts`) and the upstream cap (`lib/places.ts`, one key) can
+  no longer sweep or evict each other's keys. A denied key is now re-inserted as
+  most-recently-used, so an over-limit client is not the first key evicted.
+  - Regression script (scratchpad, not a committed test, since the project has no test
+    runner yet): it fills the booking bucket, runs both short-window limiters 75 s later,
+    and checks the booking bucket is still at 429. It also checks the lookup and upstream
+    limits and window expiry. All 8 checks pass.
+- **F-10:** `crossSiteRejected` returns **403 `forbidden`** when `Sec-Fetch-Site` is
+  present and not `same-origin`/`none`, or when `Origin` is present and does not match.
+  - Checked live: cross-site request → 403; mismatched `Origin` alone → 403;
+    same-origin → 200; a request with neither header (curl) → 200, and it still faces the
+    per-client and upstream limits.
+  - The optional custom request header was not added.
+- **F-11:**
+  - The reverse-lookup URL now carries 4 decimals (about 11 m), not 5. Pins in the
+    booking POST body keep 5 decimals and are not in URLs.
+  - The terms list now names Photon (komoot) and OpenStreetMap tiles, and says the
+    visitor's IP address is not passed to Photon.
+  - A consent note sits beside "Use my current location".
+  - `docs/api/endpoints.md` now says queries and points are "not logged by the app".
+  - **Still open:** there is no privacy page, and DevOps has not yet confirmed the
+    platform's access-log retention.
+- **F-12:** `str()` in `lib/places.ts` runs provider text through `sanitiseSubjectFragment`.
+- **F-13:** the query length rules now give their own messages ("under 80 characters",
+  "ordinary punctuation"). The client skips the server search for text longer than
+  80 characters.
+
+Verified: lint, `tsc`, `next build` with the CI placeholder env, and the live checks
+above. **Not re-reviewed** by the Cybersecurity Agent after the fixes.
+
 ## D-24 — Single-ride booking (POST /api/rides) review (2026-09-25)
 
 **Reviewer:** Cybersecurity / Application Security Agent

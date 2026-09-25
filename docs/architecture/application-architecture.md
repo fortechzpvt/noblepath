@@ -24,7 +24,8 @@ app/                      Routes. Server components unless marked otherwise.
   bookings/               Booking request: full trip or single ride (D-24)
   about/                  About Us
   api/bookings/route.ts   Write endpoint: full-trip requests
-  api/rides/route.ts      Write endpoint: single-ride requests (D-24)
+  api/rides/route.ts      Write endpoint: single-trip requests (D-24, D-25)
+  api/places/             Read-only place search + reverse lookup (D-25)
   api/health/route.ts     Liveness probe
 
 components/               Presentational and interactive UI
@@ -188,7 +189,7 @@ existed; this fills that in rather than adding new links. See D-22.
 ## 9.2 Booking delivery (D-23)
 
 `/bookings` is the client; `POST /api/bookings` (full trip) and
-`POST /api/rides` (single ride, D-24) are the only places a request actually
+`POST /api/rides` (single trip, D-24) are the only places a request actually
 leaves the browser. Every check runs again server-side — the client
 validating first is a convenience, never a substitute. Both routes are thin
 wrappers over one shared pipeline, `lib/enquiry-endpoint.ts`
@@ -238,3 +239,29 @@ Cybersecurity review.
   narrowed. This is deliberate: itinerary day arrays are indexed constantly, and an
   off-by-one there produces a broken travel plan rather than a crash.
 - Comments explain *why*. The code already says what.
+
+## 9.3 Single-trip place search and map (D-25)
+
+```
+components/booking/ride-form.tsx (client)
+  ├─ place-search-field.tsx ── lib/known-places.ts (instant, offline)
+  │        │ debounced GET /api/places/search?q=
+  ├─ trip-map.tsx (Leaflet + OSM tiles) ── tap / drag → pin
+  │        │ GET /api/places/reverse?lat&lng  (name the pin: "Near …")
+  └─ "Use my current location" → navigator.geolocation (on press only)
+           ▼
+app/api/places/{search,reverse}/route.ts
+  │  lib/places-endpoint.ts: per-client limit (places:<ip>, 60/min), 503 mapping
+  ▼
+lib/places.ts (server only)
+  │  cache (24 h, 2,000 entries) → upstream cap (5 req/s) → fetch, 4 s timeout
+  ▼
+Photon (photon.komoot.io) — results filtered to Sri Lanka, reduced to
+name/detail/lat/lng
+```
+
+Pins (`pickupPoint`, `dropoffPoint`) are part of the `POST /api/rides` body,
+validated by `lib/ride-validation.ts` and turned into map/directions links
+by `lib/ride-email.ts`. `lib/geo.ts` holds the shared bounds, rounding,
+estimate and link helpers. The road-estimate constants moved there from
+`lib/content.ts`, which now imports them.

@@ -37,99 +37,134 @@ export interface RateLimitResult {
   readonly resetAtMs: number;
 }
 
-/** Limits for the public booking endpoint, from the environment. */
+/** Limits for the public booking endpoints, from the environment. */
 export const bookingRateLimitOptions: RateLimitOptions = {
   max: serverEnv.BOOKING_RATE_LIMIT_MAX,
   windowMs: serverEnv.BOOKING_RATE_LIMIT_WINDOW_MS,
 };
 
-/** Hard ceiling on tracked keys, to bound memory under a rotating-IP flood. */
-const MAX_TRACKED_KEYS = 5_000;
+/** Default ceiling on tracked keys per limiter, to bound memory under a rotating-IP flood. */
+const DEFAULT_MAX_TRACKED_KEYS = 5_000;
 
 /** How often a full sweep of expired windows runs, at most. */
 const SWEEP_INTERVAL_MS = 60_000;
 
-/** Timestamps of recent hits, oldest first, per key. */
-const hits = new Map<string, number[]>();
-let lastSweepAt = 0;
-
-function sweep(now: number, windowMs: number): void {
-  if (now - lastSweepAt < SWEEP_INTERVAL_MS) return;
-  lastSweepAt = now;
-  for (const [key, timestamps] of hits) {
-    if (timestamps.length === 0 || (timestamps[timestamps.length - 1] ?? 0) <= now - windowMs) {
-      hits.delete(key);
-    }
-  }
-}
-
-function evictOldestKeys(): void {
-  // Map iterates in insertion order, so the first keys are the least recently created.
-  const excess = hits.size - MAX_TRACKED_KEYS;
-  if (excess <= 0) return;
-  let removed = 0;
-  for (const key of hits.keys()) {
-    hits.delete(key);
-    removed += 1;
-    if (removed >= excess) break;
-  }
+export interface RateLimiter {
+  /**
+   * Records a hit for `key` and reports whether it is within the limit.
+   * `now` is injectable so the behaviour can be tested without waiting for
+   * real time to pass; production callers should not pass it.
+   */
+  readonly check: (key: string, now?: number) => RateLimitResult;
+  /** Clears all counters. Intended for tests only. */
+  readonly reset: () => void;
+  /** Number of keys currently tracked. Exposed for tests and memory assertions. */
+  readonly size: () => number;
 }
 
 /**
- * Records a hit for `key` and reports whether it is within the limit.
+ * One independent limiter: its own store, window, sweep and key cap.
  *
- * `now` is injectable so the behaviour can be tested without waiting for real
- * time to pass; production callers should not pass it.
+ * Each limit (bookings, place lookups per client, the place-search upstream
+ * cap) gets its **own** limiter. They used to share one store, and a sweep
+ * triggered by a short-window limiter deleted long-window booking buckets
+ * early, silently resetting the booking limit (security review D-25, F-9).
+ * Separate stores make that impossible: a limiter only ever sweeps or evicts
+ * its own keys, by its own window.
  */
-export function checkRateLimit(
-  key: string,
-  options: RateLimitOptions = bookingRateLimitOptions,
-  now: number = Date.now(),
-): RateLimitResult {
+export function createRateLimiter(
+  options: RateLimitOptions,
+  maxTrackedKeys: number = DEFAULT_MAX_TRACKED_KEYS,
+): RateLimiter {
   const { max, windowMs } = options;
-  const windowStart = now - windowMs;
+  /** Timestamps of recent hits, oldest first, per key. */
+  const hits = new Map<string, number[]>();
+  let lastSweepAt = 0;
 
-  sweep(now, windowMs);
+  function sweep(now: number): void {
+    if (now - lastSweepAt < SWEEP_INTERVAL_MS) return;
+    lastSweepAt = now;
+    for (const [key, timestamps] of hits) {
+      if (timestamps.length === 0 || (timestamps[timestamps.length - 1] ?? 0) <= now - windowMs) {
+        hits.delete(key);
+      }
+    }
+  }
 
-  const existing = hits.get(key) ?? [];
-  const recent = existing.filter((timestamp) => timestamp > windowStart);
+  function evictOldestKeys(): void {
+    // Map iterates in insertion order, so the first keys are the least recently used.
+    const excess = hits.size - maxTrackedKeys;
+    if (excess <= 0) return;
+    let removed = 0;
+    for (const key of hits.keys()) {
+      hits.delete(key);
+      removed += 1;
+      if (removed >= excess) break;
+    }
+  }
 
-  if (recent.length >= max) {
-    const oldest = recent[0] ?? now;
-    const resetAtMs = oldest + windowMs;
+  function check(key: string, now: number = Date.now()): RateLimitResult {
+    const windowStart = now - windowMs;
+    sweep(now);
+
+    const recent = (hits.get(key) ?? []).filter((timestamp) => timestamp > windowStart);
+
+    if (recent.length >= max) {
+      const oldest = recent[0] ?? now;
+      const resetAtMs = oldest + windowMs;
+      // Re-insert so a client being denied stays most-recently-used: an
+      // over-limit key must not be the first one evicted under a flood.
+      hits.delete(key);
+      hits.set(key, recent);
+      return {
+        allowed: false,
+        limit: max,
+        remaining: 0,
+        retryAfterSeconds: Math.max(1, Math.ceil((resetAtMs - now) / 1000)),
+        resetAtMs,
+      };
+    }
+
+    recent.push(now);
+    // Re-inserting moves the key to the end of the eviction order.
+    hits.delete(key);
     hits.set(key, recent);
+    evictOldestKeys();
+
+    const oldest = recent[0] ?? now;
     return {
-      allowed: false,
+      allowed: true,
       limit: max,
-      remaining: 0,
-      retryAfterSeconds: Math.max(1, Math.ceil((resetAtMs - now) / 1000)),
-      resetAtMs,
+      remaining: Math.max(0, max - recent.length),
+      retryAfterSeconds: 0,
+      resetAtMs: oldest + windowMs,
     };
   }
 
-  recent.push(now);
-  // Re-inserting moves the key to the end of the eviction order.
-  hits.delete(key);
-  hits.set(key, recent);
-  evictOldestKeys();
-
-  const oldest = recent[0] ?? now;
   return {
-    allowed: true,
-    limit: max,
-    remaining: Math.max(0, max - recent.length),
-    retryAfterSeconds: 0,
-    resetAtMs: oldest + windowMs,
+    check,
+    reset: () => {
+      hits.clear();
+      lastSweepAt = 0;
+    },
+    size: () => hits.size,
   };
 }
 
-/** Clears all counters. Intended for tests only. */
-export function resetRateLimits(): void {
-  hits.clear();
-  lastSweepAt = 0;
+/** The limiter shared by `POST /api/bookings` and `POST /api/rides` (one bucket per client). */
+const bookingLimiter = createRateLimiter(bookingRateLimitOptions);
+
+/** Booking-endpoint limit for `key` (a client identifier). */
+export function checkRateLimit(key: string, now: number = Date.now()): RateLimitResult {
+  return bookingLimiter.check(key, now);
 }
 
-/** Number of keys currently tracked. Exposed for tests and for memory assertions. */
+/** Clears the booking limiter's counters. Intended for tests only. */
+export function resetRateLimits(): void {
+  bookingLimiter.reset();
+}
+
+/** Number of keys the booking limiter tracks. Exposed for tests and memory assertions. */
 export function trackedKeyCount(): number {
-  return hits.size;
+  return bookingLimiter.size();
 }

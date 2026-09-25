@@ -33,8 +33,12 @@ The consequences are worth stating plainly, because they shape everything else h
   story is "redeploy the build".
 - **The trust boundary is unusually simple:** two public write endpoints
   (`/api/bookings` for trips, `/api/rides` for single rides, D-24) that share one
-  request pipeline (`lib/enquiry-endpoint.ts`) and one rate-limit budget, and one
-  outbound integration (email notification via Resend).
+  request pipeline (`lib/enquiry-endpoint.ts`) and one rate-limit budget; two
+  read-only lookup endpoints (`/api/places/search`, `/api/places/reverse`, D-25)
+  with their own, separate budget; and two outbound integrations: email
+  notification via Resend, and place search via Photon (photon.komoot.io,
+  OpenStreetMap data, D-25). Photon is called only from the server, never from
+  the browser.
 - **The primary risk is not data loss — it is silent loss of booking enquiries.**
   An enquiry that fails has nowhere to go: no queue, no retry, no dead-letter store.
 - **Most pages can be static**, which is how NFR-1 (LCP ≤ 2.5s on 4G mobile) is met
@@ -69,6 +73,7 @@ The consequences are worth stating plainly, because they shape everything else h
     │  • Static + streamed HTML     │   │    images.unsplash.com only       │
     │  • /api/bookings  (POST)      │
     │  • /api/rides     (POST)      │   │    (next.config.ts remotePatterns)│
+    │  • /api/places/*  (GET, D-25) │   │                                   │
     │  • /api/health    (GET)       │   │  • result cached at the edge      │
     │  • Zod validation (NFR-7)     │   └───────────────────────────────────┘
     │  • In-memory rate limit(NFR-8)│
@@ -257,6 +262,7 @@ the retention window. Revisit when bookings gain a datastore.
 | 10 | **CLS / INP** | p75 CLS > 0.1 (NFR-2), INP > 200ms (NFR-3) | Low–Medium | Direct requirement breach | Usually a missing image dimension or a heavy client component |
 | 11 | **Vercel token expiry** | 14 days before expiry | Low | An expired token breaks deploys — not the site, but it breaks rollback-by-redeploy | Rotate per `environment.md` §5.1 |
 | 12 | **TLS certificate** | Vercel-managed; alert only if the platform reports a renewal failure | Low | Automatic, but not infallible | Check domain configuration |
+| 13 | **`/api/places/*` 503 rate** (`lookup_unavailable`) | > 20% of lookups over 15 min | Low | Photon is down, slow, or our 5 req/s upstream cap is saturated. Booking still works (free text + built-in towns), but search is degraded | Check photon.komoot.io status; if volume is the cause, plan a self-hosted Photon or paid provider (D-25) |
 
 ### Routing
 
@@ -393,4 +399,5 @@ and recorded as an ADR before implementation.**
 | Date | Change | By |
 | --- | --- | --- |
 | 2026-09-19 | Initial infrastructure architecture: runtime topology, request-path walkthroughs, trust boundaries, logging and alerting baseline, rate-limiter weakness, backup/recovery posture, datastore migration constraints. Nothing provisioned. | DevOps Engineer |
+| 2026-09-25 | D-25: added read-only `GET /api/places/search` and `/api/places/reverse`, which proxy Photon from the server (5 req/s whole-app upstream cap, 24 h in-memory cache, 60/min per-client limit in a separate bucket). Second outbound integration in §1 and topology; alert #13. `Permissions-Policy` now allows `geolocation=(self)`. CSP unchanged. | Orchestrator (Full-Stack) |
 | 2026-09-25 | D-24: added `POST /api/rides` as a second public write endpoint sharing the `/api/bookings` pipeline, env vars and rate-limit budget. Updated §1, topology, §3.2, alerts #2/#3 and §7 (shared bucket is per-process; not guaranteed across Vercel functions). `/bookings` page is now dynamically rendered (reads `?service=`). | DevOps Engineer |
