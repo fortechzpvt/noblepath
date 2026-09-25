@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { BookingForm } from "@/components/booking/booking-form";
+import { BookingOptions } from "@/components/booking/booking-options";
 import { PageHeader } from "@/components/ui/page-header";
 import { Container, Section } from "@/components/ui/section";
 import { getAllDestinations, getAllExperiences, getAllTrips } from "@/lib/content";
@@ -8,11 +8,17 @@ import { getAllDestinations, getAllExperiences, getAllTrips } from "@/lib/conten
 export const metadata: Metadata = {
   title: "Plan your trip",
   description:
-    "Send a booking request: choose a pre-planned trip or build your own, add airport transfers, and get a quotation.",
+    "Send a booking request: choose a pre-planned trip or build your own, or book a single ride with a driver, and get a quotation.",
   alternates: { canonical: "/bookings" },
 };
 
-export default function BookingsPage() {
+export default async function BookingsPage({
+  searchParams,
+}: {
+  readonly searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  // `?service=ride` opens the single-ride form (D-24); anything else is the trip form.
+  const initialService = (await searchParams).service === "ride" ? "ride" : "trip";
   // Only plain data crosses into the client component.
   const trips = getAllTrips().map((trip) => ({
     slug: trip.slug,
@@ -29,11 +35,16 @@ export default function BookingsPage() {
       <PageHeader
         imageSrc="/images/destinations/ella.jpg"
         title="Plan your trip"
-        lead="Tell us about your group and your dates, choose a ready-made trip or build your own, and we will reply with a quotation."
+        lead="Book a full trip or just a single ride with a driver. Tell us what you need and we will reply with a quotation."
       />
       <Section className="bg-sand-50">
         <Container>
-          <BookingForm trips={trips} destinations={destinations} experiences={experiences} />
+          <BookingOptions
+            initialService={initialService}
+            trips={trips}
+            destinations={destinations}
+            experiences={experiences}
+          />
         </Container>
       </Section>
     </>

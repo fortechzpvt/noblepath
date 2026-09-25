@@ -6,6 +6,7 @@ import {
   getTripBySlug,
 } from "@/lib/content";
 import { formatPriceBand, interestName } from "@/lib/format";
+import { sanitiseSubjectFragment } from "@/lib/safe-text";
 import { vehicleLabel } from "@/lib/transfers";
 import type { BookingDraftEnquiry } from "@/lib/validation";
 
@@ -46,19 +47,6 @@ function estimatePriceLine(enquiry: BookingDraftEnquiry): string {
   return "Custom quotation — price to be confirmed.";
 }
 
-/**
- * Subject-line control-character guard.
- *
- * The Resend SDK sends a structured JSON payload over HTTPS, not a raw SMTP
- * conversation, so classic CRLF header injection does not apply the way it
- * would with a hand-built `Subject:` line over `sendmail` — but stripping
- * `\r`/`\n` from the one field that becomes a mail header costs nothing and
- * removes the question entirely rather than relying on that distinction
- * holding forever.
- */
-function sanitiseSubjectFragment(value: string): string {
-  return value.replace(/[\r\n]+/g, " ").trim();
-}
 
 export function buildBookingEmail(
   enquiry: BookingDraftEnquiry,

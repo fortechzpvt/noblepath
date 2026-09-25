@@ -21,9 +21,10 @@ app/                      Routes. Server components unless marked otherwise.
   activities/             Standalone activity catalogue
   trips/                  Index + [slug] detail
   plan/                   The itinerary builder
-  bookings/               Booking request form
+  bookings/               Booking request: full trip or single ride (D-24)
   about/                  About Us
-  api/bookings/route.ts   The only write endpoint
+  api/bookings/route.ts   Write endpoint: full-trip requests
+  api/rides/route.ts      Write endpoint: single-ride requests (D-24)
   api/health/route.ts     Liveness probe
 
 components/               Presentational and interactive UI
@@ -35,7 +36,7 @@ components/               Presentational and interactive UI
   accommodation/          Accommodation picker (client)
   activities/             Activity catalogue, with "Add to my trip" (client)
   plan/                   Itinerary builder (client)
-  booking/                Booking form (client)
+  booking/                Booking forms: trip + single ride, and the switch (client)
 
 content/                  The editorial source of truth (typed data)
 lib/                      Domain logic: types, content queries, itinerary, validation
@@ -186,15 +187,21 @@ existed; this fills that in rather than adding new links. See D-22.
 
 ## 9.2 Booking delivery (D-23)
 
-`/bookings` is the client; `POST /api/bookings` is the only place a request
-actually leaves the browser. Every check runs again server-side — the client
-validating first is a convenience, never a substitute:
+`/bookings` is the client; `POST /api/bookings` (full trip) and
+`POST /api/rides` (single ride, D-24) are the only places a request actually
+leaves the browser. Every check runs again server-side — the client
+validating first is a convenience, never a substitute. Both routes are thin
+wrappers over one shared pipeline, `lib/enquiry-endpoint.ts`
+(`handleEnquiryPost`), so they cannot drift apart. The trip path is shown;
+the ride path swaps in `ride-form.tsx` → `rideRequestSchema`
+(`lib/ride-validation.ts`) → `lib/ride-email.ts`, and needs no content
+lookups because pickup and drop-off are free text:
 
 ```
 components/booking/booking-form.tsx (client)
   │  fetch POST, BookingDraft as JSON
   ▼
-app/api/bookings/route.ts
+app/api/bookings/route.ts → lib/enquiry-endpoint.ts
   │  1. Content-Length guard (≤ 50 KB)
   │  2. checkRateLimit() — lib/rate-limit.ts
   │  3. Content-Type check, JSON.parse

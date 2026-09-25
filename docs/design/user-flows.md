@@ -251,6 +251,27 @@ Static editorial page. No transactional state. Loading = skeleton; error = full-
 ### F9 — Newsletter / contact (footer)
 Single email field + pill submit. States: default, invalid email (inline), submitting (button spinner), success (field replaced by *"You're on the list."* with a checkmark, `role="status"`), error (inline retry). **Consent checkbox is required and unchecked by default** — no pre-ticked consent.
 
+### F10 — Book a single ride (D-24)
+A point-to-point journey with a driver (e.g. Matara → Kandy), requested on its own without a trip. Built; there is no payment and no confirmed booking — like the trip request (D-23) it produces a **request ID** and staff reply with a quotation by email.
+
+1. `/bookings` opens with a radio-card switch, *"What would you like to book?"*: **A full trip** (default) · **A single ride**. `/bookings?service=ride` opens with **A single ride** selected. Choosing a card mirrors the choice into `?service=` with `replaceState` (no extra history entry). Both forms stay mounted and the inactive one is `hidden`, so switching back and forth keeps everything typed in either form.
+2. **Fill in** (one page, three cards):
+   - *Your ride* — Pickup location, Drop-off location (free text with a `<datalist>` of common towns and both airports; any address is accepted), a **Swap pickup and drop-off** text button (shown once either field has text), Trip type chips (**One way** default · **Return**), Pickup date (min = today) and Pickup time. Choosing **Return** reveals Return date (min = outward date) and Return pickup time; the return goes from drop-off back to pickup.
+   - *Vehicle and passengers* — the shared vehicle radio grid (same as transfers), Passengers (1 – max travellers, default 2), Pieces of luggage (0–50, default 2), Notes for the driver (optional, 1000 chars).
+   - *Your details* — Full name, Email, WhatsApp or phone number (with country code).
+   - **Review my ride** primary button, with *"You will see a full summary before anything is submitted."*
+3. **Review** — H2 *"Check your ride"*, a read-only summary (Your ride · Contact · Price = "Quotation"), Terms and conditions with a required, unticked checkbox, **Submit ride request** (primary) and **Edit my ride** (outline, returns to the form with values intact).
+4. **Done** — card *"Your ride request"* with the request ID in monospace, a **Copy ID** button, and a line naming the email address the reply goes to.
+
+| State | UI |
+|---|---|
+| **Default** | Form step, one way selected, passengers 2, luggage 2, no vehicle selected |
+| **Error (form-level on review)** | Client validation on **Review my ride** only (no blur validation). Error summary at the top of the ride form, `role="alert"`, focused, with anchor links to each field; per-field messages below each field. Rules: both places ≥ 2 chars and not the same place (case/space-insensitive); date today or later; valid times; for Return, return date on/after the outward date and, on the same day, a later time; a vehicle chosen; whole-number passengers and luggage in range; name, email and phone format |
+| **Error (terms)** | Submitting without the checkbox shows the error summary with a link to the checkbox |
+| **Loading (submitting)** | **Submit ride request** is `disabled` while the request is in flight (no spinner, no `aria-busy`) |
+| **Error (submit failed)** | Error summary with the server's message (or a generic retry message) plus any server field errors; the traveller stays on the review step with the draft intact |
+| **Success** | Done step, as above. A one-way ride never sends return values to the server |
+
 ---
 
 ## 7. Cross-cutting state rules

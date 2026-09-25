@@ -72,6 +72,7 @@ day-by-day route, and I have enquired about the parts I want booked" in one sitt
 - FR-5.3 All input is validated server-side. Invalid submissions return field-level errors.
 - FR-5.4 The visitor receives an on-screen confirmation with a reference code.
 - FR-5.5 v1 is enquiry-based. **No card payments are taken in v1** — see Section 7.
+- FR-5.6 A visitor can request a single point-to-point ride with a driver (pickup, drop-off, date, time, one way or return, vehicle, passengers, luggage) separately from a trip (D-24).
 
 ### FR-6 — About Us
 - FR-6.1 Explain who Noble Path is, how itineraries are put together, and why to trust them.
@@ -149,4 +150,4 @@ must be recorded in `docs/decisions/architecture-decisions.md`.
 | FR-2 Experiences | `docs/design/page-specs.md` | `app/experiences/` | `docs/testing/test-results.md` |
 | FR-3 Trips | `docs/design/page-specs.md` | `app/trips/` | `docs/testing/test-results.md` |
 | FR-4 Plan | `docs/design/user-flows.md` | `app/plan/`, `lib/itinerary.ts` | `docs/testing/test-results.md` |
-| FR-5 Bookings | `docs/design/user-flows.md` | `app/bookings/`, `app/api/bookings/` | `docs/security/security-review.md` |
+| FR-5 Bookings | `docs/design/user-flows.md` | `app/bookings/`, `app/api/bookings/`, `app/api/rides/` | `docs/security/security-review.md` |

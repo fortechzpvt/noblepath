@@ -47,7 +47,7 @@ Roll back if, after a deploy, any of these are true:
 - `/api/health` returns non-200, or the home page returns 5xx.
 - 5xx rate exceeds ~1% of requests over 5 minutes.
 - p95 latency more than doubles against the pre-deploy baseline.
-- `/api/bookings` rejects valid submissions, or returns 5xx — **booking enquiries are
+- `/api/bookings` or `/api/rides` rejects valid submissions, or returns 5xx — **booking enquiries are
   the business outcome of the entire site; losing them is a severity-1 incident even
   if every page renders perfectly.**
 - The hero or primary imagery fails to load (CSP violation, broken remote pattern).
@@ -244,3 +244,4 @@ Next step:       <investigation / forward fix / post-incident note>
 | Date | Change | By |
 | --- | --- | --- |
 | 2026-09-19 | Initial rollback procedures: detection, Vercel and container rollback paths, configuration rollback, irreversible actions, TTR targets, notification matrix. Not yet rehearsed. | DevOps Engineer |
+| 2026-09-25 | D-24: `/api/rides` added to the §1.2 rollback triggers alongside `/api/bookings`. | DevOps Engineer |

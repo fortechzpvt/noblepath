@@ -343,6 +343,7 @@ export function BookingForm({
 
           <div className="flex flex-col gap-3 md:flex-row">
             <Button
+              id={ids.submit}
               type="button"
               variant="solid"
               size="lg"

@@ -6,6 +6,208 @@ requires it.
 
 ---
 
+## D-24 — Single-ride booking (POST /api/rides) review (2026-09-25)
+
+**Reviewer:** Cybersecurity / Application Security Agent
+**Change reviewed:** D-24 single point-to-point ride booking (e.g. Matara → Kandy),
+uncommitted on `feature/booking-email-delivery`, plus the extraction of the D-23
+`/api/bookings` pipeline into a shared `lib/enquiry-endpoint.ts`. Reviewed by reading the
+code and by sending requests to a running dev instance (`localhost:3123`, configured with a
+deliberately invalid Resend key and `BOOKING_RATE_LIMIT_MAX=200`, so a valid request gets
+`502 delivery_failed` and no email is sent). No source code was changed by this review.
+
+### Scope
+
+`lib/enquiry-endpoint.ts` (new — the shared pipeline), `app/api/bookings/route.ts` (now a
+thin wrapper), `app/api/rides/route.ts` (new), `lib/ride-validation.ts` (new),
+`lib/ride-email.ts` (new), `lib/ride-request.ts` (new), `lib/booking-request.ts`
+(`postEnquiry`), `components/booking/booking-options.tsx`, `ride-form.tsx`,
+`ride-summary.tsx` (new), `app/bookings/page.tsx` (`?service=`). Also read, for parity:
+`lib/validation.ts` (`toFieldErrors`, `wholeNumberField`, the booking honeypot),
+`lib/booking-email.ts` and `lib/rate-limit.ts`.
+
+### Checks performed
+
+1. **Refactor equivalence.** Compared `git show HEAD:app/api/bookings/route.ts` line by
+   line with `lib/enquiry-endpoint.ts`: the order (size → rate limit → content-type → JSON
+   → schema → honeypot → config check → send) is the same, and so are `MAX_BODY_BYTES`,
+   `clientKey()` (last `X-Forwarded-For` entry), every status code, error code and
+   client-facing message, the honeypot early return, and the rule that provider error text
+   stays out of responses. `replyTo` for bookings is still `enquiry.traveller.email`, the
+   honeypot is still removed before the email builder runs, and the four non-POST methods
+   still return the same 405 envelope. Only the server log wording changed
+   (`booking` → `request`, tag parameterised).
+2. **Live requests against `/api/rides`** (Node `fetch` script, a fresh random trailing
+   `X-Forwarded-For` per request so the tests did not use up each other's quota):
+   a valid request, the honeypot filled, the honeypot over 200 characters, CR/LF and TAB in
+   `pickup`, U+2028, bidi overrides (U+202E/U+202C) and a zero-width space in
+   pickup/drop-off, CR/LF in `fullName`, C0/ESC and bidi characters in `notes`, CR/LF /
+   comma-list / quoted-local-part emails, `passengers` as `"1e1"` and `"0x5"`, unknown
+   top-level and nested keys (including an HTML payload as the key name), a client-supplied
+   `id`, `__proto__` as a key, `vehicle: "__proto__"`, one-way with a return date, past /
+   more than 2 years ahead / impossible dates, 121-char pickup, 1,001-char notes, wrong
+   JSON types, wrong Content-Type, malformed JSON, a 50,001-byte body, an exactly
+   50,000-byte body, GET/PUT/PATCH/DELETE, and a cross-origin `OPTIONS` preflight.
+3. **Shared rate-limit bucket.** Sent 201 invalid-body requests, alternating
+   `/api/bookings` and `/api/rides`, all with the same trailing `X-Forwarded-For` address and
+   a different spoofed leading entry on every request.
+4. **Parity checks on `/api/bookings`:** an unknown key, and the honeypot over 200
+   characters.
+5. **Email rendering (offline).** Ran `rideRequestSchema` + `buildRideEmail` under `jiti`
+   with hostile inputs and inspected the exact `subject`/`text` strings produced. Nothing
+   was sent.
+6. **Client.** Read `?service=` handling (`app/bookings/page.tsx`,
+   `booking-options.tsx`), the error-summary rendering (`components/ui/field.tsx`) and
+   `postEnquiry`. **Code reading only. Not exercised in a browser.**
+7. `npm run lint`: clean. `npm run typecheck`: the only errors (6) are in stray duplicate
+   generated files (`.next/types/routes.d 2.ts`, etc.), with 0 errors in source.
+   `npm run build` was **not** run.
+
+### Verification results
+
+- Valid ride → `502 delivery_failed` with a generic message and a correlation id only.
+  Filled honeypot → `200 {"id":"NP-…"}` in 21 ms, the same shape as success (the F-4
+  timing gap applies equally to this endpoint).
+- CR/LF and TAB in `pickup` → `400` (`ride.pickup`); CR/LF, comma-list and quoted-local
+  emails → `400` (`contact.email`). Oversize place/notes, bad/past/far dates, one-way with
+  a return, a bad vehicle and wrong types → `400` with traveller-facing messages.
+  `__proto__` / `id` / unknown keys → `400 Unrecognized key`.
+- 415 / 400 invalid_json / 413 at 50,001 bytes / 400 (not 413) at exactly 50,000 bytes: the
+  same boundaries as `/api/bookings`. All non-POST methods → `405`, `Allow: POST`,
+  `Cache-Control: no-store`. `OPTIONS` from a foreign origin → `204` with no
+  `Access-Control-*` headers.
+- **Accepted and passed through to delivery (502):** U+2028 and bidi overrides in pickup,
+  a zero-width-space variant of the same pickup/drop-off, CR/LF in `fullName`, ESC/bidi in
+  `notes`, and `passengers` `"1e1"` / `"0x5"`.
+- Offline render confirmed: the subject keeps U+2028 and U+202E (only `\r\n` are
+  stripped), and a `fullName` of `"Bob\nEmail: attacker@evil.com"` produces a separate,
+  convincing `Email: attacker@evil.com` line above the real `Email:` line in the body.
+- Rate limit: 200 requests across both endpoints returned `400`. The 201st returned
+  `429` with `Retry-After: 600`. After that, both endpoints returned `429` for the same
+  trailing address, including one with a fresh spoofed leading entry. A different trailing
+  address was unaffected. **One bucket per client across both endpoints is confirmed**, and
+  the F-3 fix still holds after the refactor.
+- Parity: `/api/bookings` also returns `"form":"Unrecognized key: \"pwn\""` and
+  `"website":"Too big: …<=200 characters"`, so F-6 and F-7 are pre-existing and were
+  carried over, not introduced.
+
+### Findings
+
+**F-5 (Low) — REMEDIATED 2026-09-25 — line-break, Unicode separator, bidi and zero-width characters are
+accepted in single-line fields that reach the staff email.**
+`contactSchema.fullName` (`lib/ride-validation.ts:75-79`) has no control-character check,
+so CR/LF lets a traveller add fake lines such as `Email: attacker@evil.com` to the
+`Contact` block of the email body. `CONTROL_CHARS` (`lib/ride-validation.ts:28`) covers only
+C0/C1. It misses U+2028/U+2029, bidi controls (U+202A–202E, U+2066–2069) and zero-width
+characters (U+200B–200D, U+FEFF). Those characters reach the subject
+(`lib/ride-email.ts:11-13, 53-55`, where only `\r\n` is stripped) and the body. They can
+visually spoof a pickup or drop-off in the staff inbox. A zero-width character also gets
+past the `samePlace` check (`Kandy` → `Kan​dy`). `replyTo` is still the validated
+address. Resend receives `subject` as a JSON field, so this is not SMTP header injection
+(Resend's own encoding of U+2028 was not verified). The impact is limited to misleading
+staff. The same `fullName` gap exists on `/api/bookings` (`lib/validation.ts:141-145`).
+*Remediation:* use one shared `singleLineText` refinement that rejects
+`/[\p{Cc}\p{Cf}  ]/u` on `fullName`, `pickup`, `dropoff` and booking
+`fullName`/`nationality`. In both `sanitiseSubjectFragment` functions, replace
+`/[\p{Cc}\p{Cf}  ]+/gu` with a space. Strip `\p{Cf}` and C0 other than `\n`/`\t`
+from `notes`. *Status:* open. Recommended before release.
+
+**F-6 (Low) — REMEDIATED 2026-09-25, pre-existing (D-23), was on both endpoints — an over-long honeypot
+names itself.** `website: z.string().trim().max(200)` (`lib/ride-validation.ts:174`,
+`lib/validation.ts:432`) returns `400 {"fields":{"website":"Too big…"}}` when more than 200
+characters are sent (verified on both endpoints). The honeypot's own design comment says a
+bot should never learn which field it tripped, and this does exactly that.
+*Remediation:* never fail validation on the honeypot. For example,
+`z.preprocess(v => (v === undefined ? "" : typeof v === "string" ? v.trim().slice(0, 200) : "filled"), z.string())`.
+The 50 KB body cap already bounds the input. *Status:* open.
+
+**F-7 (Informational) — REMEDIATED 2026-09-25, pre-existing — unrecognised key names are sent back in the
+400 body.** `toFieldErrors` (`lib/validation.ts:522-528`) passes zod's
+`Unrecognized key: "<name>"` message through unchanged. This was verified with an HTML
+payload as the key name on both endpoints. It is not exploitable: the response is
+`application/json`, the client renders messages as React text, and the error-summary
+`href` (`components/ui/field.tsx:295`) uses the server-computed path, never the key. It does
+contradict the documented rule that messages never quote submitted input.
+*Remediation:* map `issue.code === "unrecognized_keys"` to `"Unrecognised request."`.
+*Status:* open.
+
+**F-8 (Informational) — REMEDIATED 2026-09-25 — whole-number fields accept non-decimal notation and email
+the raw string.** `wholeNumberField` (`lib/ride-validation.ts:46-58`; the same code is at
+`lib/validation.ts:87-99`) accepts `"0x5"`, `"1e1"` and `"5.0"` because it checks
+`Number(value)`. The email then prints `Passengers: 0x5` / `Luggage: 1e1 pieces`
+(`lib/ride-email.ts:36-37`). This is a data-integrity issue, not a security one.
+*Remediation:* add `.regex(/^\d{1,3}$/)` or output `String(Number(value))`. *Status:* open.
+
+### Checks that came back clean
+
+- **Refactor:** behaviour is identical (see check 1). No guard was dropped or reordered.
+- **Not a spam relay:** `to` is always `BOOKINGS_NOTIFICATION_EMAIL` from the environment,
+  and nothing is ever sent to the traveller's address. `replyTo` is a single address
+  checked by `z.email()` (lists, CR/LF and quoted forms were rejected live).
+- **Strict objects** at every level (`__proto__` and `id` rejected). A client-supplied id
+  cannot affect the server id.
+- **Shared rate limit** holds across both endpoints, and a spoofed leading
+  `X-Forwarded-For` entry does not help.
+- **`?service=`** is compared with `=== "ride"` on the server. `replaceState` only ever
+  sets or deletes that one parameter on the current same-origin URL. There is no
+  open-redirect or XSS path (code reading).
+- **Plain-text email only.** There is no `html` field anywhere in the pipeline.
+
+### Residual risks (accepted or out of scope)
+
+- The traveller chooses `replyTo`, so a staff reply can go to a third party whose address
+  was entered. This is the same as `/api/bookings` and inherent to the design.
+- Up to about 240 characters of attacker-chosen text appear in the staff email subject, which
+  could serve as a phishing lure. This is bounded by the rate limit and the 120-character
+  field caps.
+- The rate limiter is per instance and in memory, and a distributed attacker with many
+  real IPs is not stopped (the existing D-23 limitation). The last-entry
+  `X-Forwarded-For` assumption still needs DevOps to confirm it on Vercel (F-3).
+- F-4 (honeypot timing) applies to `/api/rides` too.
+
+### Not verified (disclosed)
+
+Real Resend delivery and how the received email renders (including how U+2028 is encoded
+in the subject), the ride form in a real browser, and `npm run build`.
+
+### Overall severity
+
+No High or Medium findings. One new Low (F-5), one pre-existing Low carried over (F-6) and
+two Informational (F-7, F-8). **Verdict: approve with changes.** F-5 should be fixed
+before release. F-6 to F-8 can follow.
+
+---
+
+
+### Remediation (Full-Stack Engineer, 2026-09-25)
+
+All four findings are fixed on **both** endpoints, in a new shared module,
+`lib/safe-text.ts`:
+
+- **F-5:** `isSingleLineText` rejects `\p{Cc}`, `\p{Cf}`, U+2028 and U+2029. It now
+  applies to `fullName` (rides and bookings), `nationality`, ride `pickup`/`dropoff`
+  and booking transport `pickup`/`dropoff`. **Deliberate deviation from the
+  recommendation:** ZWNJ/ZWJ (U+200C/U+200D) are still allowed. Both are `\p{Cf}`, but
+  Sinhala and Tamil need them to spell ordinary words, and blocking them would reject
+  real names written in Sinhala. Residual risk: a ZWJ can still make two place strings
+  differ invisibly for the "drop-off ≠ pickup" check. That is cosmetic, since staff read
+  both values. Both subject builders now use the shared `sanitiseSubjectFragment`, which
+  collapses the same character class to a space.
+- **F-6:** `website` is now `honeypotSchema`. It accepts any value of any type and never
+  produces a 400, and a non-empty value collapses to `"filled"`.
+- **F-7:** `toFieldErrors` maps `unrecognized_keys` to "Unrecognised request."
+- **F-8:** both `wholeNumberField`s require `/^\d{1,3}$/`.
+
+**Verified** against a local dev server with an invalid Resend key, so no mail was sent:
+- CR/LF in `contact.fullName` and in `traveller.fullName` → 400. An RLO or ZWSP in
+  `pickup` → 400. `passengers: "1e1"` → 400.
+- A 500-character honeypot, and a numeric honeypot → fake 200.
+- An unknown key → 400 with "Unrecognised request."
+- A Sinhala name containing ZWJ → passes validation (502 from the invalid key).
+
+A unit script checked 9 character cases. `npm run lint`, `tsc` and `next build` (with
+CI placeholder env) pass. **Not re-reviewed** by the Cybersecurity Agent after the fixes.
+
 ## Review 2026-09-23 — Booking delivery connected: `POST /api/bookings` + Resend (D-23)
 
 **Reviewer:** Cybersecurity / Application Security Agent

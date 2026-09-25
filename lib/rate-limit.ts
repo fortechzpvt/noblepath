@@ -8,8 +8,8 @@ import { serverEnv } from "@/lib/env";
  *   * each instance counts separately, so N instances allow N times the limit.
  *
  * That is an accepted trade-off for v1, which runs as a single container and
- * whose only public write endpoint creates an enquiry rather than an account or
- * a payment. Before the application is scaled horizontally this must be moved
+ * whose public write endpoints (`/api/bookings`, `/api/rides`, which share one
+ * bucket per client) create an enquiry rather than an account or a payment. Before the application is scaled horizontally this must be moved
  * to a shared store (Redis or equivalent) keyed the same way. Documented in
  * docs/api/api-overview.md so the constraint does not live only in this file.
  *
