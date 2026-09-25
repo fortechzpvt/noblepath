@@ -14,13 +14,10 @@
 #       ...
 #     };
 #
-# `next.config.ts` does NOT currently set this. `next.config.ts` is owned by the
-# Full-Stack Engineer, so the DevOps Engineer has not edited it. Until that
-# one-line change lands, the `builder` stage will produce no
-# `.next/standalone` directory and the COPY below will fail the build with
-# "failed to compute cache key: ... /app/.next/standalone: not found".
-# That failure is intentional and loud: it is better than shipping a broken
-# image. Tracked as a required action in the DevOps handoff.
+# `next.config.ts` sets this (line ~53). If it is ever removed, the `builder`
+# stage will produce no `.next/standalone` directory and the COPY below will
+# fail the build with "failed to compute cache key: ... /app/.next/standalone:
+# not found" — loud on purpose, better than shipping a broken image.
 # =============================================================================
 #
 # Build:  docker build -t noble-path:local .

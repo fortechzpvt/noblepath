@@ -260,6 +260,33 @@ No hero. `--color-sand-50` page.
 
 Layout: single column, max 860 px, centred.
 
+**Implementation status (D-23, D-24):** built as a **request form**, not the entry/checkout split above.
+There is no checkout, payment, account or "Your bookings" list yet; §8.2–8.4 are **not built**. What exists:
+
+- **Page header** (compact, image `ella.jpg`): H1 *"Plan your trip"*, lead *"Book a full trip or just a single
+  ride with a driver. Tell us what you need and we will reply with a quotation."* Then a `--color-sand-50`
+  section with one column at `--container-prose`, centred.
+- **Service switch** (`BookingOptions`): a `<fieldset>` whose `<legend>` *"What would you like to book?"* is
+  styled `--text-h4` (a legend, not a heading — the form cards below remain the page's `<h2>`s). Two radio
+  cards — **A full trip** (`map` icon) and **A single ride** (`car-front` icon) — each a visually hidden native
+  radio inside a `<label>`, `--radius-xl`, 2 px border, 20 px padding, `--text-h5` title + `--text-body-sm`
+  line. Checked = `--color-jungle-700` border on `--color-jungle-50`; focus ring on the card via
+  `peer-focus-visible`. Stacked at <768, two columns at ≥768. `?service=ride` preselects the ride card; the
+  choice is written back to the URL with `replaceState`.
+- **Below the switch**, both forms are rendered and the inactive one is `hidden` (state is kept across
+  switches):
+  - *A full trip* — the D-23 request form: Traveller details · Trip dates · Airport transfers · Your trip
+    plan → review → request ID.
+  - *A single ride* — `RideForm` (flow `user-flows.md` §F10): cards *Your ride* · *Vehicle and passengers* ·
+    *Your details* (each `Card`: `<h2>` at `--text-h4`, white, `--radius-xl`, 24/32 px padding), then
+    **Review my ride** (solid, `lg`, full-width <768). Paired fields sit two-up at ≥768 and stack below.
+    Trip type uses the 44 px pill chips; vehicles use the shared `VehicleGrid` (2 columns <768, 4 at ≥768).
+    Review step: H2 *"Check your ride"* at `--text-h2`, summary blocks (`<h3>` at `--text-h5`), terms card,
+    **Submit ride request** + **Edit my ride** (stacked <768, in a row at ≥768). Done step: *"Your ride
+    request"* card with the monospace ID and **Copy ID**.
+- Metadata description mentions both options; the page is dynamically rendered because it reads
+  `?service=`.
+
 ### 8.2 `/bookings/checkout`
 **Reduced chrome:** the nav collapses to the wordmark + a `lock` "Secure checkout" label + an exit link. No primary nav links, no search, no trip tray. This is deliberate — every additional link in checkout is a leak. The exit link is a real, obvious link ("Back to your trip"), not a trap.
 

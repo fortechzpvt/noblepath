@@ -668,3 +668,64 @@ whether it's worth closing; it does not block shipping. This review found and fi
 real, concretely exploitable High-severity hole rather than rubber-stamping the engineer's
 own (thorough, and mostly accurate) self-testing — see D-23's own text: "nothing in this
 entry should be read as self-certifying its own security," which held true here.
+
+---
+
+## Handoff — D-24 single-ride booking: Orchestrator/Full-Stack → reviewers → human (2026-09-25)
+
+**Task:** Let travellers book a single point-to-point ride with a driver (e.g. Matara → Kandy),
+separately from a full trip, from the booking section.
+
+**Agents involved:**
+- Orchestrator + Full-Stack Engineer: design, implementation, tests, API/architecture/ADR docs.
+- Cybersecurity Agent: review, findings F-5–F-8, written up in `docs/security/security-review.md`.
+- UI/UX Designer: review, 7 issues; `docs/design/user-flows.md` §F10, `page-specs.md` §8.1.
+- DevOps Engineer: infra review; `docs/architecture/infrastructure-architecture.md`, `docs/deployment/*`.
+- Mobile, Embedded/Firmware and AI/ML: not involved. This change has no app, device or model work.
+
+**Completed:**
+- `/bookings` now asks "What would you like to book?": **A full trip** (unchanged) or
+  **A single ride** (new form). `?service=ride` opens the ride form directly.
+- `POST /api/rides`, with the reviewed D-23 pipeline extracted into `lib/enquiry-endpoint.ts`
+  so both endpoints share it, and one rate-limit bucket per client.
+- All UI/UX issues 1–7 fixed. Two of them (the submit-button id and focus after a step
+  change) were fixed in the trip form too.
+- All security findings F-5–F-8 fixed on both endpoints (`lib/safe-text.ts`), with one
+  documented deviation: ZWJ/ZWNJ are allowed for Sinhala and Tamil.
+- The stale precondition comment in the `Dockerfile` header was corrected (DevOps note).
+
+**Files:**
+- New: `lib/enquiry-endpoint.ts`, `lib/ride-request.ts`, `lib/ride-validation.ts`,
+  `lib/ride-email.ts`, `lib/safe-text.ts`, `app/api/rides/route.ts`,
+  `components/booking/booking-options.tsx`, `ride-form.tsx`, `ride-summary.tsx`.
+- Changed: `app/api/bookings/route.ts`, `app/bookings/page.tsx`, `lib/booking-request.ts`,
+  `lib/validation.ts`, `lib/booking-email.ts`, `lib/rate-limit.ts` (comment),
+  `components/booking/booking-form.tsx`, `Dockerfile` (comment), docs.
+
+**Tests:**
+- `npm run lint` and `tsc` pass. The only typecheck errors are in stray, pre-existing
+  `.next/types/* 2.ts` duplicates, not in source.
+- `next build` passes with the CI placeholder env.
+- curl against a dev server with an **invalid** Resend key, so no mail was sent. Covered: a
+  valid one-way ride; return rules; same place; past date; bad vehicle; unknown key;
+  honeypot (string, oversized, numeric); CRLF, RLO and ZWSP injection; `1e1` counts; 405;
+  `/api/bookings` still validating; the shared rate limit (tested by the Cybersecurity Agent).
+- A unit script checked 9 character cases for `lib/safe-text.ts`.
+- **Not done:**
+  - A browser click-through of the form. The Chrome extension was not connected, and the
+    UI/UX review read the code and the rendered HTML only.
+  - A real Resend delivery of a ride request.
+  - A re-review by the Cybersecurity Agent after the fixes.
+
+**Known issues / open items:**
+- The shared rate-limit bucket holds only within one process. It may not hold across Vercel
+  function instances (DevOps). This is the existing shared-store item.
+- `/bookings` is now dynamically rendered; watch its p95/LCP after deploy.
+- Terms wording on both forms is draft and needs a business/legal review.
+- No drive-time estimate, one vehicle per ride, and the return always goes drop-off → pickup (D-24).
+
+**Required action (human):**
+1. Click through `/bookings?service=ride` on mobile and desktop.
+2. Send one real ride request to confirm the staff email.
+3. Optionally, ask the Cybersecurity Agent to re-review the F-5–F-8 fixes.
+4. Commit and open a PR.

@@ -18,6 +18,7 @@ import {
   isKnownExperienceSlug,
   isKnownTripSlug,
 } from "@/lib/content";
+import { DIGITS_ONLY, honeypotSchema, isSingleLineText } from "@/lib/safe-text";
 import { VEHICLE_IDS } from "@/lib/transfers";
 import type { AccommodationTier, Interest } from "@/lib/types";
 
@@ -89,6 +90,7 @@ function wholeNumberField(min: number, max: number, message: string) {
     .string({ message })
     .trim()
     .max(10)
+    .regex(DIGITS_ONLY, { message })
     .refine(
       (value) => {
         if (value === "") return false;
@@ -142,12 +144,14 @@ const travellerSchema = z.strictObject({
     .string({ message: "Enter your full name." })
     .trim()
     .min(2, { message: "Enter your full name." })
-    .max(100, { message: "Please keep your name under 100 characters." }),
+    .max(100, { message: "Please keep your name under 100 characters." })
+    .refine(isSingleLineText, { message: "Please use letters, numbers and ordinary punctuation only." }),
   nationality: z
     .string({ message: "Enter your nationality." })
     .trim()
     .min(2, { message: "Enter your nationality." })
-    .max(60, { message: "Please keep your nationality under 60 characters." }),
+    .max(60, { message: "Please keep your nationality under 60 characters." })
+    .refine(isSingleLineText, { message: "Please use letters, numbers and ordinary punctuation only." }),
   email: z
     .string({ message: "Enter a valid email address." })
     .trim()
@@ -345,8 +349,10 @@ const transportEntrySchema = z
     id: entryIdSchema,
     vehicle: vehicleIdSchema.nullable(),
     mode: z.enum(["private", "shared"], { message: "Choose private or shared." }),
-    pickup: z.string().trim().max(120).default(""),
-    dropoff: z.string().trim().max(120).default(""),
+    pickup: z.string().trim().max(120).default("")
+      .refine(isSingleLineText, { message: "Please use letters, numbers and ordinary punctuation only." }),
+    dropoff: z.string().trim().max(120).default("")
+      .refine(isSingleLineText, { message: "Please use letters, numbers and ordinary punctuation only." }),
     date: z.string().trim().max(10).default(""),
   })
   .superRefine((entry, ctx) => {
@@ -427,9 +433,11 @@ export const bookingDraftRequestSchema = z
      * to leave blank next time. Instead this is allowed to parse
      * successfully, and the route handler branches on it *after* validation
      * to answer with a normal-looking success while silently dropping the
-     * request — the schema's job here is only to keep the value bounded.
+     * request. `honeypotSchema` (`lib/safe-text.ts`) accepts any value and
+     * collapses it to `""` or `"filled"`, so not even an oversized or
+     * wrongly-typed value produces a 400 that names this field (F-6).
      */
-    website: z.string().trim().max(200).optional().default(""),
+    website: honeypotSchema,
   })
   .superRefine((draft, ctx) => {
     if (draft.planChoice === null) {
@@ -523,7 +531,9 @@ export function toFieldErrors(error: z.ZodError): Record<string, string> {
   const fields: Record<string, string> = {};
   for (const issue of error.issues) {
     const key = issue.path.length > 0 ? issue.path.map(String).join(".") : "form";
-    if (!(key in fields)) fields[key] = issue.message;
+    // Zod's own message quotes the unknown key's name back (F-7); keep it generic.
+    const message = issue.code === "unrecognized_keys" ? "Unrecognised request." : issue.message;
+    if (!(key in fields)) fields[key] = message;
   }
   return fields;
 }

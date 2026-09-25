@@ -1,7 +1,7 @@
 # Noble Path — API Overview
 
-**Status:** Current as of D-23 (2026-09-23). One route exists; see
-`docs/api/endpoints.md` for its full contract. This page holds the
+**Status:** Current as of D-24 (2026-09-25). Two routes exist; see
+`docs/api/endpoints.md` for their full contracts. This page holds the
 conventions that apply across every route on this API, referenced by name
 from a couple of source comments (`lib/rate-limit.ts`, `lib/validation.ts`)
 so those constraints have a documented home rather than living only in code.
@@ -39,4 +39,5 @@ so those constraints have a documented home rather than living only in code.
 
 | Method | Path | Purpose | Docs |
 | --- | --- | --- | --- |
-| `POST` | `/api/bookings` | Submit a booking request (FR-5) | `docs/api/endpoints.md` |
+| `POST` | `/api/bookings` | Submit a full-trip booking request (FR-5) | `docs/api/endpoints.md` |
+| `POST` | `/api/rides` | Submit a single-ride request (FR-5.6, D-24) | `docs/api/endpoints.md` |

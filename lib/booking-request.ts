@@ -521,12 +521,24 @@ const GENERIC_SUBMIT_ERROR =
 export async function submitBookingRequest(
   draft: BookingDraft,
 ): Promise<{ readonly id: string }> {
+  return postEnquiry("/api/bookings", draft);
+}
+
+/**
+ * POSTs a request body to one of the enquiry endpoints and maps the shared
+ * response envelope (`lib/enquiry-endpoint.ts`) onto `BookingSubmissionError`.
+ * Used by full-trip requests and single-ride requests (`lib/ride-request.ts`).
+ */
+export async function postEnquiry(
+  path: "/api/bookings" | "/api/rides",
+  body: unknown,
+): Promise<{ readonly id: string }> {
   let response: Response;
   try {
-    response = await fetch("/api/bookings", {
+    response = await fetch(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(draft),
+      body: JSON.stringify(body),
     });
   } catch {
     throw new BookingSubmissionError(
@@ -534,15 +546,15 @@ export async function submitBookingRequest(
     );
   }
 
-  const body: unknown = await response.json().catch(() => null);
+  const payload: unknown = await response.json().catch(() => null);
 
   if (response.ok) {
-    const id = (body as { id?: unknown } | null)?.id;
+    const id = (payload as { id?: unknown } | null)?.id;
     if (typeof id === "string" && id.length > 0) return { id };
     throw new BookingSubmissionError(GENERIC_SUBMIT_ERROR);
   }
 
-  const error = (body as { error?: { message?: unknown; fields?: unknown } } | null)?.error;
+  const error = (payload as { error?: { message?: unknown; fields?: unknown } } | null)?.error;
   const message =
     typeof error?.message === "string" && error.message.trim() !== "" ? error.message : GENERIC_SUBMIT_ERROR;
 

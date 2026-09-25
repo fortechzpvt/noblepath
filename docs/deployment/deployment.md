@@ -103,7 +103,8 @@ robots policy as production**. Staging must be `noindex` (see §9) or it will co
 with production in search results.
 
 The second parity gap: **the booking rate limiter is in-memory and per-instance**
-(NFR-8). On serverless, each concurrent instance has its own counter, so the effective
+(NFR-8). It is shared by `/api/bookings` and `/api/rides` (one budget per client) only
+within a single process — see infrastructure architecture §7. On serverless, each concurrent instance has its own counter, so the effective
 limit is `BOOKING_RATE_LIMIT_MAX × active instances`, not `BOOKING_RATE_LIMIT_MAX`.
 This is a known v1 limitation, documented in
 `docs/troubleshooting/troubleshooting.md` §6 and in the infrastructure architecture.
@@ -355,7 +356,8 @@ a performance requirement, not a detail.
 | Optimised images `/_next/image?...` | Vercel image optimisation + CDN | Long-lived, keyed on source URL + width + quality + format | First request per variant transcodes (slow); subsequent requests are cache hits. |
 | Files in `public/` | Edge CDN | `public, max-age=0, must-revalidate` by default | **Not content-hashed.** Replacing `public/images/hero/sigiriya-sunrise.jpg` in place with the same filename risks stale intermediary caches. Prefer a new filename on change. |
 | Static/prerendered pages | Edge CDN | Cached, revalidated per route segment config | Destinations, experiences, trips and About are static content (ADR-002) and should be statically rendered. |
-| `/api/bookings` | App runtime | `no-store` — must never be cached | A cached write endpoint is a correctness *and* security bug. |
+| `/bookings` page | App runtime (dynamic) | Not prerendered; rendered per request | Since D-24 the page reads `searchParams` (`?service=ride` preselects the ride form), which opts it out of static rendering. Every visit invokes the app runtime. Acceptable at v1 traffic (the page does no I/O beyond bundled content), but it is the conversion page, so watch its p95/LCP after deploy. |
+| `/api/bookings`, `/api/rides` | App runtime | `no-store` — must never be cached | A cached write endpoint is a correctness *and* security bug. Applied to every `/api/:path*` route by `next.config.ts`, so both endpoints are covered. |
 | `/api/health` | App runtime | `no-store` | A cached health check reports the health of the past. |
 
 Guidance for whoever implements the image components:
@@ -400,8 +402,10 @@ Detailed alert thresholds live in
 
 - 5xx rate on the app runtime
 - p95 response time
-- function error rate on `/api/bookings`
-- 429 rate on `/api/bookings` (a spike means either an attack or a misconfigured limit)
+- function error rate on `/api/bookings` and `/api/rides`
+- 429 rate on `/api/bookings` + `/api/rides` combined (one shared limit; a spike means
+  either an attack or a misconfigured limit)
+- p95 / LCP of `/bookings`, now dynamically rendered (D-24)
 - Core Web Vitals for the home page (NFR-1, NFR-2, NFR-3)
 
 ---
@@ -413,7 +417,7 @@ does not own these files and has not modified them.
 
 | # | Action | File | Owner | Blocking |
 | --- | --- | --- | --- | --- |
-| 1 | Add `output: "standalone"` to `nextConfig` | `next.config.ts` | Full-Stack Engineer | Docker image build only (Vercel deploy unaffected) |
+| 1 | Add `output: "standalone"` to `nextConfig` | `next.config.ts` | Full-Stack Engineer | **Done** — `next.config.ts` now sets it. (The precondition comment at the top of `Dockerfile` is stale and should be trimmed.) |
 | 2 | Implement a health route returning 200 with a small JSON body, `no-store`, no secrets and no internal version detail | `app/api/health/route.ts` | Full-Stack Engineer | **Deploy smoke check and container HEALTHCHECK — blocking for both** |
 | 3 | Emit `noindex` on non-production environments (§9) | app layer | Full-Stack Engineer | Blocking for production launch |
 | 4 | Record the hosting decision as an ADR (Vercel over containers, §1) | `docs/decisions/architecture-decisions.md` | Orchestrator / owning agent | Fortechz policy |
@@ -428,3 +432,4 @@ does not own these files and has not modified them.
 | --- | --- | --- |
 | 2026-09-19 | Initial deployment design: Vercel recommendation, CI/CD pipelines, GitHub Environment approval gate, container escape hatch, DNS/TLS and caching plan. Nothing provisioned. | DevOps Engineer |
 | 2026-09-23 | `POST /api/bookings` built and delivery connected (D-23). Closed §11 item 5 for `/api/bookings` (the `/api/health` half stays open with item 2). Production `next build` now requires `RESEND_API_KEY` and `BOOKINGS_NOTIFICATION_EMAIL` to be set — this was already the documented intent but had never actually been enforced before this change (see `docs/deployment/environment.md` §7 item 1). | Full-Stack Engineer |
+| 2026-09-25 | D-24: `POST /api/rides` added alongside `/api/bookings` (shared pipeline, env vars, rate limit; `no-store` via the existing `/api/:path*` rule — no config change needed). `/bookings` is now dynamically rendered. Updated §2, §8, §10; marked §11 item 1 done. No CI, Dockerfile or env change required. | DevOps Engineer |

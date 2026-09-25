@@ -31,8 +31,10 @@ The consequences are worth stating plainly, because they shape everything else h
 
 - **There is no persistent state to protect, back up, or restore.** The recovery
   story is "redeploy the build".
-- **The trust boundary is unusually simple:** one public write endpoint
-  (`/api/bookings`), and one outbound integration (email notification).
+- **The trust boundary is unusually simple:** two public write endpoints
+  (`/api/bookings` for trips, `/api/rides` for single rides, D-24) that share one
+  request pipeline (`lib/enquiry-endpoint.ts`) and one rate-limit budget, and one
+  outbound integration (email notification via Resend).
 - **The primary risk is not data loss — it is silent loss of booking enquiries.**
   An enquiry that fails has nowhere to go: no queue, no retry, no dead-letter store.
 - **Most pages can be static**, which is how NFR-1 (LCP ≤ 2.5s on 4G mobile) is met
@@ -65,7 +67,8 @@ The consequences are worth stating plainly, because they shape everything else h
     │                               │   │  • resize + AVIF/WebP transcode   │
     │  • React Server Components    │   │  • source allow-list:             │
     │  • Static + streamed HTML     │   │    images.unsplash.com only       │
-    │  • /api/bookings  (POST)      │   │    (next.config.ts remotePatterns)│
+    │  • /api/bookings  (POST)      │
+    │  • /api/rides     (POST)      │   │    (next.config.ts remotePatterns)│
     │  • /api/health    (GET)       │   │  • result cached at the edge      │
     │  • Zod validation (NFR-7)     │   └───────────────────────────────────┘
     │  • In-memory rate limit(NFR-8)│
@@ -135,12 +138,19 @@ visitor pays the transcode cost. See troubleshooting §8.
 
 ### 3.2 Visitor submits a booking enquiry (the security path)
 
-1. `POST /api/bookings` from the browser. CSP `form-action 'self'` and
+The same path applies to `POST /api/bookings` (trip) and `POST /api/rides` (single
+ride, D-24): both route handlers call the shared pipeline in
+`lib/enquiry-endpoint.ts`, differing only in the request schema and email body.
+
+1. `POST /api/bookings` or `POST /api/rides` from the browser. CSP `form-action 'self'` and
    `connect-src 'self'` prevent the form from being posted cross-origin.
 2. The request always reaches the **app runtime** — never cached, never served from
    the edge.
 3. The **rate limiter** checks the caller against `BOOKING_RATE_LIMIT_MAX` per
-   `BOOKING_RATE_LIMIT_WINDOW_MS` (NFR-8). Over limit → `429`.
+   `BOOKING_RATE_LIMIT_WINDOW_MS` (NFR-8). Over limit → `429`. The budget is
+   shared: one bucket per client across both endpoints, so a trip request and a
+   ride request from the same caller count against the same limit (subject to the
+   per-process caveat in §7).
 4. **Zod validates the body server-side** (NFR-7, FR-5.3). Invalid → `400` with
    field-level errors. Client-side validation is a convenience only; this is the
    control.
@@ -152,8 +162,8 @@ visitor pays the transcode cost. See troubleshooting §8.
 HTTP request and that email. If step 5 fails — provider outage, wrong address, unset
 variable — the visitor still sees a success code and the lead is **gone**. There is no
 database, no queue and no retry. This is the single highest-value reliability gap in
-v1 and it is why §6 alerts on `/api/bookings` error rate specifically rather than on
-overall 5xx alone.
+v1 and it is why §6 alerts on enquiry-endpoint (`/api/bookings`, `/api/rides`) error
+rate specifically rather than on overall 5xx alone.
 
 ### 3.3 A change reaches production (the control path)
 
@@ -187,7 +197,8 @@ overall 5xx alone.
 Stated explicitly so nobody assumes a missing control is an oversight:
 
 - No VPC, private networking, bastion host or SSH access — there are no servers.
-- No WAF beyond platform defaults. Reconsider if `/api/bookings` attracts abuse.
+- No WAF beyond platform defaults. Reconsider if `/api/bookings` or `/api/rides`
+  attracts abuse.
 - No secrets manager beyond Vercel environment variables and GitHub Environment
   secrets — there are only four application variables, none of which is a credential.
 - No authentication or session layer — no accounts in v1.
@@ -235,8 +246,8 @@ the retention window. Revisit when bookings gain a datastore.
 | # | Signal | Threshold | Severity | Why | First response |
 | --- | --- | --- | --- | --- | --- |
 | 1 | **5xx rate (all routes)** | > 1% of requests over 5 min | **High** | The site is failing for real visitors | Check the last deploy; roll back (`rollback.md`) |
-| 2 | **`/api/bookings` error rate** | Any 5xx, or > 2% of submissions over 10 min | **Critical** | **Every failed enquiry is a permanently lost lead — there is no queue or retry (§3.2)** | Roll back immediately; then confirm whether email delivery or validation is at fault |
-| 3 | **`/api/bookings` 429 spike** | > 20 in 10 min, or a sharp change from baseline | Medium | Either abuse/spam, or the limit is too tight and real visitors (shared hotel NAT) are being blocked | Inspect source distribution. Many sources → likely abuse. Few sources, many legitimate-looking → raise `BOOKING_RATE_LIMIT_MAX` and see troubleshooting §6 |
+| 2 | **`/api/bookings` + `/api/rides` error rate** | Any 5xx, or > 2% of submissions over 10 min | **Critical** | **Every failed enquiry is a permanently lost lead — there is no queue or retry (§3.2)** | Roll back immediately; then confirm whether email delivery or validation is at fault |
+| 3 | **`/api/bookings` + `/api/rides` 429 spike** (sum both — they share one limit) | > 20 in 10 min, or a sharp change from baseline | Medium | Either abuse/spam, or the limit is too tight and real visitors (shared hotel NAT) are being blocked | Inspect source distribution. Many sources → likely abuse. Few sources, many legitimate-looking → raise `BOOKING_RATE_LIMIT_MAX` and see troubleshooting §6 |
 | 4 | **p95 response time** | > 1500 ms over 10 min, or 2× the pre-deploy baseline | Medium | Leading indicator of NFR-1 failure | Check cache hit rate and image optimisation volume |
 | 5 | **`/api/health` non-200** | 2 consecutive failures from an external check, 1-min interval | **Critical** | The app runtime is down | Roll back |
 | 6 | **Build / deploy failure on `main`** | Any | Medium | `main` is broken; the release path is blocked | Fix forward on a branch |
@@ -265,7 +276,16 @@ alert table with no implementation is documentation theatre.
 
 ## 7. The rate limiter: a known architectural weakness
 
-`/api/bookings` is rate-limited in memory, per process (NFR-8).
+`/api/bookings` and `/api/rides` are rate-limited in memory, per process (NFR-8), by
+one shared store in `lib/rate-limit.ts`, keyed by client address only (not by route).
+
+**"Shared across both endpoints" holds only within one process.** In the container
+path (`next start` / standalone server) both routes run in one Node process and do
+share the bucket. On Vercel, route handlers are packaged into serverless functions
+and the platform does not guarantee that `/api/bookings` and `/api/rides` land in the
+same function or instance; if they do not, each keeps its own counters and a single
+caller can reach up to `BOOKING_RATE_LIMIT_MAX` on *each* endpoint. This is unverified
+until a Vercel project exists and is covered by the same "fix when needed" below.
 
 The app runtime is **stateless and horizontally scaled**. Each instance has its own
 counter. So the effective limit is:
@@ -373,3 +393,4 @@ and recorded as an ADR before implementation.**
 | Date | Change | By |
 | --- | --- | --- |
 | 2026-09-19 | Initial infrastructure architecture: runtime topology, request-path walkthroughs, trust boundaries, logging and alerting baseline, rate-limiter weakness, backup/recovery posture, datastore migration constraints. Nothing provisioned. | DevOps Engineer |
+| 2026-09-25 | D-24: added `POST /api/rides` as a second public write endpoint sharing the `/api/bookings` pipeline, env vars and rate-limit budget. Updated §1, topology, §3.2, alerts #2/#3 and §7 (shared bucket is per-process; not guaranteed across Vercel functions). `/bookings` page is now dynamically rendered (reads `?service=`). | DevOps Engineer |

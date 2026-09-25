@@ -884,6 +884,37 @@ Also: payment card data must never reach the Noble Path origin (provider-hosted 
 - **Confirmed end to end, 2026-09-24**, against a real Resend account and a real domain-verification flow: a live request was submitted and successfully delivered, `200` with a reference id, nothing logged beyond the id and correlation id. The requester's account is under `noblepath187@gmail.com`; `BOOKINGS_NOTIFICATION_EMAIL` is set to that address as the confirmed permanent destination (not a placeholder), `RESEND_FROM_EMAIL` remains the sandbox `onboarding@resend.dev` sender, which already works for this destination without domain verification. A custom domain (`noblepathsrilanka.com`, added via Resend's Cloudflare auto-configure flow) was left mid-verification, kept only as an optional future upgrade to a branded `RESEND_FROM_EMAIL` — not required for delivery to work, since it already does.
 - **CI needed a follow-up fix the same day, exactly as predicted above**: `.github/workflows/ci.yml`'s "Production build" step failed once this ADR's env requirement went live, because nothing in that step set `RESEND_API_KEY`/`BOOKINGS_NOTIFICATION_EMAIL`. Fixed by adding the same kind of inert, non-secret placeholder that step already used for `NEXT_PUBLIC_SITE_URL: https://ci.invalid` — `RESEND_API_KEY` only needs to be a non-empty string and `BOOKINGS_NOTIFICATION_EMAIL` only needs to look like an address, so a fake value satisfies the schema without this build-only job ever calling Resend. Real secrets were deliberately **not** added to `ci.yml`: its own header comment prohibits that, because it runs on fork PRs too, and a real secret there would be exposed to them.
 
+## D-24 - Single-ride booking: a separate "A single ride" option on `/bookings` and `POST /api/rides`
+
+**Decision:** Travellers can book one point-to-point journey with a driver (for example Matara to Kandy, one way or return) without booking a full trip. `/bookings` now opens with "What would you like to book?" offering **A full trip** (the existing form, unchanged) or **A single ride** (a new, short form). A ride request is posted to a new endpoint, `POST /api/rides`, and emailed to staff exactly like a trip request.
+
+**Reason:** Requested product feature: "book a single trip like Matara to Kandy ... provide a vehicle service and add that option to the booking section separately." Before this, a vehicle could only be requested *inside* a full-trip request (airport legs, or build-your-own transport entries), which forced arrival/departure dates, nationality and a trip plan on someone who only needs a car.
+
+**Alternatives considered:**
+- **A third `planChoice` ("transport only") inside `BookingForm`** (rejected: the full-trip draft requires arrival/departure dates, nationality and at least one plan item, and its validation, summary, email and server schema are all built around that. Making those conditional would touch every part of an already-reviewed form for a flow that shares almost none of its fields).
+- **The same endpoint with a `kind` discriminator** (rejected: it changes the documented, reviewed `/api/bookings` contract and mixes two unrelated schemas' error messages in one handler).
+- **Copying the `/api/bookings` handler into a second route** (rejected: two copies of the security-reviewed pipeline would drift. The pipeline was extracted instead, see below).
+- **Pickup and drop-off chosen from destination slugs only** (rejected: a driver collects from towns, hotels and addresses that are not destinations in our content, Matara among them. Free text with a `datalist` of suggestions is used, bounded and stripped of control characters on the server).
+
+**Chosen solution:**
+- `lib/enquiry-endpoint.ts`: `handleEnquiryPost`, the D-23 pipeline (size guard → rate limit → content type → JSON → schema → honeypot → Resend) moved out of `app/api/bookings/route.ts` **with its behaviour unchanged**, parameterised by schema and email builder. `/api/bookings` and `/api/rides` are both thin wrappers over it. Both share **one rate-limit bucket per client**, so the new endpoint does not double what one caller can send.
+- `lib/ride-request.ts` (client model, `validateRide`, `submitRideRequest`), `lib/ride-validation.ts` (strict Zod schema, authoritative), `lib/ride-email.ts` (plain-text staff email, subject `Ride request <id> — <from> to <to>, <date>`).
+- `components/booking/booking-options.tsx` (the switch), `ride-form.tsx`, `ride-summary.tsx`. Both forms stay mounted and the inactive one is `hidden`, so switching never loses what was typed. `?service=ride` links straight to the ride form.
+- Request ids use the same `NP-YYYYMMDD-XXXXXX` format. Staff tell the two apart by the email subject ("Ride request" vs "Booking request").
+- `lib/booking-request.ts`: `postEnquiry(path, body)` factored out of `submitBookingRequest` so both forms map errors the same way.
+
+**Impact:**
+- New public write endpoint. It needs **no new environment variables**; it uses the same Resend and rate-limit settings as `/api/bookings`.
+- `/bookings` now reads `searchParams`, so it is rendered per request instead of statically.
+- Security review (F-5–F-8) led to `lib/safe-text.ts`, applied to **both** endpoints. Single-line fields reject control, format and line-separator characters, except ZWJ/ZWNJ, which Sinhala and Tamil need. The honeypot never fails validation. Unknown keys get a generic message. Counts must be plain digits.
+- Price: a ride is always a quotation. The site holds no ride prices, and inventing one would be inventing data (requirements §7.4).
+
+**Known limitations:**
+- No distance or drive-time estimate is shown. `getTravelMinutes` only knows destinations in our content, and pickup/drop-off are free text.
+- One vehicle per ride. A group needing two vehicles says so in the notes.
+- The return leg is always drop-off → pickup. A different return destination is a second ride request.
+- Terms wording is draft, same caveat as the trip form's `TERMS`.
+
 ---
 
 ## Pending decisions (not yet made)

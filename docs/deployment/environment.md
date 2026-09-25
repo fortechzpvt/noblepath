@@ -75,7 +75,7 @@ Every variable in `.env.example`, plus the pipeline variables.
 
 | Property | Value |
 | --- | --- |
-| **Purpose** | Destination mailbox for booking enquiries submitted via `/api/bookings` (FR-5). Noble Path staff follow up from here. |
+| **Purpose** | Destination mailbox for booking enquiries submitted via `/api/bookings` (FR-5) and single-ride requests via `/api/rides` (D-24). Noble Path staff follow up from here. |
 | **Exposure** | **SERVER-ONLY.** Never expose to the client. It is not a credential, but it is an internal operational address: publishing it invites spam directly into the booking workflow. |
 | **Required** | Yes in staging and production. Optional locally (enquiries can be logged instead of sent). |
 | **Default** | Empty in `.env.example` — there is deliberately no fallback address. |
@@ -89,15 +89,15 @@ Every variable in `.env.example`, plus the pipeline variables.
 
 | Property | Value |
 | --- | --- |
-| **Purpose** | Secret API key for [Resend](https://resend.com), used by `POST /api/bookings` (D-23) to send the notification email. |
+| **Purpose** | Secret API key for [Resend](https://resend.com), used by `POST /api/bookings` (D-23) and `POST /api/rides` (D-24) to send the notification email. |
 | **Exposure** | **SERVER-ONLY, SECRET.** Never expose to the client, never commit, never log. Treat exactly like the pipeline's `VERCEL_TOKEN` in §3. |
-| **Required** | Yes in production (`lib/env.ts` throws at startup if unset — same treatment as `BOOKINGS_NOTIFICATION_EMAIL`). Optional locally: `/api/bookings` answers `503 delivery_unavailable` instead of sending when unset, so the rest of the app stays usable without a Resend account. |
+| **Required** | Yes in production (`lib/env.ts` throws at startup if unset — same treatment as `BOOKINGS_NOTIFICATION_EMAIL`). Optional locally: `/api/bookings` and `/api/rides` answer `503 delivery_unavailable` instead of sending when unset, so the rest of the app stays usable without a Resend account. |
 | **Default** | None. |
 | **Format** | A Resend secret key, `re_...`, created in the [Resend dashboard](https://resend.com/api-keys). |
 | **Local** | A developer's own Resend key, or leave empty to exercise the 503 path |
 | **Staging** | A separate Resend key/project from production, if staging is expected to actually send mail during testing |
 | **Production** | The real Noble Path Resend key |
-| **Consequence if wrong/unset** | In production: the app refuses to start (see §7 item 1 — now enforced, not just designed). At runtime with a revoked/invalid key: Resend's API call fails, `/api/bookings` returns `502 delivery_failed`, and the failure (never the key itself) is logged server-side with a correlation id. |
+| **Consequence if wrong/unset** | In production: the app refuses to start (see §7 item 1 — now enforced, not just designed). At runtime with a revoked/invalid key: Resend's API call fails, `/api/bookings` / `/api/rides` return `502 delivery_failed`, and the failure (never the key itself) is logged server-side with a correlation id. |
 
 ### 2.2.2 `RESEND_FROM_EMAIL`
 
@@ -125,7 +125,7 @@ Every variable in `.env.example`, plus the pipeline variables.
 | **Staging** | `5` — keep it at the production value so the limit is actually exercised before release |
 | **Production** | `5` |
 | **Consequence if wrong** | Too low: legitimate visitors — especially several people behind one hotel NAT — get blocked with 429 and the enquiry is lost. Too high: the endpoint becomes a spam and email-amplification vector. |
-| **Caveat** | The limiter is **in-memory and per-instance**. The real-world ceiling is `MAX × number of live instances`. See `docs/troubleshooting/troubleshooting.md` §6. |
+| **Caveat** | The limiter is **in-memory and per-instance**. The real-world ceiling is `MAX × number of live instances`. See `docs/troubleshooting/troubleshooting.md` §6. It is one budget per client shared by `/api/bookings` and `/api/rides` (D-24) — within a single process only (`docs/architecture/infrastructure-architecture.md` §7). |
 
 ### 2.4 `BOOKING_RATE_LIMIT_WINDOW_MS`
 
@@ -280,3 +280,4 @@ deploy → verify canonical tags and Open Graph URLs → update this document.
 | --- | --- | --- |
 | 2026-09-19 | Initial specification of all four application variables from `.env.example`, pipeline secrets, per-environment storage, rotation procedures and known gaps. Nothing provisioned. | DevOps Engineer |
 | 2026-09-23 | Added `RESEND_API_KEY` and `RESEND_FROM_EMAIL` (D-23, booking delivery). Closed gap #1 — `lib/env.ts`'s startup validation is now actually exercised by `POST /api/bookings`, not dead code. | Full-Stack Engineer |
+| 2026-09-25 | D-24: `POST /api/rides` uses the same five variables as `/api/bookings`; no new variables. Updated purposes and the rate-limit caveat. | DevOps Engineer |
