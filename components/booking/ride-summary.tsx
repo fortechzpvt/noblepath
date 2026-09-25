@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { estimateRoadTrip, formatDuration, formatPoint } from "@/lib/geo";
 import type { RideDraft } from "@/lib/ride-request";
 import { vehicleLabel } from "@/lib/transfers";
 
@@ -21,14 +22,23 @@ function Row({ label, value }: { readonly label: string; readonly value: ReactNo
   );
 }
 
-/** Read-only summary of a single-ride request, shown before it is submitted. */
+/** Read-only summary of a single-trip request, shown before it is submitted. */
 export function RideSummary({ draft }: { readonly draft: RideDraft }) {
   const { ride: r, contact: c } = draft;
+  const estimate = r.pickupPoint && r.dropoffPoint ? estimateRoadTrip(r.pickupPoint, r.dropoffPoint) : null;
   return (
     <div className="flex flex-col gap-4">
-      <Block title="Your ride">
+      <Block title="Your trip">
         <Row label="From" value={r.pickup} />
+        <Row label="Pickup pin" value={r.pickupPoint ? formatPoint(r.pickupPoint) : "Not pinned"} />
         <Row label="To" value={r.dropoff} />
+        <Row label="Drop-off pin" value={r.dropoffPoint ? formatPoint(r.dropoffPoint) : "Not pinned"} />
+        {estimate ? (
+          <Row
+            label="Estimate"
+            value={`About ${estimate.km} km by road, roughly ${formatDuration(estimate.minutes)}`}
+          />
+        ) : null}
         <Row label="Outward" value={`${r.date} at ${r.time}`} />
         <Row
           label="Return"
@@ -45,7 +55,7 @@ export function RideSummary({ draft }: { readonly draft: RideDraft }) {
         <Row label="WhatsApp or phone" value={c.phone} />
       </Block>
       <Block title="Price">
-        <p>Quotation. We price the ride for your vehicle and route, and reply with a quote.</p>
+        <p>Quotation. We price the trip for your vehicle and route, and reply with a quote.</p>
       </Block>
     </div>
   );

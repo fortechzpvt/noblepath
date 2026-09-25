@@ -1,9 +1,11 @@
 # Noble Path — API Endpoints
 
-**Status:** Current as of D-24 (2026-09-25).
+**Status:** Current as of D-25 (2026-09-25).
 
-Two endpoints exist: `POST /api/bookings` (a full trip) and `POST /api/rides`
-(a single ride, D-24). Both are public (no authentication — there are no
+Two write endpoints exist: `POST /api/bookings` (a full trip) and
+`POST /api/rides` (a single trip, D-24/D-25). Two read-only lookup endpoints,
+`GET /api/places/search` and `GET /api/places/reverse` (D-25), are described
+at the end of this page. The write endpoints are public (no authentication — there are no
 accounts in v1) and are the only places a request from the browser writes
 anything. They run the same request pipeline (`lib/enquiry-endpoint.ts`), so
 the response table, honeypot behaviour and rate limiting described under
@@ -178,7 +180,9 @@ traveller's email. Nothing is persisted.
 {
   "contact": { "fullName": "Asha Fernando", "email": "asha@example.com", "phone": "+94 77 123 4567" },
   "ride": {
-    "pickup": "Matara", "dropoff": "Kandy",
+    "pickup": "Mannar", "dropoff": "Jaffna",
+    "pickupPoint": { "lat": 8.98129, "lng": 79.90439 },
+    "dropoffPoint": { "lat": 9.66509, "lng": 80.0093 },
     "date": "2026-11-01", "time": "08:30",
     "tripType": "return", "returnDate": "2026-11-03", "returnTime": "15:00",
     "vehicle": "van", "passengers": "3", "luggage": "2",
@@ -194,6 +198,7 @@ traveller's email. Nothing is persisted.
 | `contact.email` | Valid address, ≤ 254 characters, lower-cased. |
 | `contact.phone` | Same permissive international pattern as `/api/bookings`. |
 | `ride.pickup`, `ride.dropoff` | Free text, 2–120 characters, single line (no control, format or line-separator characters; see `lib/safe-text.ts`). Must differ from each other (case- and space-insensitive). Not checked against content: a driver can collect from any town, hotel or address. |
+| `ride.pickupPoint`, `ride.dropoffPoint` | Optional map pins (D-25): `null` or `{ "lat": number, "lng": number }` (strict; JSON numbers, not strings) inside Sri Lanka (lat 5.7–10.1, lng 79.4–82.1). Rounded to 5 decimals (~1 m) on the server. Pins under 100 m apart are rejected as "the same place". When present they appear in the staff email with Google Maps links, a directions link and a straight-line-based distance/time estimate. |
 | `ride.date` | Real ISO date, not before yesterday (UTC, slack for UTC+13), at most 2 years ahead. |
 | `ride.time`, `ride.returnTime` | `HH:MM`, 24-hour, local Sri Lanka time. |
 | `ride.tripType` | `"one-way"` or `"return"`. |
@@ -215,3 +220,52 @@ the cross-field checks (pickup ≠ drop-off, date range, return rules) only
 once every individual field is valid, so a request with, say, an unknown
 vehicle *and* a past date reports only the vehicle first. The form catches
 both client-side before sending, so a traveller never sees this ordering.
+
+---
+
+## `GET /api/places/search`
+
+Sri Lankan places matching a query, for the single-trip pickup and drop-off
+fields (FR-5.7, D-25). Read-only. The server calls Photon (OpenStreetMap
+data) on the browser's behalf — the browser never contacts the provider —
+see `lib/places.ts` and D-25.
+
+**Request:** `?q=<text>`: 2–80 characters, single line (`lib/safe-text.ts`).
+
+**Response `200`:**
+
+```jsonc
+{ "places": [ { "name": "Mannar", "detail": "Mannar District", "lat": 8.98129, "lng": 79.90439 } ] }
+```
+
+At most 6 results, only in Sri Lanka, coordinates rounded to 5 decimals.
+`detail` may be `""`. An empty array means nothing matched.
+
+## `GET /api/places/reverse`
+
+The nearest named place to a point, used to label a map pin or the
+traveller's current location.
+
+**Request:** `?lat=<n>&lng=<n>`: decimal numbers inside Sri Lanka. The point
+is sent by our client at 4 decimals (~11 m) and coarsened to 4 decimals again before it goes upstream.
+
+**Response `200`:** `{ "place": { "name", "detail", "lat", "lng" } }`, or
+`{ "place": null }` when nothing named is nearby. The `lat`/`lng` are the
+*named feature's*, not the pin's; the client keeps its own pin and uses only
+the name.
+
+### Shared behaviour (both lookup endpoints)
+
+| Status | `error.code` | Meaning |
+| --- | --- | --- |
+| `200` | — | See above. |
+| `400` | `validation_failed` | Query too short, over 80 characters or not single-line (each with its own message); point missing, malformed or outside Sri Lanka. |
+| `403` | `forbidden` | A browser request from another site: `Sec-Fetch-Site` present and not `same-origin`, or an `Origin` that is not ours (F-10). Requests with neither header are allowed and still rate-limited. |
+| `429` | `rate_limited` | Over 60 lookups per minute for this client. `Retry-After` set. **Separate limiter with its own store** (`createRateLimiter`, F-9), so searching can never use up, sweep or evict a traveller's booking allowance. |
+| `503` | `lookup_unavailable` | Photon timed out (4 s), errored, or the whole-app upstream cap (5 requests/second) was reached. The form falls back to built-in towns and free text. The provider's error is never forwarded; it is logged with the correlation id. |
+| `405` | `method_not_allowed` | Any method but `GET`. `Allow: GET`. |
+
+Successful lookups are cached in memory for 24 hours (up to 2,000 entries,
+per server instance), keyed on the normalised query or the coarsened point.
+Neither the query nor the point is logged by the app. The platform's access logs may still record request URLs, which is why the client sends reverse lookups at only 4 decimals (F-11). `Cache-Control: no-store` applies,
+as for every `/api/*` route.

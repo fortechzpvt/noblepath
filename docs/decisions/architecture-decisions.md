@@ -915,6 +915,56 @@ Also: payment card data must never reach the Noble Path origin (provider-hosted 
 - The return leg is always drop-off → pickup. A different return destination is a second ride request.
 - Terms wording is draft, same caveat as the trip form's `TERMS`.
 
+## D-25 - Single trip: search, map pins and "Use my current location"
+
+**Decision:** The single-ride option on `/bookings` is now presented as **"A single trip"**. Its pickup and drop-off can be set, a simpler version of how a ride-hailing app does it, in three ways:
+- searching a place (instant built-in towns plus live results);
+- tapping or dragging A/B pins on a map;
+- "Use my current location" for the pickup.
+
+A dashed line joins the pins, and a rough distance and drive time are shown. The pins travel with the request, and the staff email includes map and directions links built from them. Typed text stays required and the pins stay optional, so the form never depends on the map.
+
+**Reason:** Requested feature: "select a location from the map ... Mannar to Jaffna ... put the current location and set the destination, simply like Uber but not that advanced, only one trip." Pins also remove the ambiguity of free-text addresses for the driver.
+
+**Alternatives considered:**
+- **A separate "single trip" form** (rejected: it would duplicate the D-24 single-ride form, its endpoint and its security review).
+- **The browser calling the geocoder directly** (rejected: the CSP's `connect-src 'self'` would have to be widened, and every keystroke would send the traveller's IP address and User-Agent to a third party). A same-origin proxy (`/api/places/*`) is used instead. It also lets us cache, bound and rate-limit upstream use.
+- **Nominatim (OSM's own geocoder)** (rejected: its public usage policy forbids search-as-you-type and caps use at one request per second for the whole app). **Photon** (komoot, also OSM data) supports search-as-you-type, needs no API key and has a reverse endpoint.
+- **Google Places / Mapbox** (rejected for now: they need an account, a key and billing, and bring their own terms on displaying results. Swapping provider later only changes `lib/places.ts`).
+- **A routing service (OSRM, Google Directions) for real road distance** (rejected: the public OSRM server is not for production use, and "not that advanced" was the brief. A straight-line × 1.3 estimate, the same rule the planner already uses, is shown and clearly labelled as an estimate).
+- **Requiring a pin** (rejected: the map cannot be used by keyboard or screen reader, and may fail to load. The text field stays the accessible, always-working path).
+
+**Chosen solution:**
+- `lib/places.ts` (server only): the Photon client.
+  - 4 s timeout, a cap of 5 upstream requests per second for the whole app, and a 24 h in-memory cache.
+  - Results are kept only if they are in Sri Lanka, and only name, detail and coordinates are passed on.
+  - Reverse lookups coarsen the point to 4 decimals (about 11 m) before it leaves our server.
+- `GET /api/places/search`, `GET /api/places/reverse`: per-client limit of 60 per minute, in a **separate** bucket from bookings.
+- `lib/geo.ts` (bounds, rounding, estimate, link builders; `lib/content.ts` now imports its road constants from here) and `lib/known-places.ts` (43 towns and airports with OpenStreetMap coordinates, the instant suggestions and the fallback when search is down).
+- `RideDetails.pickupPoint` / `dropoffPoint`: nullable, validated inside Sri Lanka and rounded to 5 decimals (about 1 m). Typing in a field clears its pin, so a pin never disagrees with the visible text. Pins under 100 m apart count as the same place.
+- UI: `place-search-field.tsx` (ARIA combobox), `trip-map.tsx` (Leaflet, divIcon A/B pins, map taps limited to Sri Lanka), and changes to `ride-form.tsx` and `ride-summary.tsx`.
+- `next.config.ts`: `Permissions-Policy` `geolocation=()` → `geolocation=(self)`. Location is requested only when the button is pressed.
+
+**Impact:**
+- **A new third-party dependency (Photon) at runtime.** When it is down or slow, search degrades to the built-in towns and free text; booking is unaffected.
+- **New read-only public endpoints.** They add upstream traffic, which the cache and cap bound.
+- **Privacy:** the traveller's location, when they choose to share it, and any pins reach our server and the staff email. The terms text says so.
+- No new environment variables.
+- The security review (F-9 to F-13) led to these changes:
+  - `lib/rate-limit.ts` now creates one independent limiter per limit. Previously a short-window limiter's sweep could reset the booking limit.
+  - Cross-site calls to the place endpoints now get a 403.
+  - Reverse-lookup URLs carry 4 decimals.
+  - Provider text is sanitised.
+  - The terms name the geocoder and the map-tile provider.
+
+**Known limitations:**
+- **No privacy page.** The site still has no privacy page (security review F-11).
+- **No SLA on Photon.** The public Photon service has no SLA and is fair-use only. For real volume, self-host Photon or move to a paid provider.
+- **Per-instance limits and cache.** The rate limits and the cache are per server instance, the same caveat as `lib/rate-limit.ts`.
+- **Estimate only.** The drive-time figure is straight-line based and not a route. Staff check the real route with the directions link.
+- **"Near …" labels.** A reverse-geocoded label names the *nearest named feature*, which may be a shop or hotel beside the pin. The pin itself is authoritative.
+- **No keyboard dragging.** The map pins can't be dragged by keyboard, so keyboard users set places through search.
+
 ---
 
 ## Pending decisions (not yet made)

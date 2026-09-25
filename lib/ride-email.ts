@@ -1,3 +1,10 @@
+import {
+  directionsLinkFor,
+  estimateRoadTrip,
+  formatDuration,
+  formatPoint,
+  mapLinkFor,
+} from "@/lib/geo";
 import type { RideEnquiry } from "@/lib/ride-validation";
 import { sanitiseSubjectFragment } from "@/lib/safe-text";
 import { vehicleLabel } from "@/lib/transfers";
@@ -22,12 +29,21 @@ export function buildRideEmail(
     add("-".repeat(title.length));
   };
 
-  add(`Single ride request ${id}`);
+  add(`Single trip request ${id}`);
   add();
 
-  heading("Ride");
+  heading("Trip");
   add(`From: ${r.pickup}`);
+  if (r.pickupPoint) add(`  Pin: ${formatPoint(r.pickupPoint)} — ${mapLinkFor(r.pickupPoint)}`);
   add(`To: ${r.dropoff}`);
+  if (r.dropoffPoint) add(`  Pin: ${formatPoint(r.dropoffPoint)} — ${mapLinkFor(r.dropoffPoint)}`);
+  if (r.pickupPoint && r.dropoffPoint) {
+    const estimate = estimateRoadTrip(r.pickupPoint, r.dropoffPoint);
+    add(`Directions: ${directionsLinkFor(r.pickupPoint, r.dropoffPoint)}`);
+    add(`Rough estimate: about ${estimate.km} km, ${formatDuration(estimate.minutes)} by road (straight-line based, check the route).`);
+  } else {
+    add("Pins: not set for both ends — confirm the exact addresses with the traveller.");
+  }
   add(`Outward: ${r.date} at ${r.time} (local Sri Lanka time)`);
   add(r.tripType === "return" ? `Return: ${r.returnDate} at ${r.returnTime}, ${r.dropoff} to ${r.pickup}` : "Return: one way only");
   add(`Vehicle: ${vehicleLabel(r.vehicle)}`);
@@ -43,13 +59,13 @@ export function buildRideEmail(
   add();
 
   heading("Estimated price");
-  add("Quotation — price the ride and reply to the traveller.");
+  add("Quotation — price the trip and reply to the traveller.");
   add();
 
   add(`Reply to this email to reach the traveller directly at ${c.email}.`);
 
   const subject = sanitiseSubjectFragment(
-    `Ride request ${id} — ${r.pickup} to ${r.dropoff}, ${r.date}`,
+    `Single trip request ${id} — ${r.pickup} to ${r.dropoff}, ${r.date}`,
   );
   return { subject, text: lines.join("\n") };
 }
