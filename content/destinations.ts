@@ -4,9 +4,10 @@ import type { Destination, ImageAsset } from "@/lib/types";
  * The five hero-quality photographs used for site-wide headers and categories —
  * some owned by Noble Path, one (`sigiriyaSunrise`) freely-licensed stock swapped
  * in 2026-09-20 to replace a low-resolution original. `credit` records which
- * is which. Destinations have their own photographs (`destinationPhotos`, D-26);
- * experiences and packages still reuse the closest of these five until the
- * owned library is complete (requirements §7.3). `alt` always describes the
+ * is which. Destinations and experiences have their own photographs
+ * (`destinationPhotos` D-26, `experiencePhotos` D-27); trip packages still
+ * reuse the closest of these five until the owned library is complete
+ * (requirements §7.3). `alt` always describes the
  * photograph that is actually rendered, never the page it sits on, because a
  * screen-reader user must be told what is really on screen.
  *

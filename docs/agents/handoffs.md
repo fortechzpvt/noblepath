@@ -847,3 +847,33 @@ use the current location for the pickup. Like Uber, but simpler and one trip onl
    Mirissa (4:3 aerial).
 2. Approve or swap the judgement-call picks.
 3. Commit and open a PR.
+
+---
+
+## Handoff: cinematic experience photography (D-27), 2026-09-29
+
+**From:** Orchestrator (three UI/UX curator agents plus Full-Stack integration)
+**To:** Human reviewer and UI/UX Designer
+
+**Completed:**
+- 30 experiences now have their own Commons photograph. Three keep an owned photograph.
+- `/credits` covers experiences.
+
+**Files changed:**
+- `public/images/experiences/*.jpg`: 30 files. Old unsourced files were overwritten or
+  replaced.
+- `content/experiences.ts` (`experiencePhotos`), `content/destinations.ts` (comment),
+  `app/credits/page.tsx`.
+- Docs: D-27, the credits register, README, this handoff.
+
+**Tests:**
+- `tsc`, eslint and `next build` pass.
+- Checked with curl against `next start`:
+  - `/credits` lists 50 Commons-credited photos;
+  - the home "Experiences worth the detour" band serves the new files.
+- **Not done:** any browser visual check.
+
+**Required action (human):**
+1. Review the nine judgement calls in the register, especially Ayurveda.
+2. Look at the home experiences band and at a destination page's experience list.
+3. Commit, and push with the D-26 changes.

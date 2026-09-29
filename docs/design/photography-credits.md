@@ -55,6 +55,63 @@ than a perfect one, and are the first candidates to replace with commissioned ph
 - **wilpattu:** flat light.
 - **horton-plains:** the grasslands rather than World's End.
 
+## Experience photographs (D-27, sourced 2026-09-29)
+
+Same sourcing and processing as the destination set, and none repeats a destination
+photograph. Where Commons allows, each photograph shows the activity rather than the town.
+`sri-lankan-cooking-class.jpg` is trimmed 5% at the bottom and 4% at the right to remove a
+stray foot at the edge. That is still a resize and trim, not an adaptation.
+
+| Slug | File | Commons source | Author | Licence | Original size |
+|---|---|---|---|---|---|
+| adams-peak-night-climb | `public/images/experiences/adams-peak-night-climb.jpg` | [File:Shadow of the peak when sun rising.jpg](https://commons.wikimedia.org/wiki/File:Shadow_of_the_peak_when_sun_rising.jpg) | Sameera Madusanka | CC BY-SA 4.0 | 5438×3625 |
+| anuradhapura-sacred-city-tour | `public/images/experiences/anuradhapura-sacred-city-tour.jpg` | [File:The Jetavanarama stupa.jpg](https://commons.wikimedia.org/wiki/File:The_Jetavanarama_stupa.jpg) | MinugaV | CC BY-SA 4.0 | 3456×2304 |
+| arugam-bay-surf-session | `public/images/experiences/arugam-bay-surf-session.jpg` | [File:Panama, Beach, 2025-07 CN-02.jpg](https://commons.wikimedia.org/wiki/File:Panama,_Beach,_2025-07_CN-02.jpg) | Steffen Schmitz | CC BY-SA 4.0 | 4915×3295 |
+| ayurveda-wellness-retreat | `public/images/experiences/ayurveda-wellness-retreat.jpg` | [File:Spices for Sale - Negombo - Sri Lanka (14050176727).jpg](https://commons.wikimedia.org/wiki/File:Spices_for_Sale_-_Negombo_-_Sri_Lanka_(14050176727).jpg) | Adam Jones from Kelowna, BC, Canada | CC BY-SA 2.0 | 3648×2736 |
+| colombo-street-food-walk | `public/images/experiences/colombo-street-food-walk.jpg` | [File:Floating Market Lk.jpg](https://commons.wikimedia.org/wiki/File:Floating_Market_Lk.jpg) | Heshan93 | CC BY-SA 4.0 | 4128×3096 |
+| dambulla-cave-temple | `public/images/experiences/dambulla-cave-temple.jpg` | [File:Statue of the Buddha reclining in the Dambulla cave temple, Dambulla, Sri Lanka, 20260201 1419 8127.jpg](https://commons.wikimedia.org/wiki/File:Statue_of_the_Buddha_reclining_in_the_Dambulla_cave_temple,_Dambulla,_Sri_Lanka,_20260201_1419_8127.jpg) | Jakub Hałun | CC BY 4.0 | 5736×3829 |
+| ella-rock-sunrise-hike | `public/images/experiences/ella-rock-sunrise-hike.jpg` | [File:The beautiful sun rise in ELLA Srilanka.jpg](https://commons.wikimedia.org/wiki/File:The_beautiful_sun_rise_in_ELLA_Srilanka.jpg) | Thavi21 | CC BY-SA 4.0 | 6000×4000 |
+| ella-yoga-morning | `public/images/experiences/ella-yoga-morning.jpg` | [File:Ella Gap (Valley), mountains of Sri Lanka.jpg](https://commons.wikimedia.org/wiki/File:Ella_Gap_(Valley),_mountains_of_Sri_Lanka.jpg) | Vyacheslav Argenberg | CC BY 4.0 | 3072×2048 |
+| galle-fort-walking-tour | `public/images/experiences/galle-fort-walking-tour.jpg` | [File:GALLE FORT AND LIGHTHOUSE GALLE SRI LANKA JAN2013 (8510167078).jpg](https://commons.wikimedia.org/wiki/File:GALLE_FORT_AND_LIGHTHOUSE_GALLE_SRI_LANKA_JAN2013_(8510167078).jpg) | calflier001 | CC BY-SA 2.0 | 4106×2967 |
+| hikkaduwa-reef-snorkelling | `public/images/experiences/hikkaduwa-reef-snorkelling.jpg` | [File:Follow the sea turtle.jpg](https://commons.wikimedia.org/wiki/File:Follow_the_sea_turtle.jpg) | Jithma Kalingu | CC BY-SA 4.0 | 4608×3456 |
+| horton-plains-worlds-end | `public/images/experiences/horton-plains-worlds-end.jpg` | [File:World's End 2.jpg](https://commons.wikimedia.org/wiki/File:World%27s_End_2.jpg) | Schnobby | CC BY-SA 3.0 | 4000×2672 |
+| jaffna-peninsula-tour | `public/images/experiences/jaffna-peninsula-tour.jpg` | [File:Sunset Over Lagoon2.jpg](https://commons.wikimedia.org/wiki/File:Sunset_Over_Lagoon2.jpg) | Indi Samarajiva | CC BY 2.0 | 3648×2736 |
+| kandy-to-ella-train | `public/images/experiences/kandy-to-ella-train.jpg` | [File:Railway track from Kandy to Ella, Sri Lanka.jpg](https://commons.wikimedia.org/wiki/File:Railway_track_from_Kandy_to_Ella,_Sri_Lanka.jpg) | Deshanktd | CC BY-SA 4.0 | 4928×3264 |
+| koneswaram-temple-visit | `public/images/experiences/koneswaram-temple-visit.jpg` | [File:Koneswaram Temple - panoramio.jpg](https://commons.wikimedia.org/wiki/File:Koneswaram_Temple_-_panoramio.jpg) | Alexey Komarov | CC BY 3.0 | 4601×3067 |
+| little-adams-peak-and-nine-arch | `public/images/experiences/little-adams-peak-and-nine-arch.jpg` | [File:Little adams park sri lanka.jpg](https://commons.wikimedia.org/wiki/File:Little_adams_park_sri_lanka.jpg) | Hs Lamahewage | CC BY-SA 4.0 | 4288×2848 |
+| minneriya-elephant-gathering | `public/images/experiences/minneriya-elephant-gathering.jpg` | [File:Elephants gather for water in the plains at Minneriya National Park in Sri Lanka. It is one of the largest gathering of - Flickr - Al Jazeera English.jpg](https://commons.wikimedia.org/wiki/File:Elephants_gather_for_water_in_the_plains_at_Minneriya_National_Park_in_Sri_Lanka._It_is_one_of_the_largest_gathering_of_-_Flickr_-_Al_Jazeera_English.jpg) | Al Jazeera English | CC BY-SA 2.0 | 5616×3744 |
+| mirissa-whale-watching | `public/images/experiences/mirissa-whale-watching.jpg` | [File:Big blue fish 2.jpg](https://commons.wikimedia.org/wiki/File:Big_blue_fish_2.jpg) | TatianaPashko | CC BY 4.0 | 3456×2304 |
+| negombo-lagoon-and-canal-boat | `public/images/experiences/negombo-lagoon-and-canal-boat.jpg` | [File:Boats Anchored in Negambo Lagoon.jpg](https://commons.wikimedia.org/wiki/File:Boats_Anchored_in_Negambo_Lagoon.jpg) | Deshan Ruhunage | CC BY-SA 4.0 | 4000×3000 |
+| pidurangala-sunrise | `public/images/experiences/pidurangala-sunrise.jpg` | [File:Sunrise at Sigiriya.jpg](https://commons.wikimedia.org/wiki/File:Sunrise_at_Sigiriya.jpg) | Abishek Palraj | CC BY-SA 4.0 | 5472×3648 |
+| pigeon-island-snorkelling | `public/images/experiences/pigeon-island-snorkelling.jpg` | [File:Dive in pigeon island.jpg](https://commons.wikimedia.org/wiki/File:Dive_in_pigeon_island.jpg) | Kalana Weeramuni | CC BY-SA 4.0 | 4000×3000 |
+| polonnaruwa-cycle-tour | `public/images/experiences/polonnaruwa-cycle-tour.jpg` | [File:Polonnaruwa quadrangle Sri Lanka 2.jpg](https://commons.wikimedia.org/wiki/File:Polonnaruwa_quadrangle_Sri_Lanka_2.jpg) | Stuart Pinkney | CC BY 2.0 | 3008×2000 |
+| royal-botanic-gardens-peradeniya | `public/images/experiences/royal-botanic-gardens-peradeniya.jpg` | [File:Conservatory near the Palmyra palm avenue.jpg](https://commons.wikimedia.org/wiki/File:Conservatory_near_the_Palmyra_palm_avenue.jpg) | Royal Botanic Gardens, Peradeniya | CC BY-SA 4.0 | 5760×3840 |
+| sigiriya-sunrise-climb | `public/images/experiences/sigiriya-sunrise-climb.jpg` | [File:Sigiriya 0168.jpg](https://commons.wikimedia.org/wiki/File:Sigiriya_0168.jpg) | Michael Gunther | CC BY-SA 4.0 | 2592×1944 |
+| sri-lankan-cooking-class | `public/images/experiences/sri-lankan-cooking-class.jpg` | [File:Sri Lanka Trip -104 (32115057607).jpg](https://commons.wikimedia.org/wiki/File:Sri_Lanka_Trip_-104_(32115057607).jpg) | Weldon Kennedy from London, UK | CC BY 2.0 | 5472×3648 |
+| stilt-fishing-koggala | `public/images/experiences/stilt-fishing-koggala.jpg` | [File:Riti Panna.jpg](https://commons.wikimedia.org/wiki/File:Riti_Panna.jpg) | Ellis jarton | CC BY-SA 4.0 | 4404×2909 |
+| tea-estate-and-factory-tour | `public/images/experiences/tea-estate-and-factory-tour.jpg` | [File:20160127 Sri Lanka 4060 crop sRGB (25674524341).jpg](https://commons.wikimedia.org/wiki/File:20160127_Sri_Lanka_4060_crop_sRGB_(25674524341).jpg) | Dan Lundberg | CC BY-SA 2.0 | 3104×2328 |
+| temple-of-the-tooth | `public/images/experiences/temple-of-the-tooth.jpg` | [File:Temple of the tooth 2023.jpg](https://commons.wikimedia.org/wiki/File:Temple_of_the_tooth_2023.jpg) | Zarniwoop und Zarquon | CC BY 4.0 | 6014×4003 |
+| udawalawe-elephant-safari | `public/images/experiences/udawalawe-elephant-safari.jpg` | [File:Udawalawe national park.jpg](https://commons.wikimedia.org/wiki/File:Udawalawe_national_park.jpg) | Ganiarachchi | CC BY-SA 4.0 | 2048×1366 |
+| wilpattu-wilderness-safari | `public/images/experiences/wilpattu-wilderness-safari.jpg` | [File:Sri Lankan leopard-Panthera pardus kotiya.jpg](https://commons.wikimedia.org/wiki/File:Sri_Lankan_leopard-Panthera_pardus_kotiya.jpg) | Senthiaathavan | CC BY 4.0 | 3227×2151 |
+| yala-leopard-safari | `public/images/experiences/yala-leopard-safari.jpg` | [File:Leopard on stone in Yala National Park.jpg](https://commons.wikimedia.org/wiki/File:Leopard_on_stone_in_Yala_National_Park.jpg) | Byrdyak | CC BY-SA 4.0 | 3700×2462 |
+
+The owned photographs are kept for the three experiences they already show: `tuktuk-road-trip`,
+`yala-jungle-villa-stay` and `weligama-surf-lesson`.
+
+**Judgement calls (reviewable):**
+- **ayurveda-wellness-retreat:** market spice bowls. Commons has no usable photo of a
+  treatment, so this is the first candidate for commissioned photography.
+- **colombo-street-food-walk:** Pettah floating market at dusk. No food is visible.
+- **arugam-bay-surf-session:** Panama Beach, about 12 km south, not Main Point.
+- **pigeon-island-snorkelling:** shows a scuba diver, not a snorkeller.
+- **hikkaduwa-reef-snorkelling:** a turtle in Sri Lanka, but the exact site is unconfirmed.
+- **mirissa-whale-watching:** a whale off Sri Lanka; the series is tagged Mirissa, but this
+  file is not.
+- **stilt-fishing-koggala:** the south coast; the exact beach is unnamed.
+- **udawalawe-elephant-safari:** the source is 2048 px wide, so it may be soft at hero size.
+- **royal-botanic-gardens-peradeniya:** Commons names the institution as the author, and the
+  credit reproduces that.
+
 ## Owned / site-wide photographs
 
 The `ownedPhotos` entries in `content/destinations.ts`: the Noble Path photo library, plus
@@ -62,7 +119,7 @@ the Sigiriya hero above. These are credited as "Noble Path photo library".
 
 ## Unreferenced files
 
-`public/images/experiences/*` (except the three owned files `surfing-south-coast.jpg`,
-`jungle-villa-yala.jpg` and `tuktuk-road-trip.jpg`) were committed with no recorded
-provenance and are **not used**. They must not be referenced until they are re-sourced
+The old unsourced files in `public/images/experiences/` were all overwritten by the D-27 set;
+every file in that folder is now either owned or listed above. `public/images/trips/*` was
+committed with no recorded provenance and is **not used**. They must not be referenced until they are re-sourced
 with a row in this register.

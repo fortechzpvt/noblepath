@@ -1020,6 +1020,64 @@ the same tuk-tuk, and alt text that described a photo unrelated to the page's pl
 
 ---
 
+## D-27 - Every experience gets its own cinematic photograph
+
+**Date:** 2026-09-29 · **Decided by:** Orchestrator, with the UI/UX Designer (curation) and Full-Stack Engineer
+
+**Decision:** 30 of the 33 experiences now have their own Wikimedia Commons photograph, under
+`public/images/experiences/<slug>.jpg`. Where Commons allows, the photo shows the activity
+itself: the Lion Staircase, a whale fluke, the peak's shadow, stilt fishermen, the view from
+a train doorway. Three experiences keep the owned photograph that already shows exactly that
+activity: the tuk-tuk road trip, the Yala jungle villa and the Weligama surf lesson.
+
+**Reason:** This was a follow-up to D-26 ("Experiences worth the detour ... we are using the
+same image"). The 33 experiences shared five photographs.
+
+**Chosen solution:**
+- The same pipeline and rules as D-26. Curators were also told not to reuse any destination
+  photograph, so no image appears twice on a destination page.
+- `experiencePhotos` is in `content/experiences.ts`.
+- `/credits` now also lists experience photos.
+
+**Impact:**
+- About 17 MB of source JPEG is added to the repo.
+- No new origin, CSP change or environment variable.
+
+**Known limitations:** nine picks are judgement calls, listed in
+`docs/design/photography-credits.md`. The most notable:
+- Ayurveda shows market spices, because no free treatment photo exists.
+- Arugam Bay surfing is at Panama Beach.
+- Pigeon Island shows scuba rather than snorkelling.
+
+Trip packages still reuse the five owned photos. As with D-26, there has been no browser
+visual check.
+
+---
+
+## D-28 - Site favicon from the Noble Path "NP" monogram
+
+**Date:** 2026-09-29 · **Decided by:** Orchestrator (Full-Stack Engineer)
+
+**Decision:** The "NP" monogram is the site icon, using Next.js file conventions:
+- `app/favicon.ico`: 16, 32 and 48 px, cropped tight so it stays legible in a tab;
+- `app/icon.png`: 192 px;
+- `app/apple-icon.png`: 180 px, with extra padding because iOS rounds the corners.
+
+Next.js emits the `<link rel="icon">` and `<link rel="apple-touch-icon">` tags itself. No
+metadata or layout code was changed, and none is needed.
+
+**Reason:** Requested. The supplied source was a 288 px JPEG named `favicon.ico` in the repo
+root. Next.js does not serve files from the root, and the file was not a real ICO, so it was
+converted and the root file was removed.
+
+**Known limitations:**
+- The monogram's thin serif strokes are faint at 16 px.
+- No vector or higher-resolution master was supplied, so `icon.png` is capped at 192 px.
+  If a 512 px or SVG logo becomes available, replace `app/icon.png` or add `app/icon.svg`.
+- Browsers cache favicons heavily, so a hard refresh may be needed after deploy.
+
+---
+
 ## Pending decisions (not yet made)
 
 These are open and must be decided before the relevant work starts. Listed so they are visible rather than rediscovered mid-build.
