@@ -805,3 +805,45 @@ use the current location for the pickup. Like Uber, but simpler and one trip onl
 2. Send one real trip request and check the links in the staff email.
 3. Decide on the naming and on a privacy page.
 4. Commit and open a PR.
+
+---
+
+## Handoff: cinematic destination photography (D-26), 2026-09-29
+
+**From:** Orchestrator (three UI/UX curator agents plus Full-Stack integration)
+**To:** Human reviewer. The UI/UX Designer should run a visual pass in the browser.
+
+**Completed:**
+- 20 destinations now have their own Wikimedia Commons photograph, 2400 px, with EXIF stripped.
+  Sigiriya is unchanged.
+- There is a new `/credits` page, linked from the footer, and a new `photography-credits.md`
+  register.
+
+**Files changed:**
+- `public/images/destinations/*.jpg`: 19 files replaced, plus a new `ella-nine-arch.jpg`.
+- `content/destinations.ts` (`destinationPhotos`), `lib/types.ts` (`sourceUrl`, `licenceUrl`).
+- `app/credits/page.tsx` (new), `components/site-footer.tsx`.
+- Docs: D-26, a note on ADR-006, `photography-credits.md`, README, this handoff.
+
+**Tests:**
+- `tsc`, eslint and `next build` (CI placeholder env) all pass.
+- Checked with curl against `next start`:
+  - the detail pages reference the new images;
+  - `/credits` lists all 20 with Commons links;
+  - the footer links to `/credits`;
+  - the optimiser serves AVIF.
+- **Not done:** any browser visual check, because the Chrome extension did not respond.
+
+**Security:**
+- No new origin: images are self-hosted and the CSP is unchanged.
+- Outbound links on `/credits` use `rel="noopener"`.
+- Images were re-encoded, which strips EXIF, including any GPS data.
+
+**Known issues:** see the known limitations in D-26, including the six judgement-call picks.
+
+**Required action (human):**
+1. Look at `/destinations` and at a few detail pages on desktop and mobile. Check that the
+   hero text sits on a quiet part of each photo, especially Polonnaruwa (a tight crop) and
+   Mirissa (4:3 aerial).
+2. Approve or swap the judgement-call picks.
+3. Commit and open a PR.

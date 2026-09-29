@@ -1,14 +1,14 @@
 import type { Destination, ImageAsset } from "@/lib/types";
 
 /**
- * The five hero-quality photographs currently in use across the site — some
- * owned by Noble Path, one (`sigiriyaSunrise`) freely-licensed stock swapped
+ * The five hero-quality photographs used for site-wide headers and categories —
+ * some owned by Noble Path, one (`sigiriyaSunrise`) freely-licensed stock swapped
  * in 2026-09-20 to replace a low-resolution original. `credit` records which
- * is which. Until the owned library is complete (requirements §7.3) every
- * other destination, experience and package reuses the closest of these
- * five. `alt` always describes the photograph that is actually rendered,
- * never the page it sits on, because a screen-reader user must be told what
- * is really on screen. Tracked as a known limitation.
+ * is which. Destinations have their own photographs (`destinationPhotos`, D-26);
+ * experiences and packages still reuse the closest of these five until the
+ * owned library is complete (requirements §7.3). `alt` always describes the
+ * photograph that is actually rendered, never the page it sits on, because a
+ * screen-reader user must be told what is really on screen.
  *
  * Exported from this module (rather than a separate file) so that experiences
  * and trips share one definition of each photograph's alt text and credit.
@@ -38,6 +38,157 @@ export const ownedPhotos = {
     src: "/images/experiences/tuktuk-road-trip.jpg",
     alt: "Travellers skateboarding behind a tuk-tuk on an empty palm-lined road.",
     credit: "Noble Path photo library",
+  },
+} as const satisfies Record<string, ImageAsset>;
+
+/**
+ * One photograph per destination (D-26). Freely-licensed images from Wikimedia
+ * Commons, chosen for cinematic light and composition, resized to 2400 px and
+ * self-hosted under /images/destinations (ADR-006). Author, licence and source
+ * are recorded here and rendered on /credits, which is how the CC BY / CC BY-SA
+ * attribution obligation is met. Full register: docs/design/photography-credits.md.
+ * Sigiriya keeps `ownedPhotos.sigiriyaSunrise`, which is already its own place.
+ */
+const destinationPhotos = {
+  adamsPeak: {
+    src: "/images/destinations/adams-peak.jpg",
+    alt: "Buddhist prayer flags fluttering on the summit of Adam's Peak at sunrise, layered blue ridges and mist-filled valleys glowing beneath an orange sky.",
+    credit: "Photo by Eli Solidum / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Sunrise_from_the_top_of_Sri_Pada_(Adam%27s_Peak)_Sri_Lanka.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  anuradhapura: {
+    src: "/images/destinations/anuradhapura.jpg",
+    alt: "The brilliant white dome of Ruwanwelisaya stupa in Anuradhapura, ringed by its wall of carved elephants, rising against towering monsoon clouds.",
+    credit: "Photo by KennyOMG / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Ruwanweli_Saya_1.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  arugamBay: {
+    src: "/images/destinations/arugam-bay.jpg",
+    alt: "A fiery orange sun rising over breaking surf at Arugam Bay, a small fishing boat silhouetted on the horizon.",
+    credit: "Photo by Lakshitha Vithanage / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:DSC_5813-2.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  colombo: {
+    src: "/images/destinations/colombo.jpg",
+    alt: "Colombo's glittering night skyline seen from high above, lit apartment towers rising over a sea of city lights beneath a dark, cloud-heavy sky.",
+    credit: "Photo by Thilina Alagiyawanna / CC0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Stunning_Night_View_of_Colombo_City_Skyline.jpg",
+    licenceUrl: "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  },
+  dambulla: {
+    src: "/images/destinations/dambulla.jpg",
+    alt: "A long procession of golden standing Buddha statues, hands raised in blessing, receding beneath the vividly painted rock ceiling of the Dambulla cave temple.",
+    credit: "Photo by Philip Nalangan / CC BY 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Buddha_Dambulla_6.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/4.0",
+  },
+  ella: {
+    src: "/images/destinations/ella-nine-arch.jpg",
+    alt: "A blue-and-red train curving across the stone arches of Ella's Nine Arch Bridge, morning mist drifting over the tea-covered hills beyond.",
+    credit: "Photo by Alexey Komarov / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Nine_Arches_Bridge,_Demodara_2023-04-29-2.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  galle: {
+    src: "/images/destinations/galle.jpg",
+    alt: "Galle's white lighthouse, lamp glowing at dusk, framed by palms on the fort ramparts beneath a brooding sky over the Indian Ocean.",
+    credit: "Photo by Philip Nalangan / CC BY 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Galle_Lighthouse_1.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/4.0",
+  },
+  hikkaduwa: {
+    src: "/images/destinations/hikkaduwa.jpg",
+    alt: "The sun setting behind silhouetted palms on Hikkaduwa's shore, golden light spilling across the surf and dark beach rocks.",
+    credit: "Photo by Thatslguy / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Photo_8-23-17,_5_50_14_PM.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  hortonPlains: {
+    src: "/images/destinations/horton-plains.jpg",
+    alt: "A dark river winding through the golden tussock grasslands of Horton Plains, cloud-forest rising behind under soft misty light.",
+    credit: "Photo by A-wiki-guest-user / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Horton_Plains_River.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  jaffna: {
+    src: "/images/destinations/jaffna.jpg",
+    alt: "The ornate golden entrance arch and terracotta gopuram of Nallur Kandaswamy temple in Jaffna, flanked by red-and-white striped walls.",
+    credit: "Photo by Gane Kumaraswamy / CC BY-SA 2.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Nallur_Kandasamy_front_entrance.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0",
+  },
+  kandy: {
+    src: "/images/destinations/kandy.jpg",
+    alt: "A rainbow arcing through the fountain on Kandy Lake, with the Temple of the Sacred Tooth Relic nestled below forested hills under a brooding sky.",
+    credit: "Photo by Philip Nalangan / CC BY 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Sacred_Tooth_Relic_Temple_1.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/4.0",
+  },
+  mirissa: {
+    src: "/images/destinations/mirissa.jpg",
+    alt: "Aerial view of Mirissa's Coconut Tree Hill, a red-earth headland of tall palms reaching into swirling turquoise surf.",
+    credit: "Photo by Sachin Kaveesha Fernando / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Amazing_Coconut_Tree_Hill.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  negombo: {
+    src: "/images/destinations/negombo.jpg",
+    alt: "A traditional outrigger fishing boat resting on Negombo beach at sunset, two fishermen silhouetted on its bow against a pink and gold sky over the Indian Ocean.",
+    credit: "Photo by Luboš Holič / CC BY-SA 3.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Negombo,_Sri_Lanka_-_panoramio_(11).jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/3.0",
+  },
+  nuwaraEliya: {
+    src: "/images/destinations/nuwara-eliya.jpg",
+    alt: "Mist rolling over steep green hill-country valleys, tea terraces and a winding road dropping through the forest below cloud-wrapped peaks.",
+    credit: "Photo by Kapila Perera / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Morning_dew_mist.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  polonnaruwa: {
+    src: "/images/destinations/polonnaruwa.jpg",
+    alt: "The serene face of the great reclining Buddha at Gal Vihara, carved from banded granite, resting on its hand in warm Polonnaruwa light.",
+    credit: "Photo by Philip Nalangan / CC BY 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Gal_Vihara_Polonnaruwa_1.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/4.0",
+  },
+  trincomalee: {
+    src: "/images/destinations/trincomalee.jpg",
+    alt: "Golden sunset over Trincomalee bay seen from Swami Rock, fishing boats scattered on glittering water framed by silhouetted branches.",
+    credit: "Photo by Nishan Silva / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Sun_Set_of_Koneshwaram_Kowil_-_Trincomalee_Sri_Lanka.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  udawalawe: {
+    src: "/images/destinations/udawalawe.jpg",
+    alt: "Wild elephants grazing on the green floodplain of the Udawalawe reservoir, dead trees standing in the shallows beneath forested mountains.",
+    credit: "Photo by PIERRE ANDRE LECLERCQ / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Parc_national_de_Uda_Walawa_Sri-Lanka_(4).jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  unawatuna: {
+    src: "/images/destinations/unawatuna.jpg",
+    alt: "The palm-fringed crescent of Unawatuna beach, bright outrigger boats pulled up on white sand beside calm turquoise water.",
+    credit: "Photo by Bernard Gagnon / CC BY-SA 3.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Unawatuna.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/3.0",
+  },
+  wilpattu: {
+    src: "/images/destinations/wilpattu.jpg",
+    alt: "A sloth bear mother and cub crossing a winding red-earth track through dry woodland in Wilpattu National Park.",
+    credit: "Photo by Wenuri / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:A_mother_and_cub_sloth_bear_crossing_the_road_in_Wilpattu_National_Park.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  yala: {
+    src: "/images/destinations/yala.jpg",
+    alt: "A Sri Lankan leopard prowling out of dark jungle undergrowth in Yala, mid-stride on a dusty trail with its pale eyes fixed ahead.",
+    credit: "Photo by AdrianRanasinghe / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Srilankan_leopard_in_Yala_National_Park.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
   },
 } as const satisfies Record<string, ImageAsset>;
 
@@ -72,7 +223,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Pleasant and dry from December to March. The south-west monsoon brings heavy afternoon rain from May, and October is the wettest month of the year.",
     suggestedNights: 1,
-    image: ownedPhotos.tuktukRoadTrip,
+    image: destinationPhotos.colombo,
     highlights: [
       "Pettah market and the Jami Ul-Alfar mosque",
       "The restored Dutch Hospital precinct in Fort",
@@ -113,7 +264,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Calm sea and reliable sunshine December to March. Swimming is often unwise during the south-west monsoon from May to September.",
     suggestedNights: 1,
-    image: ownedPhotos.surfSouthCoast,
+    image: destinationPhotos.negombo,
     highlights: [
       "Lellama fish market at dawn",
       "The Dutch canal by boat or bicycle",
@@ -193,7 +344,7 @@ export const destinations: readonly Destination[] = [
     avoidMonths: [10, 11],
     seasonNote: "Dry and hot May to September; heaviest rain in October and November.",
     suggestedNights: 1,
-    image: ownedPhotos.sigiriyaSunrise,
+    image: destinationPhotos.dambulla,
     highlights: [
       "Cave 1: the 14-metre rock-cut reclining Buddha",
       "The painted ceilings of the Maha Alut Viharaya",
@@ -231,7 +382,7 @@ export const destinations: readonly Destination[] = [
     avoidMonths: [10, 11],
     seasonNote: "Hot and dry May to September. The north-east monsoon brings real rain from late October into December.",
     suggestedNights: 1,
-    image: ownedPhotos.sigiriyaSunrise,
+    image: destinationPhotos.polonnaruwa,
     highlights: [
       "The four Buddha figures of the Gal Vihara",
       "The Vatadage and the Quadrangle",
@@ -270,7 +421,7 @@ export const destinations: readonly Destination[] = [
     avoidMonths: [10, 11],
     seasonNote: "Driest May to September. October to December can be genuinely wet under the north-east monsoon.",
     suggestedNights: 1,
-    image: ownedPhotos.sigiriyaSunrise,
+    image: destinationPhotos.anuradhapura,
     highlights: [
       "Ruwanwelisaya stupa at dusk with the evening pilgrims",
       "The Sri Maha Bodhi sacred fig",
@@ -312,7 +463,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Cooler than the coast all year. Driest January to April; October and November bring the heaviest rain. The Esala Perahera festival falls in July or August.",
     suggestedNights: 2,
-    image: ownedPhotos.ellaRoadSign,
+    image: destinationPhotos.kandy,
     highlights: [
       "Evening puja at the Temple of the Sacred Tooth Relic",
       "The Royal Botanic Gardens at Peradeniya",
@@ -354,7 +505,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Clearest and coldest January to April, which is also the local holiday season in April. Expect afternoon mist year-round and heavy rain in October and November.",
     suggestedNights: 2,
-    image: ownedPhotos.ellaRoadSign,
+    image: destinationPhotos.nuwaraEliya,
     highlights: [
       "A working tea factory tour and tasting",
       "The estate roads above the town at first light",
@@ -393,7 +544,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Uva sits in a rain shadow, so Ella is often clear in July and August when the south-west is wet. Its own rain arrives October to December.",
     suggestedNights: 2,
-    image: ownedPhotos.ellaRoadSign,
+    image: destinationPhotos.ella,
     highlights: [
       "Little Adam's Peak at sunrise",
       "A train crossing the Nine Arch Bridge",
@@ -440,7 +591,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Clearest skies January to March. Whatever the month, be at World's End before 9am or the view will be cloud.",
     suggestedNights: 1,
-    image: ownedPhotos.ellaRoadSign,
+    image: destinationPhotos.hortonPlains,
     highlights: [
       "World's End before the cloud arrives",
       "Baker's Falls on the return leg",
@@ -478,7 +629,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Pilgrimage season runs from the December full moon to the May full moon; outside it the path is unlit, facilities are closed and the weather is usually poor.",
     suggestedNights: 1,
-    image: ownedPhotos.ellaRoadSign,
+    image: destinationPhotos.adamsPeak,
     highlights: [
       "Sunrise from the summit and the peak's triangular shadow",
       "Climbing through the night with pilgrims and tea stalls",
@@ -517,7 +668,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "South-west coast pattern: best December to March. May and June are the wettest months and the sea is rough.",
     suggestedNights: 2,
-    image: ownedPhotos.surfSouthCoast,
+    image: destinationPhotos.galle,
     highlights: [
       "The rampart walk at sunset",
       "The lighthouse and Flag Rock bastion",
@@ -558,7 +709,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Calmest swimming December to March. The bay gets rough and narrow during the south-west monsoon from May.",
     suggestedNights: 2,
-    image: ownedPhotos.surfSouthCoast,
+    image: destinationPhotos.unawatuna,
     highlights: [
       "Swimming in the reef-sheltered bay",
       "Jungle Beach and the Japanese Peace Pagoda",
@@ -597,7 +748,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Whale watching runs roughly November to April, which is also when the sea is calmest. Most boats stop during the south-west monsoon.",
     suggestedNights: 2,
-    image: ownedPhotos.surfSouthCoast,
+    image: destinationPhotos.mirissa,
     highlights: [
       "Blue whale and dolphin watching from the harbour",
       "Beginner surf lessons at Weligama Bay",
@@ -638,7 +789,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Snorkelling and surf are at their best November to April. The sea is rough and murky during the south-west monsoon.",
     suggestedNights: 2,
-    image: ownedPhotos.surfSouthCoast,
+    image: destinationPhotos.hikkaduwa,
     highlights: [
       "Snorkelling the coral sanctuary from the beach",
       "Green turtles feeding in the shallows at dawn",
@@ -678,7 +829,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Sightings are best in the dry months February to July, when animals concentrate at waterholes. Block 1 normally closes for around six weeks from early September — confirm before booking.",
     suggestedNights: 2,
-    image: ownedPhotos.jungleVilla,
+    image: destinationPhotos.yala,
     highlights: [
       "Dawn game drive in Block 1 for leopard",
       "Sloth bear sightings in the palu fruiting season",
@@ -718,7 +869,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Elephants are seen year-round. The driest, easiest months are May to September; October and November can be wet and the tracks muddy.",
     suggestedNights: 1,
-    image: ownedPhotos.jungleVilla,
+    image: destinationPhotos.udawalawe,
     highlights: [
       "Near-certain wild elephant sightings on an open grassland drive",
       "The Elephant Transit Home feeding sessions",
@@ -757,7 +908,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Best February to July, with sloth bears most active in June and July. Tracks flood during the north-east monsoon from late October.",
     suggestedNights: 1,
-    image: ownedPhotos.jungleVilla,
+    image: destinationPhotos.wilpattu,
     highlights: [
       "Villu lakes and dry-zone forest with very few vehicles",
       "Sloth bears in the palu fruiting season",
@@ -796,7 +947,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Surf season runs roughly May to September, which is exactly when the south-west coast is wet. Many businesses close from November to March.",
     suggestedNights: 3,
-    image: ownedPhotos.surfSouthCoast,
+    image: destinationPhotos.arugamBay,
     highlights: [
       "Main Point's long right-hand wall",
       "Beginner surf at Baby Point and Whiskey Point",
@@ -834,7 +985,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "The eastern season runs roughly April to September. The north-east monsoon makes October to January wet and the sea rough.",
     suggestedNights: 2,
-    image: ownedPhotos.surfSouthCoast,
+    image: destinationPhotos.trincomalee,
     highlights: [
       "Snorkelling Pigeon Island's reef",
       "Koneswaram temple on Swami Rock",
@@ -875,7 +1026,7 @@ export const destinations: readonly Destination[] = [
     seasonNote:
       "Dry from February to September, and very hot in May and June. The north-east monsoon soaks the peninsula from October to January.",
     suggestedNights: 2,
-    image: ownedPhotos.tuktukRoadTrip,
+    image: destinationPhotos.jaffna,
     highlights: [
       "Evening puja at Nallur Kandaswamy Kovil",
       "Jaffna crab curry and palmyra sweets",
