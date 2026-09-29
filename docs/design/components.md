@@ -133,9 +133,9 @@ Full-bleed image → scrim stack → kicker → display headline (2 lines) → l
 | Element | Token | Colour |
 |---|---|---|
 | Kicker `Sri Lanka is Waiting ....` | `--text-kicker` (Poppins 400, sentence case) | `--color-on-image-secondary` |
-| Headline `Explore` / `Sri Lanka with us` | `--text-display` (Playfair Display 700) | `--color-on-image` + `--text-shadow-on-image` |
+| Headline `Explore` / `Sri Lanka with us` | `--text-display` (Abril Fatface 400, D-30) | `--color-on-image` + `--text-shadow-on-image` |
 | Lead paragraph | `--text-lead` (Poppins 400, `--measure-hero`) | `--color-on-image-secondary` |
-| CTA label `Plan Your Trip →` | `--text-button-serif` (Playfair Display 600) | `--color-ink-900` on white pill |
+| CTA label `Plan Your Trip →` | `--text-button-serif` (Abril Fatface 400, D-30) | `--color-ink-900` on white pill |
 | Rail heading `Popular Destinations` | `--text-h3` (Poppins 600) | `--color-on-image` |
 | `View all` | `--text-body-sm` 600 | `--color-on-image` + 2 px `--color-amber-500` underline (D-01) |
 

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     type: "article",
     title: "About Noble Path",
     description:
-      "How we build Sri Lankan itineraries — seasons first, geography second, and a human reading every enquiry.",
+      "How we build Sri Lankan itineraries: seasons first, geography second, and a human reading every enquiry.",
     url: "/about",
     images: [
       {
@@ -44,7 +44,7 @@ const PRINCIPLES = [
     number: "03",
     icon: Compass,
     title: "Fewer stops, longer stays",
-    body: "The most common mistake on a first Sri Lanka itinerary is seven towns in ten days. Packing and unpacking is not travel. Our suggested stays come from how long a place actually rewards — two nights for Sigiriya, three or more for the hill country — and our planner spends your days rather than scattering them.",
+    body: "The most common mistake on a first Sri Lanka itinerary is seven towns in ten days. Packing and unpacking is not travel. Our suggested stays come from how long a place actually rewards: two nights for Sigiriya, three or more for the hill country. Our planner spends your days rather than scattering them.",
   },
   {
     number: "04",
@@ -100,8 +100,8 @@ export default function AboutPage() {
         <Container>
           <div className="mx-auto max-w-[var(--container-prose)]">
             <p className="text-lead text-ink-800 first-letter:float-left first-letter:mt-1 first-letter:mr-3 first-letter:font-display first-letter:text-[3.5rem] first-letter:leading-[0.82] first-letter:font-bold first-letter:text-jungle-700">
-              Noble Path started with a spreadsheet. Friends kept asking the same question —
-              &ldquo;I have ten days in Sri Lanka, what should I actually do?&rdquo; — and the
+              Noble Path started with a spreadsheet. Friends kept asking the same question,
+              &ldquo;I have ten days in Sri Lanka, what should I actually do?&rdquo;, and the
               honest answer was never a list of places. It was an order, a direction of
               travel, and a month.
             </p>
@@ -131,7 +131,7 @@ export default function AboutPage() {
               choice. The itinerary you get is produced by a rule-based engine that behaves
               the same way every time it is given the same answers. If you tell us you are
               coming in July for nine days and you care about wildlife and food, two people on
-              two continents typing the same thing get the same plan — and if that plan is
+              two continents typing the same thing get the same plan. If that plan is
               wrong, we can reproduce it exactly and fix the rule that caused it.
             </p>
 
@@ -147,8 +147,8 @@ export default function AboutPage() {
               <li>
                 <strong className="font-semibold text-ink-900">Score by interest.</strong>{" "}
                 Your selected interests raise places that carry those tags. Select nothing and
-                you get the island&rsquo;s strongest places instead of a random shortlist —
-                an editorial weight decides the order, so the &ldquo;surprise me&rdquo; answer
+                you get the island&rsquo;s strongest places instead of a random shortlist.
+                An editorial weight decides the order, so the &ldquo;surprise me&rdquo; answer
                 is still a credible one.
               </li>
               <li>
@@ -168,7 +168,7 @@ export default function AboutPage() {
 
             <p className="mt-6 text-body text-ink-700">
               You then edit it. Days can be removed and reordered, and the totals and warnings
-              update as you go. Your plan is kept in your own browser — there is no account,
+              update as you go. Your plan is kept in your own browser. There is no account,
               no login, and nothing to remember. That also means it lives on one device: clear
               your browser data and it is gone.
             </p>
@@ -236,7 +236,7 @@ export default function AboutPage() {
           <div data-surface="dark" className="np-measure-lead">
             <h2 className="font-display text-h2 text-white">Talk to us</h2>
             <p className="mt-4 text-lead text-white/85">
-              The enquiry form is the way to reach us — it goes straight to the people who
+              The enquiry form is the way to reach us. It goes straight to the people who
               build the routes, and it tells us enough to reply with something useful rather
               than a brochure.
             </p>

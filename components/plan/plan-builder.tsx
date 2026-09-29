@@ -332,7 +332,7 @@ export function PlanBuilder() {
               >
                 <AlertTriangle size={20} aria-hidden className="mt-0.5 shrink-0" />
                 <span>
-                  This browser will not let us save your plan on this device — private
+                  This browser will not let us save your plan on this device. Private
                   browsing usually causes that. Everything still works, but the plan will be
                   gone when you close the tab.
                 </span>
@@ -513,7 +513,7 @@ export function PlanBuilder() {
 
               <p className="mt-4 text-small text-text-meta">
                 Enquiring costs nothing and commits nothing. We reply with availability and a
-                real price — the bands on this site are indicative.{" "}
+                real price. The bands on this site are indicative.{" "}
                 <Link
                   href="/about#how-we-plan"
                   className="rounded-xs text-jungle-600 underline underline-offset-4"

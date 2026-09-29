@@ -152,16 +152,18 @@ Error text on `--color-sand-50` uses `--color-error-600` (6.1:1 ✅).
 
 | Role | Family | Google Fonts | Weights shipped | Token |
 |---|---|---|---|---|
-| Display serif | **Playfair Display** | yes (variable, `wght` 400–900 + italic) | 400, 500, 600, 700 | `--font-display` |
+| Display serif | **Abril Fatface** (was Playfair Display until D-30) | no, single weight | 400 | `--font-display` |
 | UI / body sans | **Poppins** | yes (static, 9 weights + italic) | 300, 400, 500, 600, 700 | `--font-sans` |
 | Numeric (tabular) | Poppins with `font-variant-numeric: tabular-nums` | — | — | `--font-num` |
 
 ```css
---font-display: "Playfair Display", "Playfair Display Fallback", "Iowan Old Style", "Times New Roman", Times, serif;
+--font-display: "Abril Fatface", "Bodoni 72", Didot, "Times New Roman", Times, serif; /* D-30 */
 --font-sans: "Poppins", "Poppins Fallback", "Century Gothic", "Avenir Next", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 ```
 
-**Why Playfair Display.** The mockup's headline (`Explore / Sri Lanka with us`) shows extreme stroke modulation — hairline thins against very heavy stems — with vertical stress, flat unbracketed-to-lightly-bracketed serifs, and a teardrop terminal on the `r` and `a`. That is a transitional/Didone hybrid. Playfair Display is the only high-quality Google Fonts face in that genre with a true variable weight axis and a real italic, and it holds up at 76 px, which is where our display sizes land. **Alternatives considered:** *DM Serif Display* (correct contrast, but a single 400 weight — the mockup headline is clearly 700, so we would be faking weight); *Libre Baskerville* (contrast too low, reads bookish rather than cinematic); *Fraunces* (its `wonk`/`soft` axes add personality the mockup does not have); *Cormorant* (far too fragile below 40 px and its cap height is too small for a full-bleed hero).
+**Update 2026-09-30 (D-30).** The display face is now **Abril Fatface**, at the owner's request for a retro, vintage-cinema headline. It is a fat Didone poster serif in a single 400 weight. Headings are set at 400 with `font-synthesis-weight: none`, so the browser never fakes a bold. The rationale below is kept as the historical record of the original choice; the size floor and hairline rules in this section still apply, and apply more strongly, because Abril's hairlines are thinner still.
+
+**Why Playfair Display (original choice).** The mockup's headline (`Explore / Sri Lanka with us`) shows extreme stroke modulation — hairline thins against very heavy stems — with vertical stress, flat unbracketed-to-lightly-bracketed serifs, and a teardrop terminal on the `r` and `a`. That is a transitional/Didone hybrid. Playfair Display is the only high-quality Google Fonts face in that genre with a true variable weight axis and a real italic, and it holds up at 76 px, which is where our display sizes land. **Alternatives considered:** *DM Serif Display* (correct contrast, but a single 400 weight — the mockup headline is clearly 700, so we would be faking weight); *Libre Baskerville* (contrast too low, reads bookish rather than cinematic); *Fraunces* (its `wonk`/`soft` axes add personality the mockup does not have); *Cormorant* (far too fragile below 40 px and its cap height is too small for a full-bleed hero).
 
 **Why Poppins.** The mockup's nav (`Destinations`, `Experiences`), the `Popular Destinations` rail heading and the trust-bar labels are monolinear with near-perfect circular bowls on `o`/`e`/`p`, a single-storey geometric `a`, and a tall x-height with long ascenders — the `O` in `NOBLE` is a true circle. That is Poppins. **Alternatives considered:** *Montserrat* (double-storey `a`, wider, less strictly geometric — the wordmark would not match); *Outfit* (very close, but tighter apertures and a less circular `O`); *DM Sans* (softer, smaller x-height, reads more "SaaS" than "premium travel"); *Jost* (Futura-derived, but its `a` and low x-height hurt UI legibility at 14 px).
 
@@ -629,7 +631,7 @@ The engineer copies this verbatim into `app/globals.css` (or equivalent). Names 
   --color-error-50:    #FDECEA;
 
   /* ---- fonts ---- */
-  --font-display: "Playfair Display", "Playfair Display Fallback", "Iowan Old Style", "Times New Roman", Times, serif;
+  --font-display: "Abril Fatface", "Bodoni 72", Didot, "Times New Roman", Times, serif; /* D-30 */
   --font-sans: "Poppins", "Poppins Fallback", "Century Gothic", "Avenir Next", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* ---- type scale ---- */

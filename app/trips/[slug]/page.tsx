@@ -134,7 +134,7 @@ export default async function TripDetailPage({
     {
       icon: Map,
       label: "Regions",
-      value: regions.map((region) => regionName(region)).join(" · ") || "—",
+      value: regions.map((region) => regionName(region)).join(" · ") || "Not set",
     },
     {
       icon: CalendarRange,
@@ -230,7 +230,7 @@ export default async function TripDetailPage({
           <p className="np-measure-body mt-8 text-lead text-ink-700">{trip.summary}</p>
           <p className="mt-4 text-small text-text-meta">
             The band above is indicative, per person, and depends on party size, season and
-            the standard of accommodation you choose. It is not a quote — we confirm a price
+            the standard of accommodation you choose. It is not a quote. We confirm a price
             by email after your enquiry.
           </p>
         </Container>
@@ -328,7 +328,7 @@ export default async function TripDetailPage({
             <p className="mt-4 text-lead text-white/85">
               Send us your dates and party size and we will come back with availability, a
               firm price and anything we would change about the route for your month.
-              It is an enquiry, not a booking — nothing is charged and nothing is committed.
+              It is an enquiry, not a booking. Nothing is charged and nothing is committed.
             </p>
             <div className="mt-8 flex flex-col gap-3 md:flex-row">
               <LinkButton

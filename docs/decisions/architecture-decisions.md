@@ -1116,6 +1116,48 @@ Those paths are restored to the `.jpg`, which is still used everywhere except th
 
 ---
 
+## D-30 - Retro display font (Abril Fatface) and a dash-free, minimal copy style
+
+**Date:** 2026-09-30 · **Decided by:** Orchestrator (UI/UX Designer and Full-Stack Engineer), with the owner choosing the font
+
+**Decision:**
+1. **Font.** The display face for every heading changes from Playfair Display to
+   **Abril Fatface**, a fat Didone poster serif with a retro, vintage-cinema feel. That
+   covers the hero "Explore Sri Lanka with us" and every `font-display` / `h1`–`h6`.
+2. **Copy.** Em dashes (—) are removed from all visible copy. They are rewritten as commas,
+   colons, parentheses or full stops, for a calmer, more minimal reading texture. En dashes
+   (–) stay where they mark ranges ("May–September", "3–4 hours", "Kandy–Ella"), because
+   there they carry meaning. Page titles use the existing "·" separator.
+
+**Reason:** Requested: a "rogue retro vintage cinematic" headline font, and removing
+"unnecessary dash marks" to make the UI minimalistic. "Rogue" itself is a paid font. The
+owner chose the free Abril Fatface instead of licensing it.
+
+**Alternatives considered:**
+- **Rogue (paid):** needs a purchased web licence and a font file.
+- **Limelight:** art-deco cinema marquee style, but too decorative for long headings.
+- **Bebas Neue:** condensed modern caps, not vintage.
+
+**Chosen solution:**
+- `next/font/google` `Abril_Fatface` is self-hosted at build time, so there is no CSP change
+  and no runtime request to Google.
+- Abril has one weight, so headings and `--text-display` are set to 400, and
+  `font-synthesis-weight: none` on headings and `.font-display` stops faux bold.
+- Copy edits cover `content/*` (111 dashes), `app/*`, `components/*` and the itinerary
+  messages in `lib/itinerary.ts`.
+- Staff-only email bodies (`lib/*-email.ts`) and server logs are untouched: visitors never
+  see them.
+
+**Known limitations:**
+- Abril's hairlines are thinner than Playfair's. The design-system serif size floor
+  (≥ 24 px, never small over photography) matters even more now.
+- Headings that previously relied on 600/700 weight now render at the face's single weight.
+  They were not reviewed one by one in a browser.
+- `design-system.md` keeps the original Playfair rationale as history, with a D-30 update
+  note.
+
+---
+
 ## Pending decisions (not yet made)
 
 These are open and must be decided before the relevant work starts. Listed so they are visible rather than rediscovered mid-build.

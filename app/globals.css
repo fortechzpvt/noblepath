@@ -90,19 +90,19 @@
   --color-accent: #8A5416;
 
   /* ---- fonts ----
-     --font-playfair / --font-poppins are injected by next/font in app/layout.tsx.
-     next/font self-hosts both faces and generates a metric-adjusted local fallback,
-     which is what the specification calls "Playfair Display Fallback" / "Poppins
-     Fallback". Because the faces are self-hosted there is no runtime request to
+     --font-abril / --font-poppins are injected by next/font in app/layout.tsx.
+     next/font self-hosts both faces and generates a metric-adjusted local fallback.
+     The display face is Abril Fatface (D-30), single weight. Because the faces
+     are self-hosted there is no runtime request to
      Google, which is why the CSP in next.config.ts does not allow fonts.gstatic.com. */
-  --font-display: var(--font-playfair), "Iowan Old Style", "Times New Roman", Times, serif;
+  --font-display: var(--font-abril), "Bodoni 72", Didot, "Times New Roman", Times, serif;
   --font-sans: var(--font-poppins), "Century Gothic", "Avenir Next", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* ---- type scale ---- */
   --text-display: clamp(2.5rem, 1.664rem + 3.429vw, 4.75rem);
   --text-display--line-height: 1.06;
   --text-display--letter-spacing: -0.02em;
-  --text-display--font-weight: 700;
+  --text-display--font-weight: 400;
 
   --text-display-sm: clamp(2rem, 1.443rem + 2.286vw, 3.5rem);
   --text-display-sm--line-height: 1.10;
@@ -330,9 +330,13 @@
   h1, h2, h3, h4, h5, h6 {
     margin: 0;
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: 400;
     text-wrap: balance;
   }
+
+  /* Abril Fatface has one weight (D-30). Never let a stray font-bold or
+     font-semibold make the browser synthesise a heavier one. */
+  h1, h2, h3, h4, h5, h6, .font-display { font-synthesis-weight: none; }
 
   p { margin: 0; text-wrap: pretty; }
 

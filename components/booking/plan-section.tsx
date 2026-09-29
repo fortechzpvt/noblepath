@@ -202,7 +202,7 @@ export function PlanSection({
                   .map((slug) => destinations.find((d) => d.slug === slug)?.name ?? slug)
                   .join(" · ")}
                 {draft.plannedItinerary.interests.length > 0
-                  ? ` — interests: ${draft.plannedItinerary.interests.map(interestName).join(", ")}`
+                  ? `, interests: ${draft.plannedItinerary.interests.map(interestName).join(", ")}`
                   : ""}
               </p>
             </div>
@@ -319,7 +319,7 @@ export function PlanSection({
                     key={stay.id}
                     legend={
                       stay.accommodationSlug
-                        ? `Stay ${index + 1} — ${getAccommodationBySlug(stay.accommodationSlug)?.name ?? "picked"} (from Accommodation)`
+                        ? `Stay ${index + 1}: ${getAccommodationBySlug(stay.accommodationSlug)?.name ?? "picked"} (from Accommodation)`
                         : `Stay ${index + 1}`
                     }
                     removeLabel={`Remove stay ${index + 1}`}
@@ -430,7 +430,7 @@ export function PlanSection({
                     key={activity.id}
                     legend={
                       activity.sourceActivitySlug
-                        ? `Activity ${index + 1} — ${getActivityBySlug(activity.sourceActivitySlug)?.name ?? "picked"} (from Activities)`
+                        ? `Activity ${index + 1}: ${getActivityBySlug(activity.sourceActivitySlug)?.name ?? "picked"} (from Activities)`
                         : `Activity ${index + 1}`
                     }
                     removeLabel={`Remove activity ${index + 1}`}

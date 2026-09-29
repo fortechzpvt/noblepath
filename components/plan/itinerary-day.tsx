@@ -95,7 +95,7 @@ export function ItineraryDay({
             </ul>
           ) : (
             <p className="mt-3 text-small text-text-meta">
-              Nothing booked this day — a rest day, or time to wander.
+              Nothing booked this day. A rest day, or time to wander.
             </p>
           )}
 
@@ -116,7 +116,7 @@ export function ItineraryDay({
             <p className="mt-3 flex items-start gap-2 rounded-sm bg-warning-50 px-3 py-2 text-small text-warning-700">
               <AlertTriangle size={16} aria-hidden className="mt-px shrink-0" />
               <span>
-                Long drive. This day is mostly travel — worth splitting, or worth accepting
+                Long drive. This day is mostly travel. Worth splitting, or worth accepting
                 deliberately.
               </span>
             </p>

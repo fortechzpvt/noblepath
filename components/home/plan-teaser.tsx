@@ -5,7 +5,7 @@ import { Container } from "@/components/ui/section";
 
 const POINTS = [
   "Routed so you are never driving more than half a day",
-  "Seasonally aware — we steer you away from the wrong coast",
+  "Seasonally aware: we steer you away from the wrong coast",
   "Yours to edit, reorder and keep",
 ] as const;
 

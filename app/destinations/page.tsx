@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/destinations" },
   openGraph: {
     type: "website",
-    title: "Destinations — Noble Path",
+    title: "Destinations · Noble Path",
     description:
       "Every place Noble Path covers in Sri Lanka. Filter by region and by what you are travelling for.",
     url: "/destinations",
