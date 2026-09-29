@@ -10,7 +10,8 @@ import type { Destination } from "@/lib/types";
 /**
  * The home hero (components.md §2).
  *
- * Layered exactly as design-system §10.2 specifies: photograph, cooling wash,
+ * Layered exactly as design-system §10.2 specifies: photograph (with the
+ * Sigiriya video playing over it, D-29), cooling wash,
  * vertical scrim, horizontal scrim (≥768 only — below that the copy is
  * full-width, so the vertical layer is strengthened instead), and a top scrim
  * that carries the transparent nav.
@@ -42,8 +43,11 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
         aria-hidden
       />
 
+      {/* The photograph stays as the base layer (D-29): it is the LCP element and
+          paints before the video has buffered, and it is all a visitor who
+          prefers reduced motion ever sees. */}
       <Image
-        src="/images/hero/sigiriya.mp4"
+        src="/images/hero/sigiriya-sunrise-2.jpg"
         alt=""
         aria-hidden
         fill
@@ -53,6 +57,23 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
         quality={72}
         className="np-ken-burns z-0 object-cover object-[50%_45%]"
       />
+
+      {/* Muted, looping, inline: the only combination every mobile browser will
+          autoplay. No `poster` — the photograph underneath already fills that
+          role, and a poster would download the image a second time. Hidden
+          under prefers-reduced-motion (WCAG 2.3.3). */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-hidden
+        tabIndex={-1}
+        className="absolute inset-0 z-0 h-full w-full object-cover object-[50%_45%] motion-reduce:hidden"
+      >
+        <source src="/images/hero/sigiriya.mp4" type="video/mp4" />
+      </video>
 
       {/* Scrim stack. Decorative throughout. */}
       <div className="absolute inset-0 z-[1] np-scrim-wash" aria-hidden />
