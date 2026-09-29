@@ -21,7 +21,7 @@ export function TripsPreview({
           lead="Complete routes with the driving, the stays and the timing already worked out. Take one as it is, or use it as a starting point."
         />
 
-        <ul className="mt-8 grid gap-[var(--grid-gap)] md:grid-cols-2 lg:grid-cols-3">
+        <ul className="np-reveal-stagger mt-8 grid gap-[var(--grid-gap)] md:grid-cols-2 lg:grid-cols-3">
           {trips.slice(0, 3).map((trip) => (
             <li key={trip.slug}>
               <TripCard trip={trip} regions={regionsByTrip[trip.slug] ?? []} />

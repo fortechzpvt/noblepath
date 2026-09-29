@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Abril_Fatface, Poppins } from "next/font/google";
 
 import { SiteHeader } from "@/components/site-header";
+import { ScrollRevealFallback } from "@/components/scroll-reveal-fallback";
 import { SiteFooter } from "@/components/site-footer";
 
 import "./globals.css";
@@ -106,6 +107,7 @@ export default function RootLayout({
         <SiteHeader />
         <main id="main">{children}</main>
         <SiteFooter />
+        <ScrollRevealFallback />
       </body>
     </html>
   );

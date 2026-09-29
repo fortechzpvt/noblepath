@@ -545,3 +545,109 @@
   .np-fade-up { animation: none !important; opacity: 1; transform: none; }
   .np-pop { animation: none !important; opacity: 1; transform: none; }
 }
+
+/* ---- Scrollytelling (D-31) ----
+   Primary engine: CSS scroll-driven animations. The browser ties each keyframe
+   set to scroll position (`animation-timeline: view()` / `scroll()`), so there
+   is no scroll listener and no animation library, and the work runs off the
+   main thread. Where a browser has no scroll timelines (Firefox, older Safari),
+   components/scroll-reveal-fallback.tsx adds `np-sdt-fallback` to <html> and
+   drives the reveals with an IntersectionObserver instead; the scrubbed
+   parallax effects are simply skipped there.
+
+   IMPORTANT: a view() timeline follows the nearest *scroll container* above
+   the element, and `overflow: hidden` makes a box one. Anything that clips an
+   animated descendant must use `overflow: clip` (Tailwind `overflow-clip`),
+   which clips identically without becoming a scroll container. Using
+   overflow-hidden there silently freezes the animation.
+
+   Everything is off under prefers-reduced-motion. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Rise into focus as the element enters the viewport. */
+    .np-reveal {
+      animation: np-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+
+    /* Siblings in one row share a scroll position; offset their ranges so they
+       arrive one after another without timers. */
+    .np-reveal-stagger > :nth-child(3n + 2).np-reveal,
+    .np-reveal-stagger > :nth-child(3n + 2) .np-reveal { animation-range: entry 10% cover 36%; }
+    .np-reveal-stagger > :nth-child(3n + 3).np-reveal,
+    .np-reveal-stagger > :nth-child(3n + 3) .np-reveal { animation-range: entry 20% cover 42%; }
+
+    /* Photos inside cards drift against the scroll: depth without moving the card. */
+    .np-parallax-img {
+      animation: np-parallax-img linear both;
+      animation-timeline: view();
+    }
+
+    /* Full-bleed band photographs: stronger drift plus a settling zoom. */
+    .np-parallax-band {
+      animation: np-parallax-band linear both;
+      animation-timeline: view();
+    }
+
+    /* Hero: the video sinks slower than the page, the words lift and blur away. */
+    .np-hero-parallax {
+      animation: np-hero-parallax linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100svh;
+    }
+    .np-hero-exit {
+      animation: np-hero-exit linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 75svh;
+    }
+
+    /* Journey chapter text: in from below, hold, out above. */
+    .np-chapter-text {
+      animation: np-chapter-text linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+
+/* Fallback engine for browsers without scroll timelines: same look, driven by
+   an IntersectionObserver toggling .np-in (see scroll-reveal-fallback.tsx). */
+@media (prefers-reduced-motion: no-preference) {
+  .np-sdt-fallback .np-reveal {
+    opacity: 0;
+    transform: translate3d(0, 64px, 0) scale(0.97);
+    filter: blur(8px);
+    transition:
+      opacity var(--dur-6) var(--ease-cinematic),
+      transform var(--dur-6) var(--ease-cinematic),
+      filter var(--dur-6) var(--ease-cinematic);
+  }
+  .np-sdt-fallback .np-reveal.np-in { opacity: 1; transform: none; filter: none; }
+  .np-sdt-fallback .np-reveal-stagger > :nth-child(3n + 2) { transition-delay: 120ms; }
+  .np-sdt-fallback .np-reveal-stagger > :nth-child(3n + 3) { transition-delay: 240ms; }
+}
+
+@keyframes np-reveal {
+  from { opacity: 0; transform: translate3d(0, 72px, 0) scale(0.97); filter: blur(8px); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+@keyframes np-parallax-img {
+  from { transform: translate3d(0, -8%, 0) scale(1.18); }
+  to   { transform: translate3d(0, 8%, 0) scale(1.18); }
+}
+@keyframes np-parallax-band {
+  from { transform: translate3d(0, -14%, 0) scale(1.3); }
+  to   { transform: translate3d(0, 14%, 0) scale(1.12); }
+}
+@keyframes np-hero-parallax {
+  to { transform: translate3d(0, 30%, 0) scale(1.12); }
+}
+@keyframes np-hero-exit {
+  to { opacity: 0; transform: translate3d(0, -14svh, 0) scale(0.96); filter: blur(10px); }
+}
+@keyframes np-chapter-text {
+  0%       { opacity: 0; transform: translate3d(0, 96px, 0); filter: blur(6px); }
+  28%, 68% { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+  100%     { opacity: 0; transform: translate3d(0, -72px, 0); filter: blur(6px); }
+}

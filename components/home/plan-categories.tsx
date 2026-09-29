@@ -22,14 +22,14 @@ export function PlanCategories() {
   return (
     <section className="np-section">
       <Container wide>
-        <h2 className="max-w-[16ch] font-display text-h2 text-jungle-800">
+        <h2 className="np-reveal max-w-[16ch] font-display text-h2 text-jungle-800">
           Come on, let&rsquo;s plan your trip around Sri Lanka.........
         </h2>
 
         <div className="mt-6 rounded-2xl bg-jungle-200 p-4 md:mt-8 md:rounded-3xl md:p-6 lg:p-8 xl:p-10">
-          <ul className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4 lg:gap-6">
+          <ul className="np-reveal-stagger grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4 lg:gap-6">
             {CATEGORIES.map((category) => (
-              <li key={category.label}>
+              <li key={category.label} className="np-reveal">
                 <Link
                   href={category.href}
                   className="group relative block aspect-[3/4] overflow-hidden rounded-xl shadow-sm transition-transform duration-[var(--dur-3)] ease-[var(--ease-standard)] hover:-translate-y-1 active:translate-y-0 md:aspect-[4/5] md:rounded-2xl"
@@ -40,7 +40,7 @@ export function PlanCategories() {
                     aria-hidden
                     fill
                     sizes="(min-width: 1024px) 25vw, 50vw"
-                    className="object-cover transition-transform duration-[var(--dur-3)] ease-[var(--ease-standard)] group-hover:scale-105"
+                    className="np-parallax-img object-cover transition-transform duration-[var(--dur-3)] ease-[var(--ease-standard)] group-hover:scale-105"
                   />
                   <span
                     aria-hidden
