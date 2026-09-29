@@ -1078,6 +1078,42 @@ converted and the root file was removed.
 
 ---
 
+## D-29 - Home hero plays a Sigiriya video over the photograph
+
+**Date:** 2026-09-30 · **Decided by:** Orchestrator (Full-Stack Engineer)
+
+**Decision:** The home hero plays `public/images/hero/sigiriya.mp4` as a muted, looping,
+inline `<video>` over the existing Sigiriya photograph.
+
+**Reason:** Requested. The first attempt (commit `ab4b665`) passed the `.mp4` to
+`next/image` and to the Open Graph and `ownedPhotos.sigiriyaSunrise` paths. That broke:
+- the hero, because `next/image` cannot render video;
+- link previews, because social platforms need an image;
+- every Sigiriya card, trip card and page header that shares `ownedPhotos.sigiriyaSunrise`.
+
+All three paths are restored to the `.jpg`.
+
+**Chosen solution:**
+- `<video autoPlay muted loop playsInline preload="auto">`, `aria-hidden` and not focusable.
+  Muted plus `playsInline` is what iOS and Android require for autoplay.
+- The photograph stays underneath as the LCP element. It paints before the video buffers,
+  so the hero is never blank.
+- `motion-reduce:hidden`: visitors who prefer reduced motion see only the still photograph
+  (WCAG 2.3.3).
+- There is no `poster`, because the photograph underneath does that job without a second
+  download.
+- No CSP change: `default-src 'self'` covers same-origin media.
+
+**Known limitations:**
+- **The video is 26 MB** (2560×1440, 13 s, H.264). That is far over the hero budget
+  (NFR-1), and on mobile data it is a real cost. `ffmpeg` was not available to re-encode it,
+  and macOS `avconvert` presets only reached 18 MB at 720p. **Action:** re-encode to about
+  1080p at CRF 28, with no audio and `+faststart`, targeting 3–5 MB, before launch.
+- There is no separate smaller file for mobile yet.
+- As with D-26 and D-27, there has been no browser visual check.
+
+---
+
 ## Pending decisions (not yet made)
 
 These are open and must be decided before the relevant work starts. Listed so they are visible rather than rediscovered mid-build.
