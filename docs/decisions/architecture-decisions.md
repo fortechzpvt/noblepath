@@ -205,6 +205,8 @@ Tailwind v4 with `@theme`, copied verbatim from `docs/design/design-system.md` �
 
 **Date:** 2026-09-19 · **Status:** Accepted, superseded in part — see Consequences · **Decided by:** Orchestrator
 
+> 2026-09-29: implemented for destinations by D-26. The credits register referenced below now exists, and credits ship at `/credits`.
+
 **Decision**
 Use Noble Path's own photographs where they exist. Fill the remainder with freely-licensed
 photography from Wikimedia Commons, downloaded and self-hosted under `public/images/`, with
@@ -964,6 +966,57 @@ A dashed line joins the pins, and a rough distance and drive time are shown. The
 - **Estimate only.** The drive-time figure is straight-line based and not a route. Staff check the real route with the directions link.
 - **"Near …" labels.** A reverse-geocoded label names the *nearest named feature*, which may be a shop or hotel beside the pin. The pin itself is authoritative.
 - **No keyboard dragging.** The map pins can't be dragged by keyboard, so keyboard users set places through search.
+
+---
+
+## D-26 - Every destination gets its own cinematic photograph, credited on `/credits`
+
+**Date:** 2026-09-29 · **Decided by:** Orchestrator, with the UI/UX Designer (curation) and Full-Stack Engineer
+
+**Decision:** Each of the 20 destinations that shared one of five photographs now has its own
+photograph from Wikimedia Commons, self-hosted under `public/images/destinations/`. Sigiriya
+keeps its dedicated hero. Attribution is shown on a new `/credits` page, linked from the footer.
+
+**Reason:** Requested: "search for cinematic images for destinations ... cause we are using the
+same image". Twenty-one places sharing five photos meant, for example, Colombo and Jaffna showing
+the same tuk-tuk, and alt text that described a photo unrelated to the page's place.
+
+**Alternatives considered:**
+- **Unsplash hotlinking:** rejected, for the same reasons as ADR-006. It needs a third-party origin
+  in the CSP, and its licence is weaker for commercial use.
+- **The 20 unreferenced per-destination files already in `public/images/destinations/`:** rejected
+  because there is no record of their source or licence. They were overwritten; the originals
+  are in git history.
+- **Credits overlaid on each hero:** rejected by design-system.md ("Attribution ... in the footer
+  credits list, not over the image").
+
+**Chosen solution:**
+- Three UI/UX curator agents searched Commons, filtering to landscape JPEGs of 2000 px or wider
+  under CC0, public domain, CC BY or CC BY-SA. They looked at every candidate and picked for
+  golden-hour or dramatic light, composition and recognisability. They rejected anything with a
+  watermark, overlaid text or an identifiable face.
+- Each pick was resized to 2400 px wide (JPEG q82) with EXIF stripped. Ella's new photo is
+  `ella-nine-arch.jpg`, because the owned `ella.jpg` is still used site-wide.
+- `ImageAsset` gains optional `sourceUrl` and `licenceUrl`. `content/destinations.ts` gains
+  `destinationPhotos`.
+- `/credits` (`app/credits/page.tsx`) is derived from content. A credited image cannot miss the
+  page, and there is no second list to keep in sync.
+- The register is in `docs/design/photography-credits.md`.
+
+**Impact:**
+- No new origin, CSP change or environment variable.
+- The home hero rail, destination cards and detail pages all show place-specific photographs.
+- About 13 MB of source JPEG is added to the repo. `next/image` serves AVIF (about 200 KB at
+  1920 w for the hero).
+
+**Known limitations:**
+- This is licensed stock, not commissioned art direction (ADR-006).
+- Six picks are judgement calls, listed in the register: Arugam Bay, Nuwara Eliya (Hatton),
+  Jaffna, Unawatuna, Wilpattu and Horton Plains.
+- The heroes' quiet zone (design-system.md) was not checked in a browser, because the Chrome
+  extension did not respond. Text legibility relies on the existing scrim stack.
+- Experiences and trips still reuse the five owned photos. Unreferenced, unsourced files remain
+  in `public/images/experiences/` and `public/images/trips/`.
 
 ---
 

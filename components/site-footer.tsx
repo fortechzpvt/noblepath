@@ -62,6 +62,12 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-12 flex flex-col gap-3 border-t border-white/12 pt-8 text-small text-white/55 md:flex-row md:items-center md:justify-between">
+          <p>
+            © {new Date().getFullYear()} Noble Path. Made in Sri Lanka. ·{" "}
+            <Link href="/credits" className="rounded-sm underline-offset-4 hover:text-white hover:underline">
+              Photo credits
+            </Link>
+          </p>
           <p>© {new Date().getFullYear()} Developed by Fortechz.</p>
           <p>
             Prices shown are indicative bands, not quotes. Travel times are advisory.

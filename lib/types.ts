@@ -89,6 +89,13 @@ export interface ImageAsset {
   readonly alt: string;
   /** Attribution line, where the licence requires or the photographer is known. */
   readonly credit?: string;
+  /**
+   * Where the photograph came from (the Wikimedia Commons file page for
+   * licensed stock). With `licenceUrl` it completes the title/author/source/
+   * licence attribution that CC BY and CC BY-SA require — rendered on /credits.
+   */
+  readonly sourceUrl?: string;
+  readonly licenceUrl?: string;
 }
 
 /* -------------------------------------------------------------------------- */
