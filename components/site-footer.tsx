@@ -68,6 +68,7 @@ export function SiteFooter() {
               Photo credits
             </Link>
           </p>
+          <p>© {new Date().getFullYear()} Developed by Fortechz.</p>
           <p>
             Prices shown are indicative bands, not quotes. Travel times are advisory.
           </p>
