@@ -1078,12 +1078,13 @@ converted and the root file was removed.
 
 ---
 
-## D-29 - Home hero plays a Sigiriya video over the photograph
+## D-29 - Home hero is a Sigiriya video (no photograph)
 
 **Date:** 2026-09-30 · **Decided by:** Orchestrator (Full-Stack Engineer)
 
-**Decision:** The home hero plays `public/images/hero/sigiriya.mp4` as a muted, looping,
-inline `<video>` over the existing Sigiriya photograph.
+**Decision:** The home hero is `public/images/hero/sigiriya.mp4`, played as a muted,
+looping, inline `<video>`. At the owner's request the Sigiriya photograph was removed
+from the hero entirely, rather than kept as a still frame under the video.
 
 **Reason:** Requested. The first attempt (commit `ab4b665`) passed the `.mp4` to
 `next/image` and to the Open Graph and `ownedPhotos.sigiriyaSunrise` paths. That broke:
@@ -1091,17 +1092,15 @@ inline `<video>` over the existing Sigiriya photograph.
 - link previews, because social platforms need an image;
 - every Sigiriya card, trip card and page header that shares `ownedPhotos.sigiriyaSunrise`.
 
-All three paths are restored to the `.jpg`.
+Those paths are restored to the `.jpg`, which is still used everywhere except the hero.
 
 **Chosen solution:**
 - `<video autoPlay muted loop playsInline preload="auto">`, `aria-hidden` and not focusable.
   Muted plus `playsInline` is what iOS and Android require for autoplay.
-- The photograph stays underneath as the LCP element. It paints before the video buffers,
-  so the hero is never blank.
-- `motion-reduce:hidden`: visitors who prefer reduced motion see only the still photograph
-  (WCAG 2.3.3).
-- There is no `poster`, because the photograph underneath does that job without a second
-  download.
+- Until the video buffers, the hero shows its existing jungle-to-ink gradient, and the text
+  on it stays readable (11.7:1).
+- `motion-reduce:hidden`: visitors who prefer reduced motion get the gradient instead of
+  moving video (WCAG 2.3.3).
 - No CSP change: `default-src 'self'` covers same-origin media.
 
 **Known limitations:**
@@ -1110,6 +1109,9 @@ All three paths are restored to the `.jpg`.
   and macOS `avconvert` presets only reached 18 MB at 720p. **Action:** re-encode to about
   1080p at CRF 28, with no audio and `+faststart`, targeting 3–5 MB, before launch.
 - There is no separate smaller file for mobile yet.
+- With no photograph, the LCP element is now the headline text, and the first paint is the
+  gradient until the video arrives. A heavy video makes that gap visible on slow
+  connections.
 - As with D-26 and D-27, there has been no browser visual check.
 
 ---
