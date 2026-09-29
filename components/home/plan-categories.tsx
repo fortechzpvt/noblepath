@@ -40,7 +40,7 @@ export function PlanCategories() {
                     aria-hidden
                     fill
                     sizes="(min-width: 1024px) 25vw, 50vw"
-                    className="object-cover transition-transform duration-[var(--dur-3)] ease-[var(--ease-standard)] group-hover:scale-105"
+                    className="np-parallax-img object-cover transition-transform duration-[var(--dur-3)] ease-[var(--ease-standard)] group-hover:scale-105"
                   />
                   <span
                     aria-hidden

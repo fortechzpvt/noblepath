@@ -1202,15 +1202,40 @@ chose "story chapter plus reveals" over reveals only or the chapter only.
 - The home page is five screens taller.
 - No new dependency, CSP change or environment variable.
 
+**Revision, 2026-09-30 (after "the animations are not working"):**
+- **Root cause 1:** the D-31 commit was pushed after PR #17 had already merged, so it never
+  reached `main` or the live site.
+- **Root cause 2:** a real bug. A `view()` timeline follows the nearest scroll container,
+  and `overflow: hidden` makes a box one. Animations inside the photo bands and inside
+  every card were bound to boxes that never scroll, so they never moved. Those boxes now
+  use `overflow: clip` (Tailwind `overflow-clip`), which clips identically without
+  becoming a scroll container. This rule is documented at the top of the scrollytelling
+  block in `globals.css`.
+- **Effects strengthened:**
+  - reveals now rise 72 px with a blur-to-sharp focus pull, and staggers are wider;
+  - photos inside cards and category tiles drift as parallax (`np-parallax-img`);
+  - band photos drift and settle from a zoom (`np-parallax-band`);
+  - the hero headline and route line lift, shrink and blur away as you leave
+    (`np-hero-exit`), while the video sinks (`np-hero-parallax`);
+  - journey chapters gain a slow Ken Burns push on the active photo and a large numeral.
+- **Fallback engine:** `components/scroll-reveal-fallback.tsx` gives Firefox and older
+  Safari the reveals through an `IntersectionObserver`. It does nothing where CSS scroll
+  timelines exist.
+
+**Testing:** headless Chrome 1440×900 and 390×844, driven over the DevTools protocol, with
+screenshots and computed styles at set scroll positions:
+- the hero content was at 40% opacity when 45% scrolled;
+- staggered cards were caught mid-reveal (opacity 0.25 / 0.13 / 0.04);
+- the journey photo index tracked chapters 1→5 on desktop and mobile;
+- all five chapter photos loaded.
+
 **Known limitations:**
-- **No browser check yet.** Nothing has been checked in a real browser: the Chrome
-  extension was not connected. Timing values (`animation-range`, the cross-fade speed and
-  the card position) may need tuning by eye.
-- **Firefox and older Safari** get the static page and the chapter's photo switching, but
-  not the reveal animations.
-- **Horizontal rails:** reveal classes on cards inside horizontally scrolling rails do
-  nothing, because the timeline follows the rail, which only scrolls sideways. Those cards
-  simply show.
+- **Tuning by eye:** timing values (`animation-range`, the cross-fade speed) were checked by
+  screenshot, not by a person scrolling. They may still want adjusting.
+- **Firefox and older Safari** get the reveals through the fallback, but no scrubbed
+  parallax.
+- **Horizontal rails:** cards inside horizontally scrolling rails do not animate (their
+  timeline is the rail). They simply show.
 
 ---
 

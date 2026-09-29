@@ -63,7 +63,7 @@ export function JourneyChapters({ chapters }: { readonly chapters: readonly Jour
             sizes="100vw"
             className={cn(
               "object-cover transition-[opacity,transform] duration-[var(--dur-6)] ease-[var(--ease-cinematic)] motion-reduce:transition-none",
-              index === active ? "scale-100 opacity-100" : "scale-[1.06] opacity-0",
+              index === active ? "np-ken-burns scale-100 opacity-100" : "scale-[1.06] opacity-0",
             )}
           />
         ))}
@@ -112,7 +112,13 @@ export function JourneyChapters({ chapters }: { readonly chapters: readonly Jour
           >
             <div className="np-container-wide w-full">
               <div className="np-chapter-text max-w-[560px]">
-                <p className="np-on-image-secondary text-overline uppercase tabular-nums">
+                <p
+                  aria-hidden
+                  className="font-display text-[clamp(5rem,14vw,11rem)] leading-[0.8] text-white/15"
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </p>
+                <p className="np-on-image-secondary mt-4 text-overline uppercase tabular-nums">
                   {String(index + 1).padStart(2, "0")} / {total}
                 </p>
                 <h3 className="np-on-image mt-3 font-display text-display-sm">{chapter.name}</h3>

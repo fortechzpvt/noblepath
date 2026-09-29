@@ -67,7 +67,7 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
 
       {/* Decorative route line, desktop only. */}
       <div
-        className="pointer-events-none absolute right-[16%] bottom-[16%] z-[10] hidden h-[400px] w-[420px] lg:block xl:right-[21%]"
+        className="np-hero-exit pointer-events-none absolute right-[16%] bottom-[16%] z-[10] hidden h-[400px] w-[420px] lg:block xl:right-[21%]"
         aria-hidden
       >
         <RouteLine className="h-full w-full" />
@@ -83,7 +83,7 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
       </div>
 
       {/* Content. */}
-      <div className="np-container-wide relative z-[2] pt-28 pb-10 lg:pt-32 lg:pb-[clamp(2rem,5svh,3.5rem)]">
+      <div className="np-hero-exit np-container-wide relative z-[2] pt-28 pb-10 lg:pt-32 lg:pb-[clamp(2rem,5svh,3.5rem)]">
         <div className="max-w-[min(560px,70%)] max-xs:max-w-full lg:max-w-[min(620px,54%)] xl:max-w-[min(660px,46%)]">
           <p
             className="np-fade-up np-on-image-secondary text-kicker"

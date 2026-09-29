@@ -12,7 +12,7 @@ export function QuoteBand() {
     <section
       data-surface="dark"
       aria-label="About travelling in Sri Lanka"
-      className="relative isolate flex h-[min(70svh,620px)] min-h-[420px] items-center overflow-hidden"
+      className="relative isolate flex h-[min(70svh,620px)] min-h-[420px] items-center overflow-clip"
     >
       <div className="absolute inset-0 z-0 bg-jungle-900" aria-hidden />
       <Image
@@ -21,7 +21,7 @@ export function QuoteBand() {
         aria-hidden
         fill
         sizes="100vw"
-        className="np-scroll-zoom z-0 object-cover object-center"
+        className="np-parallax-band z-0 object-cover object-center"
       />
       <div className="absolute inset-0 z-[1] np-scrim-wash" aria-hidden />
       <div className="absolute inset-0 z-[1] np-scrim-vertical" aria-hidden />

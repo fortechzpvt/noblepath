@@ -23,7 +23,7 @@ export function ExperiencesBand({
   return (
     <section
       data-surface="dark"
-      className="relative isolate overflow-hidden py-[var(--section-y)] lg:min-h-[560px]"
+      className="relative isolate overflow-clip py-[var(--section-y)] lg:min-h-[560px]"
     >
       <div className="absolute inset-0 z-0 bg-ink-900" aria-hidden />
       <Image
@@ -32,7 +32,7 @@ export function ExperiencesBand({
         aria-hidden
         fill
         sizes="100vw"
-        className="np-scroll-zoom z-0 object-cover object-center"
+        className="np-parallax-band z-0 object-cover object-center"
       />
       <div className="absolute inset-0 z-[1] np-scrim-wash" aria-hidden />
       <div className="absolute inset-0 z-[1] bg-ink-950/60" aria-hidden />

@@ -48,7 +48,7 @@ export function PlanTeaser() {
 
           <div
             aria-hidden
-            className="relative hidden max-h-[420px] overflow-hidden lg:block"
+            className="relative hidden max-h-[420px] overflow-clip lg:block"
           >
             <div className="flex flex-col gap-4 opacity-90">
               {[

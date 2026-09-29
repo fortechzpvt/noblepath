@@ -38,20 +38,20 @@ export function TripCard({
   return (
     <article
       className={cn(
-        "np-reveal group relative flex flex-col overflow-hidden rounded-xl border border-border",
+        "np-reveal group relative flex flex-col overflow-clip rounded-xl border border-border",
         "bg-surface shadow-sm transition-[transform,box-shadow] duration-[var(--dur-3)]",
         "ease-[var(--ease-standard)] hover:-translate-y-1 hover:shadow-md active:-translate-y-px",
         className,
       )}
     >
-      <div className="relative aspect-video overflow-hidden bg-sand-100">
+      <div className="relative aspect-video overflow-clip bg-sand-100">
         <Image
           src={trip.image.src}
           alt=""
           aria-hidden
           fill
           sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-          className="object-cover transition-transform duration-[var(--dur-3)] ease-[var(--ease-standard)] group-hover:scale-105"
+          className="np-parallax-img object-cover transition-transform duration-[var(--dur-3)] ease-[var(--ease-standard)] group-hover:scale-105"
         />
         <span
           className="np-glass np-glass-text absolute bottom-3 left-3 rounded-pill px-3.5 py-1.5 text-small font-semibold text-white"
