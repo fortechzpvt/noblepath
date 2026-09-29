@@ -16,7 +16,7 @@ import type { Destination, ImageAsset } from "@/lib/types";
  */
 export const ownedPhotos = {
   sigiriyaSunrise: {
-    src: "/images/hero/sigiriya-sunrise-2.jpg",
+    src: "/images/hero/sigiriya.mp4",
     alt: "Sigiriya rock fortress rising out of dense jungle under a dramatic sunset sky, storm clouds breaking to gold light.",
     credit: "Photo by Marina Zvada / Pexels",
   },

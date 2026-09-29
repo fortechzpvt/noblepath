@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Container, Section } from "@/components/ui/section";
 import { destinations, ownedPhotos } from "@/content/destinations";
 import { experiences } from "@/content/experiences";
+import { trips } from "@/content/trips";
 import type { ImageAsset } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function CreditsPage() {
   const entries: { readonly place: string; readonly image: ImageAsset }[] = [
     ...destinations.map((d) => ({ place: d.name, image: d.image })),
     ...experiences.map((e) => ({ place: e.name, image: e.image })),
+    ...trips.map((t) => ({ place: t.name, image: t.image })),
     ...Object.values(ownedPhotos).map((image) => ({ place: "Across the site", image })),
   ];
   const seen = new Set<string>();

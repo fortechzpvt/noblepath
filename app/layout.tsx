@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     url: siteUrl,
     images: [
       {
-        url: "/images/hero/sigiriya-sunrise-2.jpg",
+        url: "/images/hero/sigiriya.mp4",
         width: 1600,
         height: 1200,
         alt: "Sigiriya rock fortress rising from jungle at sunrise, birds circling overhead",
@@ -75,7 +75,7 @@ export const metadata: Metadata = {
     title: "Noble Path — Explore Sri Lanka with us",
     description:
       "Curated destinations, unforgettable experiences and ready-made trips across Sri Lanka.",
-    images: ["/images/hero/sigiriya-sunrise-2.jpg"],
+    images: ["/images/hero/sigiriya.mp4"],
   },
   robots: { index: true, follow: true },
 };

@@ -43,7 +43,7 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
       />
 
       <Image
-        src="/images/hero/sigiriya-sunrise-2.jpg"
+        src="/images/hero/sigiriya.mp4"
         alt=""
         aria-hidden
         fill
