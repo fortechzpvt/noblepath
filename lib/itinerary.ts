@@ -120,7 +120,7 @@ function resolveInput(input: PlanInput): ResolvedInput {
     days = MIN_TRIP_DAYS;
   } else if (days > MAX_TRIP_DAYS) {
     warnings.push(
-      `We plan up to ${MAX_TRIP_DAYS} days at a time. Here are your first ${MAX_TRIP_DAYS} days — talk to us about extending the rest.`,
+      `We plan up to ${MAX_TRIP_DAYS} days at a time. Here are your first ${MAX_TRIP_DAYS} days. Talk to us about extending the rest.`,
     );
     days = MAX_TRIP_DAYS;
   }
@@ -388,7 +388,7 @@ function arrivalSummary(destination: Destination, driveMinutes: number, fromName
 }
 
 function restDaySummary(destination: Destination): string {
-  return `A slower day in ${destination.name} — time for the things you found yesterday, or nothing at all.`;
+  return `A slower day in ${destination.name}: time for the things you found yesterday, or nothing at all.`;
 }
 
 /**
@@ -525,7 +525,7 @@ export function generateItinerary(input: PlanInput): Itinerary {
     if (day.isLongDrive) {
       const destination = getDestinationBySlug(day.destinationSlug);
       warnings.push(
-        `Day ${day.day} is a long transfer — around ${formatDuration(day.driveMinutes)} to ${
+        `Day ${day.day} is a long transfer, around ${formatDuration(day.driveMinutes)} to ${
           destination?.name ?? day.destinationSlug
         }. Start early, or split it over two days.`,
       );

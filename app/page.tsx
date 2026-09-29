@@ -18,7 +18,7 @@ import {
 import type { Region } from "@/lib/types";
 
 export const metadata: Metadata = {
-  title: "Noble Path — Explore Sri Lanka with us",
+  title: "Noble Path · Explore Sri Lanka with us",
   description:
     "Discover breathtaking destinations, unique experiences and unforgettable memories across Sri Lanka. Build an itinerary that fits the days you actually have.",
   alternates: { canonical: "/" },

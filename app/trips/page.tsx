@@ -37,7 +37,7 @@ const TIERS: ReadonlyArray<{
   {
     tier: "short",
     heading: "Short trips",
-    lead: "Three to five days. Built for stopovers, business extensions and long weekends — one region, no long transfers.",
+    lead: "Three to five days. Built for stopovers, business extensions and long weekends. One region, no long transfers.",
   },
   {
     tier: "classic",
@@ -47,7 +47,7 @@ const TIERS: ReadonlyArray<{
   {
     tier: "grand",
     heading: "Grand trips",
-    lead: "Twelve to sixteen days. The full crossing — cultural triangle, hill country and coast, at a pace that survives it.",
+    lead: "Twelve to sixteen days. The full crossing: cultural triangle, hill country and coast, at a pace that survives it.",
   },
 ];
 
@@ -114,7 +114,7 @@ export default function TripsPage() {
               <div key={group.tier}>
                 <h2 className="font-display text-h2 text-ink-900">
                   {group.heading}
-                  <span className="np-sr-only"> — {group.trips.length} trips</span>
+                  <span className="np-sr-only">, {group.trips.length} trips</span>
                 </h2>
                 <p className="np-measure-lead mt-3 text-lead text-ink-600">{group.lead}</p>
 

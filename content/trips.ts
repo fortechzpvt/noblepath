@@ -113,7 +113,7 @@ export const trips: readonly TripPackage[] = [
         title: "Inside the ramparts",
         destinationSlug: "galle",
         summary:
-          "A morning walking tour of the fort — the Dutch Reformed Church, the warehouses, the lighthouse — then a hands-on cooking class that starts at the market and ends with lunch you made.",
+          "A morning walking tour of the fort (the Dutch Reformed Church, the warehouses, the lighthouse), then a hands-on cooking class that starts at the market and ends with lunch you made.",
         experienceSlugs: ["galle-fort-walking-tour", "sri-lankan-cooking-class"],
         overnightIn: "galle",
         driveMinutes: 0,
@@ -224,7 +224,7 @@ export const trips: readonly TripPackage[] = [
         title: "Kandy",
         destinationSlug: "kandy",
         summary:
-          "The botanic gardens at Peradeniya in the morning — orchid house, giant bamboo, the great Javan fig — and an afternoon walking the lake and the market.",
+          "The botanic gardens at Peradeniya in the morning (orchid house, giant bamboo, the great Javan fig) and an afternoon walking the lake and the market.",
         experienceSlugs: ["royal-botanic-gardens-peradeniya"],
         overnightIn: "kandy",
         driveMinutes: 30,
@@ -357,7 +357,7 @@ export const trips: readonly TripPackage[] = [
         title: "The train to Ella",
         destinationSlug: "ella",
         summary:
-          "Board at Nanu Oya for the best three hours of the hill-country line — Pattipola, the Idalgashinna ridge and the drop into the Uva basin. Luggage follows by road.",
+          "Board at Nanu Oya for the best three hours of the hill-country line: Pattipola, the Idalgashinna ridge and the drop into the Uva basin. Luggage follows by road.",
         experienceSlugs: ["kandy-to-ella-train"],
         overnightIn: "ella",
         driveMinutes: 120,
@@ -613,7 +613,7 @@ export const trips: readonly TripPackage[] = [
         title: "Two rocks",
         destinationSlug: "sigiriya",
         summary:
-          "Pidurangala in the dark for first light on the fortress, breakfast, and then Sigiriya itself — frescoes, mirror wall, lion's paws and the summit palace.",
+          "Pidurangala in the dark for first light on the fortress, breakfast, and then Sigiriya itself: frescoes, mirror wall, lion's paws and the summit palace.",
         experienceSlugs: ["pidurangala-sunrise", "sigiriya-sunrise-climb"],
         overnightIn: "sigiriya",
         driveMinutes: 0,

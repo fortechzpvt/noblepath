@@ -10,20 +10,19 @@ import type { Destination } from "@/lib/types";
 /**
  * The home hero (components.md §2).
  *
- * Layered exactly as design-system §10.2 specifies: photograph (with the
- * Sigiriya video playing over it, D-29), cooling wash,
+ * Layered as design-system §10.2 specifies, with the Sigiriya video in place of
+ * the photograph (D-29): video, cooling wash,
  * vertical scrim, horizontal scrim (≥768 only — below that the copy is
  * full-width, so the vertical layer is strengthened instead), and a top scrim
  * that carries the transparent nav.
  *
- * This is a server component. The Ken Burns push, the staggered text reveal and
- * the route-line draw-on are all CSS animations, so the hero ships no JavaScript
- * — which is what makes the LCP budget (NFR-1) achievable on the one page that
- * has to meet it.
+ * This is a server component. The staggered text reveal and the route-line
+ * draw-on are CSS animations and the video plays natively, so the hero ships
+ * no JavaScript.
  *
- * The photograph is marked decorative (`alt=""`): the <h1> directly beside it
- * already names the place and the page, so describing it again would be noise
- * in a screen reader (accessibility.md §7).
+ * The video is decorative (`aria-hidden`): the <h1> directly beside it already
+ * names the place and the page, so describing it again would be noise in a
+ * screen reader (accessibility.md §7).
  */
 export function Hero({ featured }: { readonly featured: readonly Destination[] }) {
   const thumbnails = featured.slice(0, 4);
@@ -36,32 +35,17 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
       // fixed height pushed the headline up underneath the fixed header.
       className="relative isolate flex min-h-svh flex-col justify-end overflow-hidden"
     >
-      {/* Fallback behind the photograph. If the asset fails to load the hero is
-          still readable — white on jungle-900 measures 11.7:1. */}
+      {/* Fallback behind the video. If it fails to load the hero is still
+          readable — white on jungle-900 measures 11.7:1. */}
       <div
         className="absolute inset-0 z-0 bg-gradient-to-b from-jungle-900 to-ink-900"
         aria-hidden
       />
 
-      {/* The photograph stays as the base layer (D-29): it is the LCP element and
-          paints before the video has buffered, and it is all a visitor who
-          prefers reduced motion ever sees. */}
-      <Image
-        src="/images/hero/sigiriya-sunrise-2.jpg"
-        alt=""
-        aria-hidden
-        fill
-        priority
-        fetchPriority="high"
-        sizes="100vw"
-        quality={72}
-        className="np-ken-burns z-0 object-cover object-[50%_45%]"
-      />
-
-      {/* Muted, looping, inline: the only combination every mobile browser will
-          autoplay. No `poster` — the photograph underneath already fills that
-          role, and a poster would download the image a second time. Hidden
-          under prefers-reduced-motion (WCAG 2.3.3). */}
+      {/* The hero is video only (D-29). Muted, looping, inline: the only
+          combination every mobile browser will autoplay. Until it buffers — and
+          for visitors who prefer reduced motion, where it is hidden (WCAG 2.3.3)
+          — the jungle gradient above is what shows. */}
       <video
         autoPlay
         muted

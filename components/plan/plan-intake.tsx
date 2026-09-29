@@ -125,7 +125,7 @@ export function PlanIntake({
     if (!Number.isInteger(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
       found.push({
         fieldId: monthId,
-        message: "Choose the month you arrive — it changes the route we suggest.",
+        message: "Choose the month you arrive. It changes the route we suggest.",
       });
     }
 
@@ -233,7 +233,7 @@ export function PlanIntake({
           <p aria-live="polite" className="mt-3 text-small text-text-meta">
             {interests.length} of {MAX_INTERESTS} selected
             {interests.length >= MAX_INTERESTS
-              ? " — deselect one to choose something else"
+              ? ". Deselect one to choose something else."
               : ""}
           </p>
         </FieldGroup>

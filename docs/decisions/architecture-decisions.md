@@ -1078,12 +1078,13 @@ converted and the root file was removed.
 
 ---
 
-## D-29 - Home hero plays a Sigiriya video over the photograph
+## D-29 - Home hero is a Sigiriya video (no photograph)
 
 **Date:** 2026-09-30 · **Decided by:** Orchestrator (Full-Stack Engineer)
 
-**Decision:** The home hero plays `public/images/hero/sigiriya.mp4` as a muted, looping,
-inline `<video>` over the existing Sigiriya photograph.
+**Decision:** The home hero is `public/images/hero/sigiriya.mp4`, played as a muted,
+looping, inline `<video>`. At the owner's request the Sigiriya photograph was removed
+from the hero entirely, rather than kept as a still frame under the video.
 
 **Reason:** Requested. The first attempt (commit `ab4b665`) passed the `.mp4` to
 `next/image` and to the Open Graph and `ownedPhotos.sigiriyaSunrise` paths. That broke:
@@ -1091,17 +1092,15 @@ inline `<video>` over the existing Sigiriya photograph.
 - link previews, because social platforms need an image;
 - every Sigiriya card, trip card and page header that shares `ownedPhotos.sigiriyaSunrise`.
 
-All three paths are restored to the `.jpg`.
+Those paths are restored to the `.jpg`, which is still used everywhere except the hero.
 
 **Chosen solution:**
 - `<video autoPlay muted loop playsInline preload="auto">`, `aria-hidden` and not focusable.
   Muted plus `playsInline` is what iOS and Android require for autoplay.
-- The photograph stays underneath as the LCP element. It paints before the video buffers,
-  so the hero is never blank.
-- `motion-reduce:hidden`: visitors who prefer reduced motion see only the still photograph
-  (WCAG 2.3.3).
-- There is no `poster`, because the photograph underneath does that job without a second
-  download.
+- Until the video buffers, the hero shows its existing jungle-to-ink gradient, and the text
+  on it stays readable (11.7:1).
+- `motion-reduce:hidden`: visitors who prefer reduced motion get the gradient instead of
+  moving video (WCAG 2.3.3).
 - No CSP change: `default-src 'self'` covers same-origin media.
 
 **Known limitations:**
@@ -1110,7 +1109,52 @@ All three paths are restored to the `.jpg`.
   and macOS `avconvert` presets only reached 18 MB at 720p. **Action:** re-encode to about
   1080p at CRF 28, with no audio and `+faststart`, targeting 3–5 MB, before launch.
 - There is no separate smaller file for mobile yet.
+- With no photograph, the LCP element is now the headline text, and the first paint is the
+  gradient until the video arrives. A heavy video makes that gap visible on slow
+  connections.
 - As with D-26 and D-27, there has been no browser visual check.
+
+---
+
+## D-30 - Retro display font (Abril Fatface) and a dash-free, minimal copy style
+
+**Date:** 2026-09-30 · **Decided by:** Orchestrator (UI/UX Designer and Full-Stack Engineer), with the owner choosing the font
+
+**Decision:**
+1. **Font.** The display face for every heading changes from Playfair Display to
+   **Abril Fatface**, a fat Didone poster serif with a retro, vintage-cinema feel. That
+   covers the hero "Explore Sri Lanka with us" and every `font-display` / `h1`–`h6`.
+2. **Copy.** Em dashes (—) are removed from all visible copy. They are rewritten as commas,
+   colons, parentheses or full stops, for a calmer, more minimal reading texture. En dashes
+   (–) stay where they mark ranges ("May–September", "3–4 hours", "Kandy–Ella"), because
+   there they carry meaning. Page titles use the existing "·" separator.
+
+**Reason:** Requested: a "rogue retro vintage cinematic" headline font, and removing
+"unnecessary dash marks" to make the UI minimalistic. "Rogue" itself is a paid font. The
+owner chose the free Abril Fatface instead of licensing it.
+
+**Alternatives considered:**
+- **Rogue (paid):** needs a purchased web licence and a font file.
+- **Limelight:** art-deco cinema marquee style, but too decorative for long headings.
+- **Bebas Neue:** condensed modern caps, not vintage.
+
+**Chosen solution:**
+- `next/font/google` `Abril_Fatface` is self-hosted at build time, so there is no CSP change
+  and no runtime request to Google.
+- Abril has one weight, so headings and `--text-display` are set to 400, and
+  `font-synthesis-weight: none` on headings and `.font-display` stops faux bold.
+- Copy edits cover `content/*` (111 dashes), `app/*`, `components/*` and the itinerary
+  messages in `lib/itinerary.ts`.
+- Staff-only email bodies (`lib/*-email.ts`) and server logs are untouched: visitors never
+  see them.
+
+**Known limitations:**
+- Abril's hairlines are thinner than Playfair's. The design-system serif size floor
+  (≥ 24 px, never small over photography) matters even more now.
+- Headings that previously relied on 600/700 weight now render at the face's single weight.
+  They were not reviewed one by one in a browser.
+- `design-system.md` keeps the original Playfair rationale as history, with a D-30 update
+  note.
 
 ---
 

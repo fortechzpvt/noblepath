@@ -214,7 +214,7 @@ export const destinations: readonly Destination[] = [
     description: [
       "Colombo is not a city that announces itself. Its pleasures are specific rather than monumental: the Pettah market's street-by-street specialisation, the Sea Street goldsmiths, the red-and-white striped Jami Ul-Alfar mosque, an evening on Galle Face Green with isso wade and a kite.",
       "The old Dutch Hospital precinct in Fort has been restored into restaurants and shops and is the easiest entry point if your time is short. From there the Gangaramaya temple, the Independence Memorial and the National Museum form a comfortable half-day loop by tuk-tuk.",
-      "Eat well here. Colombo has the country's broadest range — hoppers and kottu from street stalls, Tamil and Muslim cooking in Pettah and Slave Island, and a serious modern Sri Lankan restaurant scene that has grown up in the last decade.",
+      "Eat well here. Colombo has the country's broadest range: hoppers and kottu from street stalls, Tamil and Muslim cooking in Pettah and Slave Island, and a serious modern Sri Lankan restaurant scene that has grown up in the last decade.",
       "Practically, Colombo is a transit hub more than a base. The airport is 35 km north near Negombo, the Southern Expressway reaches Galle in about ninety minutes, and trains to Kandy and the hill country leave from Fort station early in the morning.",
     ],
     interests: ["culture", "food"],
@@ -254,7 +254,7 @@ export const destinations: readonly Destination[] = [
       "Negombo exists on most itineraries as a first or last night, and it does that job unusually well. The airport is a 20–30 minute drive away, the beach is wide and walkable, and the fishing harbour and Dutch-era canal give the town more character than a transit stop deserves.",
     description: [
       "Arrive on a long-haul flight and the last thing you want is four hours in a car. Negombo lets you sleep, swim and eat within half an hour of landing, then start the real trip the next morning.",
-      "The town itself is strongly Catholic — a legacy of Portuguese rule — with churches at the centre of village life and a fishing fleet that comes in at dawn. The Lellama fish market is genuinely worth the early start, and the lagoon behind the town is best seen from a small boat at first light.",
+      "The town itself is strongly Catholic (a legacy of Portuguese rule), with churches at the centre of village life and a fishing fleet that comes in at dawn. The Lellama fish market is genuinely worth the early start, and the lagoon behind the town is best seen from a small boat at first light.",
       "The Dutch canal that runs north from the lagoon was cut in the seventeenth century to move cinnamon to Colombo. Parts are now a quiet paddling and cycling route through coconut plantations and villages.",
       "Negombo is also the traditional starting point for a self-drive tuk-tuk trip, and a cluster of Ayurveda and wellness resorts sits along this stretch of coast.",
     ],
@@ -335,7 +335,7 @@ export const destinations: readonly Destination[] = [
       "The Golden Temple of Dambulla is the largest and best-preserved cave temple complex in Sri Lanka. Five chambers cut into an overhanging rock hold more than 150 statues and some 2,100 square metres of painted ceiling, continuously maintained since the first century BCE. It is a 20-minute climb and an hour well spent.",
     description: [
       "Each cave has its own character, from the single 14-metre reclining Buddha carved out of the rock in the first chamber to the crowded, richly painted Maha Alut Viharaya. The murals follow the contours of the cave roof rather than a flat surface, which is what makes them remarkable.",
-      "It is an active temple. Shoulders and knees must be covered, shoes come off at the terrace, and you should never turn your back on a Buddha image for a photograph — a rule that is taken seriously and occasionally enforced.",
+      "It is an active temple. Shoulders and knees must be covered, shoes come off at the terrace, and you should never turn your back on a Buddha image for a photograph, a rule that is taken seriously and occasionally enforced.",
       "Dambulla town itself is a junction rather than a destination, but it holds the country's largest wholesale vegetable market and is the cheapest place in the region to base yourself if Sigiriya's village hotels are full.",
       "Most travellers visit Dambulla as a half-day stop between Sigiriya and Kandy, which works well: the caves in the morning, lunch in town, and on the road by early afternoon.",
     ],
@@ -373,7 +373,7 @@ export const destinations: readonly Destination[] = [
       "Sri Lanka's second ancient capital was at its height in the twelfth century under Parakramabahu I, and its ruins are unusually compact, well-labelled and shaded. The Gal Vihara's four colossal Buddha figures, carved from a single granite face, are among the finest stone sculpture in South Asia.",
     description: [
       "Polonnaruwa rewards a bicycle. The site is flat, the ruins are spread over a few kilometres of quiet lanes under trees, and you can cover the Royal Palace, the Quadrangle, the Rankot Vehera and the Gal Vihara comfortably in three to four hours.",
-      "The Quadrangle is the dense heart of it — the Vatadage's circular relic house, the Hatadage, the stone book of the Gal Pota — and repays slow looking. The Gal Vihara sits at the north end and is usually kept for last.",
+      "The Quadrangle is the dense heart of it (the Vatadage's circular relic house, the Hatadage, the stone book of the Gal Pota) and repays slow looking. The Gal Vihara sits at the north end and is usually kept for last.",
       "Beside the city lies the Parakrama Samudra, a vast twelfth-century reservoir that still irrigates the district. Elephants come down to drink on its fringes in the late afternoon, and the bund is a good place to end the day.",
       "Go early. There is little shade on the open platforms by mid-morning, and the site's own toque macaques become increasingly interested in unattended bags as the day warms up.",
     ],
@@ -411,7 +411,7 @@ export const destinations: readonly Destination[] = [
     summary:
       "Anuradhapura was the island's capital for over a millennium and remains one of Buddhism's most important pilgrimage sites. Its scale is the point: enormous brick stupas, monastic cities, and the Sri Maha Bodhi, grown from a cutting of the tree under which the Buddha attained enlightenment and tended continuously since the third century BCE.",
     description: [
-      "This is not a museum piece. White-clad pilgrims walk the sacred precinct every day, and the atmosphere at the Ruwanwelisaya at dusk — oil lamps, lotus offerings, chanting — is the reason to come rather than the archaeology.",
+      "This is not a museum piece. White-clad pilgrims walk the sacred precinct every day, and the atmosphere at the Ruwanwelisaya at dusk (oil lamps, lotus offerings, chanting) is the reason to come rather than the archaeology.",
       "The site is far larger than Polonnaruwa and is best covered by car with a driver or by bicycle if you are used to heat. Allow a full day for the sacred city, the Abhayagiri and Jetavanarama complexes and the Isurumuniya rock temple.",
       "The Sri Maha Bodhi is the oldest documented living tree planted by human hand anywhere in the world. Dress code is strict and cameras are restricted close to the terrace.",
       "Anuradhapura is also the natural staging point for Wilpattu National Park, an hour to the west, and for the long run north to Jaffna.",
@@ -454,7 +454,7 @@ export const destinations: readonly Destination[] = [
     description: [
       "The Sri Dalada Maligawa houses a tooth relic of the Buddha and is the most venerated Buddhist site in the country. Time your visit to one of the three daily puja ceremonies, when the inner chamber is opened and the drummers play; arrive thirty minutes early and dress modestly.",
       "Beyond the temple, Kandy is a walking city: the lake circuit, the covered market, the Kandy Garrison Cemetery, and an uphill climb to the Bahiravakanda Buddha for the view back over the rooftops.",
-      "The Royal Botanic Gardens at Peradeniya, six kilometres out of town, hold 147 acres of orchid house, giant bamboo, a cannonball tree avenue and an enormous Javan fig — an easy, shaded half-day.",
+      "The Royal Botanic Gardens at Peradeniya, six kilometres out of town, hold 147 acres of orchid house, giant bamboo, a cannonball tree avenue and an enormous Javan fig: an easy, shaded half-day.",
       "Kandy is where most travellers pick up the train south. The Kandy–Nanu Oya–Ella line is slow, often full, and worth every minute; book reserved seats well in advance or take a second-class unreserved carriage and stand in the doorway with everyone else.",
     ],
     interests: ["culture", "nature"],
@@ -492,10 +492,10 @@ export const destinations: readonly Destination[] = [
     region: "hill-country",
     tagline: "Tea, mist and a half-remembered English winter",
     summary:
-      "At 1,868 metres, Nuwara Eliya is the highest town in Sri Lanka and the centre of the tea industry. The British built it as a hill station and it has never quite stopped being one — hedges, a racecourse, a post office out of 1900 — set among some of the steepest, greenest tea estates in the world.",
+      "At 1,868 metres, Nuwara Eliya is the highest town in Sri Lanka and the centre of the tea industry. The British built it as a hill station and it has never quite stopped being one, with hedges, a racecourse and a post office out of 1900, set among some of the steepest, greenest tea estates in the world.",
     description: [
       "The tea is the reason to come. Estates around the town run factory tours that take you from plucking through withering, rolling, oxidation and firing in about forty minutes, ending with a tasting that will change how you buy tea at home.",
-      "The town divides opinion. Some find it charmingly odd, others find it damp and chilly. Both are right — it can drop below 10°C at night and the mist rolls in most afternoons, so pack a jacket, which nobody expects to need in Sri Lanka.",
+      "The town divides opinion. Some find it charmingly odd, others find it damp and chilly. Both are right. It can drop below 10°C at night and the mist rolls in most afternoons, so pack a jacket, which nobody expects to need in Sri Lanka.",
       "Gregory Lake is the centre of local leisure, Victoria Park is a good birding stop for hill-country endemics, and Lover's Leap waterfall is a short walk from the edge of town.",
       "Nanu Oya station, 15 minutes away, is where most travellers join or leave the Kandy–Ella train, and Horton Plains is about an hour and a quarter up the road for a pre-dawn start.",
     ],
@@ -531,10 +531,10 @@ export const destinations: readonly Destination[] = [
     region: "hill-country",
     tagline: "A gap in the mountains with the whole south below it",
     summary:
-      "Ella is a one-street hill town that happens to sit at the head of a spectacular gap in the escarpment, with views that run all the way to the southern plains on a clear morning. It is the hill country's social centre — hikes, waterfalls, the Nine Arch Bridge and more banana-pancake cafés than the population justifies.",
+      "Ella is a one-street hill town that happens to sit at the head of a spectacular gap in the escarpment, with views that run all the way to the southern plains on a clear morning. It is the hill country's social centre: hikes, waterfalls, the Nine Arch Bridge and more banana-pancake cafés than the population justifies.",
     description: [
       "The two classic walks leave from the village. Little Adam's Peak is an easy 45-minute climb for sunrise. Ella Rock is a harder two to three hours each way along the railway line and up through tea and eucalyptus, and is genuinely easy to get lost on without a guide or a downloaded track.",
-      "The Nine Arch Bridge, built in stone and brick without steel during the First World War, curves through the jungle below Ella. Check the train times locally and be on the bridge or the viewpoint for a crossing — it is the difference between a nice bridge and a memorable one.",
+      "The Nine Arch Bridge, built in stone and brick without steel during the First World War, curves through the jungle below Ella. Check the train times locally and be on the bridge or the viewpoint for a crossing. It is the difference between a nice bridge and a memorable one.",
       "Ella sits in the Uva rain shadow, which gives it a different season to most of the hill country: it is often bright and clear in July and August while the western slopes are wet, and wettest from October into December.",
       "The town has become busy, and that is worth knowing in advance. Stay a few hundred metres outside the centre, start early, and it is still one of the most enjoyable places on the island.",
     ],
@@ -581,7 +581,7 @@ export const destinations: readonly Destination[] = [
       "Horton Plains is a high plateau of montane grassland and cloud forest at over 2,000 metres, and the only national park in Sri Lanka you are allowed to walk in unaccompanied. The 9 km circuit takes in Baker's Falls and World's End, where the plateau simply stops and falls away towards the southern plains.",
     description: [
       "You have to be early. The escarpment clouds over almost every morning between about 9 and 10am, and after that World's End is a view of white. That means leaving Nuwara Eliya or Ohiya around 5am, in the cold and dark.",
-      "The loop is well-marked, takes three to four hours at a steady pace, and is not technically difficult — but it is at altitude, the ground is uneven, and it can be close to freezing at the start and hot by the end. Layers, proper shoes and water.",
+      "The loop is well-marked, takes three to four hours at a steady pace, and is not technically difficult, but it is at altitude, the ground is uneven, and it can be close to freezing at the start and hot by the end. Layers, proper shoes and water.",
       "The grassland holds sambar deer in numbers, and the forest patches shelter several endemic birds and the occasional purple-faced langur. Leopards are present and essentially never seen.",
       "There is no accommodation inside the park. Most people stay at Nuwara Eliya, Ohiya or Ella and treat Horton Plains as a long, early day trip. All plastic is checked at the gate and must be carried back out.",
     ],
@@ -620,7 +620,7 @@ export const destinations: readonly Destination[] = [
     description: [
       "The season runs from the December Unduvap full moon to the May Vesak full moon. In season the path is lit, tea stalls are open through the night, and on poya weekends it can be shoulder-to-shoulder the whole way up.",
       "Outside the season the lights are off, the stalls are shut and the weather is often appalling. It can still be climbed, but it becomes a serious unsupported night hike rather than a pilgrimage.",
-      "Most climbers start between 2 and 2.30am and take three to four hours up. It is relentless stair-climbing rather than technical walking, and the last section is steep. Take warm layers for the summit wait — it is cold and windy up there.",
+      "Most climbers start between 2 and 2.30am and take three to four hours up. It is relentless stair-climbing rather than technical walking, and the last section is steep. Take warm layers for the summit wait, as it is cold and windy up there.",
       "The descent is hard on the knees and takes two to three hours in daylight, with views over the Peak Wilderness Sanctuary that you climbed straight past in the dark.",
     ],
     interests: ["adventure", "culture", "nature"],
@@ -658,7 +658,7 @@ export const destinations: readonly Destination[] = [
       "Galle Fort is a walled seventeenth-century town on a promontory, and it is the most complete European-built fortification in Asia. Inside the ramparts are coral-stone churches, a working lighthouse, boutique hotels in merchant houses, and streets that people still live and trade on rather than a preserved shell.",
     description: [
       "Walk the ramparts at sunset. The full circuit takes about an hour, passes the lighthouse and the Flag Rock bastion where local boys dive into the sea for tips, and gives you the shape of the place before you walk its streets.",
-      "Inside the walls, the Dutch Reformed Church, the old Dutch Hospital, the Maritime Museum and the Historical Mansion fill a slow morning. The pleasure of Galle, though, is aimless wandering — jewellers, bookshops, cafés in eighteenth-century courtyards.",
+      "Inside the walls, the Dutch Reformed Church, the old Dutch Hospital, the Maritime Museum and the Historical Mansion fill a slow morning. The pleasure of Galle, though, is aimless wandering: jewellers, bookshops, cafés in eighteenth-century courtyards.",
       "The fort is small and can be covered in a day, but it is a good base for the wider south. Unawatuna, Koggala's stilt fishermen, Handunugoda tea estate and the Weligama surf breaks are all within forty minutes.",
       "Galle is also the end of the Southern Expressway: Colombo is about an hour and a half away, and the airport around two and a quarter, which makes it a comfortable final stop before a late flight.",
     ],
@@ -701,7 +701,7 @@ export const destinations: readonly Destination[] = [
       "The bay is protected by a reef, which makes it one of the safer swimming beaches on this coast during the main season. Jungle Beach, on the far side of Rumassala hill, is quieter and reachable on foot or by tuk-tuk.",
       "Rumassala itself is worth the climb for the Japanese Peace Pagoda and the view back over the bay. Local legend ties the hill to the Ramayana, and it holds a surprising concentration of medicinal plants.",
       "Koggala, fifteen minutes east, is where you will see stilt fishermen. Be aware that most of the poles now belong to men who fish for photographs rather than fish; agree a price first, and treat it as a portrait sitting rather than a documentary moment.",
-      "The stretch between Unawatuna and Weligama is the heart of the south-coast food scene — rice and curry, fresh seafood, and cooking classes in family homes.",
+      "The stretch between Unawatuna and Weligama is the heart of the south-coast food scene: rice and curry, fresh seafood, and cooking classes in family homes.",
     ],
     interests: ["beach", "food", "wellness"],
     bestMonths: [12, 1, 2, 3],
@@ -737,7 +737,7 @@ export const destinations: readonly Destination[] = [
     summary:
       "Mirissa is the south coast's whale-watching harbour and its best-known crescent beach. Blue whales pass close to the continental shelf here between roughly November and April, and the village behind the bay has grown into a comfortable base for beach days, surf lessons at Weligama and sunset on Coconut Tree Hill.",
     description: [
-      "Boats leave the fishery harbour around 6.30am for a three to five hour trip. Sightings of blue whales and spinner dolphins are common in season but never guaranteed, and the sea can be uncomfortable — take something for seasickness if you are prone to it.",
+      "Boats leave the fishery harbour around 6.30am for a three to five hour trip. Sightings of blue whales and spinner dolphins are common in season but never guaranteed, and the sea can be uncomfortable, so take something for seasickness if you are prone to it.",
       "Choose an operator that keeps its distance. Crowding and chasing whales is both stressful for the animals and against the guidelines; responsible boats stay back, cut engines and wait.",
       "Weligama, ten minutes west, has a long sandy-bottomed beach break that is the best beginner surf in the country. Boards and lessons are available on the sand for very little.",
       "Coconut Tree Hill at the eastern end of the bay is the photograph everyone comes for. Go at sunrise rather than sunset if you would like it to yourself.",
@@ -778,10 +778,10 @@ export const destinations: readonly Destination[] = [
     summary:
       "Hikkaduwa was Sri Lanka's first backpacker beach and still has the most relaxed, least polished feel of the south-west resorts. A shallow marine sanctuary sits directly off the main beach, green turtles feed in the surf line most mornings, and the reef break in front of town is forgiving.",
     description: [
-      "The coral sanctuary can be snorkelled straight from the beach. It has suffered from bleaching and from decades of boat traffic, so expect a modest reef rather than a spectacular one — and use reef-safe sunscreen, or none at all.",
+      "The coral sanctuary can be snorkelled straight from the beach. It has suffered from bleaching and from decades of boat traffic, so expect a modest reef rather than a spectacular one, and use reef-safe sunscreen, or none at all.",
       "Green turtles come in to feed on seagrass close to shore, particularly in the morning. Watch them in the water rather than handling them, and give the commercial 'turtle hatcheries' along this coast a sceptical look: standards vary widely and several keep animals in conditions that do them no good.",
       "The surf is a mixed beach and reef setup that suits improvers, with a handful of gentler spots for beginners. Season runs with the rest of the south-west coast, November to April.",
-      "Hikkaduwa is the closest good beach to Colombo — about 85 minutes on the expressway — which makes it a practical first or last stop on a short trip.",
+      "Hikkaduwa is the closest good beach to Colombo (about 85 minutes on the expressway), which makes it a practical first or last stop on a short trip.",
     ],
     interests: ["beach", "nature", "adventure", "wellness"],
     bestMonths: [12, 1, 2, 3],
@@ -820,7 +820,7 @@ export const destinations: readonly Destination[] = [
     description: [
       "Drives leave at 5.30am and again mid-afternoon, and last four to five hours. Mornings are better for cats and for light; afternoons are quieter for jeep numbers. A full-day permit avoids the gate rush entirely.",
       "Block 1 is where the leopard density is highest and where the jeeps concentrate. Block 5 and the adjoining Lunugamvehera park are far less busy and worth asking about if you would rather have space than certainty.",
-      "Yala's Block 1 usually closes for around six weeks from the start of September for maintenance and drought relief. Always confirm current dates before building a trip around it — the closure moves.",
+      "Yala's Block 1 usually closes for around six weeks from the start of September for maintenance and drought relief. Always confirm current dates before building a trip around it, as the closure moves.",
       "Tissamaharama is the practical base, with everything from guesthouses to the tented and villa-style camps on the park boundary. A stay inside or on the edge of the park buys you first position at the gate.",
     ],
     interests: ["wildlife", "nature", "adventure"],
@@ -828,7 +828,7 @@ export const destinations: readonly Destination[] = [
     shoulderMonths: [1, 8, 12],
     avoidMonths: [9, 10, 11],
     seasonNote:
-      "Sightings are best in the dry months February to July, when animals concentrate at waterholes. Block 1 normally closes for around six weeks from early September — confirm before booking.",
+      "Sightings are best in the dry months February to July, when animals concentrate at waterholes. Block 1 normally closes for around six weeks from early September, so confirm before booking.",
     suggestedNights: 2,
     image: destinationPhotos.yala,
     highlights: [
@@ -858,7 +858,7 @@ export const destinations: readonly Destination[] = [
     summary:
       "Udawalawe is open grassland and scrub around a large reservoir, and it holds a resident elephant population of several hundred. Sightings are close to certain in any month, the terrain is open enough that you actually see what is there, and it is far less crowded than Yala.",
     description: [
-      "Because the park is open rather than thick forest, Udawalawe is the most reliable place in Sri Lanka to watch elephant behaviour rather than just glimpse an animal — family groups at the water, sub-adults sparring, and large solitary tuskers.",
+      "Because the park is open rather than thick forest, Udawalawe is the most reliable place in Sri Lanka to watch elephant behaviour rather than just glimpse an animal: family groups at the water, sub-adults sparring, and large solitary tuskers.",
       "There are no leopards to speak of here, but there are water buffalo, spotted deer, jackals, crocodiles and exceptional birdlife, including large numbers of raptors over the grassland.",
       "The Elephant Transit Home nearby rehabilitates orphaned calves for release back into the wild and holds public feeding sessions at set times through the day. It is a genuine conservation operation and, unlike some elephant attractions, there is no riding or bathing with animals.",
       "Udawalawe sits neatly between the hill country and the south coast, which makes it easy to slot into a route without a long detour.",
@@ -895,7 +895,7 @@ export const destinations: readonly Destination[] = [
     region: "wilderness",
     tagline: "The biggest park, the fewest jeeps, the land of lakes",
     summary:
-      "Wilpattu is Sri Lanka's largest and oldest national park, named for the villus — natural sand-rimmed lakes — scattered through its dense dry forest. It has leopards, sloth bears and elephants, and a fraction of Yala's traffic. Sightings take longer here, and feel earned when they come.",
+      "Wilpattu is Sri Lanka's largest and oldest national park, named for the villus (natural sand-rimmed lakes) scattered through its dense dry forest. It has leopards, sloth bears and elephants, and a fraction of Yala's traffic. Sightings take longer here, and feel earned when they come.",
     description: [
       "The forest is thicker than Yala's, so game viewing is slower and more patient. The reward is the atmosphere: long tracks with no other vehicle in sight, and villus that fill after rain and draw everything to them.",
       "Sloth bears are a particular draw in June and July when the palu trees fruit. Leopards are present in good numbers and are increasingly seen as the population has recovered since the park fully reopened in 2010.",
@@ -939,7 +939,7 @@ export const destinations: readonly Destination[] = [
       "Main Point is the wave that made the place: a long, workable right that breaks over sand and rock and holds a crowd. Beginners are better off at Baby Point or Whiskey Point a little north, where boards and lessons are easy to arrange.",
       "The season is sharply defined. From roughly April or May to September the swell is consistent and the weather dry; from November to March the surf dies, the rain arrives and many places shut for the season.",
       "Beyond the surf, Kumana National Park is an hour south and is one of the island's best bird sites, with a large mangrove lagoon that fills with painted storks, pelicans and spoonbills. Elephants and the occasional leopard cross the road on the way there.",
-      "Arugam Bay is remote — about three hours from Ella and five to six from Yala or Trincomalee — so it works best as a place you commit several days to rather than pass through.",
+      "Arugam Bay is remote (about three hours from Ella and five to six from Yala or Trincomalee), so it works best as a place you commit several days to rather than pass through.",
     ],
     interests: ["beach", "adventure", "wellness"],
     bestMonths: [5, 6, 7, 8, 9],
@@ -959,7 +959,7 @@ export const destinations: readonly Destination[] = [
     travel: [
       { to: "ella", minutes: 180 },
       { to: "yala", minutes: 210, note: "Inland via Monaragala." },
-      { to: "trincomalee", minutes: 300, note: "Long coastal run via Batticaloa — split it or start very early." },
+      { to: "trincomalee", minutes: 300, note: "Long coastal run via Batticaloa. Split it or start very early." },
     ],
     coordinates: { lat: 6.84, lng: 81.836 },
     experienceSlugs: ["arugam-bay-surf-session"],
@@ -974,7 +974,7 @@ export const destinations: readonly Destination[] = [
     summary:
       "Trincomalee sits on a deep natural harbour with the Koneswaram temple on a cliff above it and the flat, clear beaches of Uppuveli and Nilaveli to the north. Pigeon Island's coral lies a short boat ride offshore, and between May and September the sea here is glassy while the south-west is being rained on.",
     description: [
-      "Koneswaram Kovil, on Swami Rock above the harbour, is one of the most important Hindu temples in Sri Lanka and among the most dramatically sited anywhere — a painted gopuram on a cliff straight above the Indian Ocean.",
+      "Koneswaram Kovil, on Swami Rock above the harbour, is one of the most important Hindu temples in Sri Lanka and among the most dramatically sited anywhere: a painted gopuram on a cliff straight above the Indian Ocean.",
       "Nilaveli and Uppuveli are wide, shallow and unusually calm, which makes them the best swimming beaches on the island for families and weak swimmers during the eastern season.",
       "Pigeon Island National Park, a few hundred metres offshore from Nilaveli, has the best accessible coral and reef fish in the country, along with resident blacktip reef sharks in the shallows. Visitor numbers are capped and the reef is fragile: no standing on coral, no touching, no sunscreen in the water.",
       "Whale and dolphin watching runs out of Trincomalee in the eastern season, and Kanniya's hot wells and the hot springs make an easy inland half-day.",
@@ -1015,10 +1015,10 @@ export const destinations: readonly Destination[] = [
     summary:
       "The Jaffna peninsula is flat, bright and culturally Tamil, with its own food, festivals and architecture, and a landscape of palmyra palms, lagoons and islands. Long closed by the civil war, it is now easily reached by road or by a comfortable day train from Colombo, and it feels like a different country to the south.",
     description: [
-      "Nallur Kandaswamy Kovil is the peninsula's centre of gravity — a large, active Hindu temple with daily pujas and a spectacular 25-day festival in July and August. Men remove shirts to enter; everyone removes shoes.",
+      "Nallur Kandaswamy Kovil is the peninsula's centre of gravity: a large, active Hindu temple with daily pujas and a spectacular 25-day festival in July and August. Men remove shirts to enter; everyone removes shoes.",
       "The Dutch fort on the lagoon, the public library rebuilt after its destruction in 1981, and the markets of the old town give Jaffna its texture. The library in particular carries a weight of recent history that is worth understanding before you visit.",
       "Jaffna food is distinct from the south: more chilli, more tamarind, crab curry, odiyal kool, and palmyra products from jaggery to toddy. It is one of the best reasons to make the trip.",
-      "Beyond the town, causeways run out to the islands — Kayts, Karainagar and, at the end of a long road and a short ferry, Delft with its wild ponies and coral-block walls. Nagadeepa's Buddhist temple and Nainativu's Hindu shrine sit on the same small island and are visited together.",
+      "Beyond the town, causeways run out to the islands: Kayts, Karainagar and, at the end of a long road and a short ferry, Delft with its wild ponies and coral-block walls. Nagadeepa's Buddhist temple and Nainativu's Hindu shrine sit on the same small island and are visited together.",
     ],
     interests: ["culture", "food"],
     bestMonths: [2, 3, 4, 7, 8, 9],

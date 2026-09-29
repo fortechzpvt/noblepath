@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, Poppins } from "next/font/google";
+import { Abril_Fatface, Poppins } from "next/font/google";
 
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -11,15 +11,19 @@ import "./globals.css";
  * of a third-party font origin and removes a render-blocking round trip on the
  * hero, which is the page that has to meet the LCP budget (NFR-1).
  *
- * `display: "swap"` plus next/font's metric-adjusted fallback is what the design
- * system refers to as "Playfair Display Fallback" / "Poppins Fallback" — the
- * fallback is size-matched, so swapping it in does not shift layout (NFR-2).
+ * `display: "swap"` plus next/font's metric-adjusted fallback keeps the swap from
+ * shifting layout (NFR-2).
+ *
+ * The display face is Abril Fatface (D-30), a retro poster serif that replaced
+ * Playfair Display. It ships in one weight only, so headings are set at 400 and
+ * weight synthesis is switched off in globals.css; otherwise the browser would
+ * fake a bold and smear it.
  */
-const playfair = Playfair_Display({
+const abril = Abril_Fatface({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-playfair",
-  weight: ["400", "500", "600", "700"],
+  variable: "--font-abril",
+  weight: "400",
 });
 
 const poppins = Poppins({
@@ -38,7 +42,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Noble Path — Explore Sri Lanka with us",
+    default: "Noble Path · Explore Sri Lanka with us",
     template: "%s · Noble Path",
   },
   description:
@@ -57,7 +61,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Noble Path",
-    title: "Noble Path — Explore Sri Lanka with us",
+    title: "Noble Path · Explore Sri Lanka with us",
     description:
       "Curated destinations, unforgettable experiences and ready-made trips across Sri Lanka.",
     url: siteUrl,
@@ -72,7 +76,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Noble Path — Explore Sri Lanka with us",
+    title: "Noble Path · Explore Sri Lanka with us",
     description:
       "Curated destinations, unforgettable experiences and ready-made trips across Sri Lanka.",
     images: ["/images/hero/sigiriya-sunrise-2.jpg"],
@@ -91,7 +95,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${playfair.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${abril.variable} ${poppins.variable}`}>
       <body>
         <a
           href="#main"

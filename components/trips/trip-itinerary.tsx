@@ -37,7 +37,7 @@ export function TripItinerary({
   readonly tripName: string;
 }) {
   return (
-    <ol aria-label={`${tripName} — day by day`} className="flex flex-col gap-6 lg:gap-8">
+    <ol aria-label={`${tripName}, day by day`} className="flex flex-col gap-6 lg:gap-8">
       {days.map((day) => {
         const destination = getDestinationBySlug(day.destinationSlug);
         const overnight = day.overnightIn ? getDestinationBySlug(day.overnightIn) : null;
@@ -117,7 +117,7 @@ export function TripItinerary({
                       <BedDouble size={16} aria-hidden />
                       {overnight
                         ? `Overnight in ${overnight.name}`
-                        : "Departure day — no overnight"}
+                        : "Departure day, no overnight"}
                     </li>
                   </ul>
 

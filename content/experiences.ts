@@ -245,7 +245,7 @@ export const experiences: readonly Experience[] = [
       "An evening on foot through Pettah and Galle Face eating kottu, hoppers, isso wade and short eats, with a guide who can explain what you are eating and order the things you would never find alone.",
     description: [
       "Start in the Pettah bazaar as the shops close and the food stalls open, work through Sea Street and the Muslim quarter, and finish on Galle Face Green with prawn wade and a kite overhead. Expect eight to ten tastings across three hours.",
-      "This is the fastest way to understand Sri Lankan food before you spend two weeks eating it. A good guide will also steer you away from the one or two things that catch out visitors — the chilli levels in a Pettah kottu chief among them.",
+      "This is the fastest way to understand Sri Lankan food before you spend two weeks eating it. A good guide will also steer you away from the one or two things that catch out visitors, the chilli levels in a Pettah kottu chief among them.",
     ],
     durationHours: 3.5,
     intensity: "easy",
@@ -257,7 +257,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.colomboStreetFoodWalk,
     included: ["English-speaking food guide", "All tastings", "Bottled water", "Tuk-tuk between the two districts"],
     goodToKnow: [
-      "Come hungry — this replaces dinner.",
+      "Come hungry: this replaces dinner.",
       "Vegetarian and no-chilli routes are available if requested in advance.",
       "Evenings only; the stalls do not open until around 6pm.",
     ],
@@ -284,7 +284,7 @@ export const experiences: readonly Experience[] = [
     included: ["Boat and boatman", "Naturalist guide", "Drinking water", "Hotel pick-up in Negombo"],
     goodToKnow: [
       "Leaves around 6am to catch the fleet returning.",
-      "Take a hat and sun cream — there is only partial shade.",
+      "Take a hat and sun cream, as there is only partial shade.",
       "Suitable for children and for non-swimmers; life jackets are provided.",
     ],
   },
@@ -294,7 +294,7 @@ export const experiences: readonly Experience[] = [
     destinationSlug: "negombo",
     category: "wellness",
     summary:
-      "A consultation with an Ayurvedic doctor followed by a prescribed sequence of oil treatments — abhyanga, shirodhara and a herbal steam — at an established west-coast retreat.",
+      "A consultation with an Ayurvedic doctor followed by a prescribed sequence of oil treatments (abhyanga, shirodhara and a herbal steam) at an established west-coast retreat.",
     description: [
       "Ayurveda in Sri Lanka is a licensed medical tradition, not a spa menu. A day programme begins with a pulse and constitution consultation, after which the treatments are chosen for you rather than picked from a list.",
       "A typical day runs to four or five hours: warm oil massage by two therapists, shirodhara oil flow across the forehead, a herbal steam box and a rest period, with an Ayurvedic lunch between sessions. Longer residential programmes of seven to twenty-one days are the traditional form if you have the time.",
@@ -305,12 +305,12 @@ export const experiences: readonly Experience[] = [
     bestMonths: [12, 1, 2, 3],
     shoulderMonths: [4, 5, 6, 7, 8, 9, 10, 11],
     avoidMonths: [],
-    seasonNote: "Indoors and available all year — one of the better wet-weather options on the west coast.",
+    seasonNote: "Indoors and available all year, and one of the better wet-weather options on the west coast.",
     image: experiencePhotos.ayurvedaWellnessRetreat,
     included: ["Doctor's consultation", "Two to three prescribed treatments", "Herbal steam", "Ayurvedic lunch and herbal tea"],
     goodToKnow: [
       "Declare pregnancy, heart conditions and recent surgery at the consultation.",
-      "Treatments use large amounts of medicated oil — bring clothes you do not mind marking.",
+      "Treatments use large amounts of medicated oil, so bring clothes you do not mind marking.",
       "Book ahead; walk-in availability is limited in season.",
     ],
   },
@@ -322,7 +322,7 @@ export const experiences: readonly Experience[] = [
     summary:
       "Pick up a tuk-tuk, get a local driving permit, and take the back roads yourself. Rentals start from Negombo or Colombo and run for anything from three days to a month.",
     description: [
-      "Driving your own tuk-tuk turns transfers into the best part of the trip. Rental companies handle the paperwork — you need a valid home licence, an International Driving Permit and a Sri Lankan recognition permit, which the operator arranges — and give you a lesson before you leave.",
+      "Driving your own tuk-tuk turns transfers into the best part of the trip. Rental companies handle the paperwork (you need a valid home licence, an International Driving Permit and a Sri Lankan recognition permit, which the operator arranges) and give you a lesson before you leave.",
       "Top speed is around 50 km/h, so plan half the daily distance you would in a car and stick to secondary roads. Breakdown cover across the island is standard with the reputable operators and is not optional in practice.",
     ],
     durationHours: 72,
@@ -336,7 +336,7 @@ export const experiences: readonly Experience[] = [
     included: ["Tuk-tuk hire", "Local permit processing", "Driving lesson", "Island-wide breakdown support", "Phone holder and charger"],
     goodToKnow: [
       "You need an International Driving Permit from your home country before you arrive.",
-      "Do not drive at night — unlit vehicles and animals on the road are the main hazard.",
+      "Do not drive at night: unlit vehicles and animals on the road are the main hazard.",
       "Three days is the practical minimum; a week or more is where it makes sense.",
     ],
   },
@@ -375,7 +375,7 @@ export const experiences: readonly Experience[] = [
     summary:
       "A rougher, cheaper 45-minute climb on the rock opposite Sigiriya, finishing with a boulder scramble onto a flat summit that looks straight across at the fortress as the sun comes up.",
     description: [
-      "Leave around 5am with a head torch. The path climbs through a working forest monastery, past a reclining Buddha, then turns into a short but genuine scramble over boulders for the last ten minutes — hands needed, and not a good idea in the wet.",
+      "Leave around 5am with a head torch. The path climbs through a working forest monastery, past a reclining Buddha, then turns into a short but genuine scramble over boulders for the last ten minutes: hands needed, and not a good idea in the wet.",
       "The reward is the view most people picture: Sigiriya's rock catching the first light across the jungle. Go on a morning when you are not also climbing Sigiriya itself, or you will have done two climbs before 10am.",
     ],
     durationHours: 3,
@@ -384,11 +384,11 @@ export const experiences: readonly Experience[] = [
     bestMonths: [5, 6, 7, 8, 9],
     shoulderMonths: [1, 2, 3, 4, 12],
     avoidMonths: [10, 11],
-    seasonNote: "Avoid after rain — the final scramble is slick granite and genuinely dangerous when wet.",
+    seasonNote: "Avoid after rain, as the final scramble is slick granite and genuinely dangerous when wet.",
     image: experiencePhotos.pidurangalaSunrise,
     included: ["Guide", "Head torch", "Transfer from Sigiriya hotels"],
     goodToKnow: [
-      "Shoulders and knees must be covered — the path passes through a monastery.",
+      "Shoulders and knees must be covered, as the path passes through a monastery.",
       "The last section is an unroped boulder scramble; skip it if you are unsteady.",
       "Take a torch: you will be starting in the dark.",
     ],
@@ -441,7 +441,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.dambullaCaveTemple,
     included: ["Licensed guide", "Drinking water", "Transfer from Sigiriya or Dambulla"],
     goodToKnow: [
-      "Shoulders and knees covered; shoes off at the terrace, where the stone can burn — take socks.",
+      "Shoulders and knees covered; shoes off at the terrace, where the stone can burn, so take socks.",
       "Do not pose with your back to a Buddha image; it causes genuine offence and is enforced.",
       "Macaques on the stairs will take food and loose items.",
     ],
@@ -454,7 +454,7 @@ export const experiences: readonly Experience[] = [
     summary:
       "Ride the shaded lanes of a twelfth-century capital, from the royal palace through the Quadrangle to the colossal rock-cut Buddhas of the Gal Vihara, with a guide setting the order to keep you ahead of the heat.",
     description: [
-      "The site is flat and compact, which makes a bicycle the obvious way to see it — you cover three or four kilometres of ruins without the walking, and you can stop wherever you like. Three to four hours is comfortable, starting at 7am.",
+      "The site is flat and compact, which makes a bicycle the obvious way to see it: you cover three or four kilometres of ruins without the walking, and you can stop wherever you like. Three to four hours is comfortable, starting at 7am.",
       "A guide earns their fee in the Quadrangle, where the Vatadage, Hatadage, Thuparama and the stone book of the Gal Pota are packed into one terrace and make very little sense without explanation.",
     ],
     durationHours: 4,
@@ -467,7 +467,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.polonnaruwaCycleTour,
     included: ["Bicycle and helmet", "Licensed archaeological guide", "Drinking water"],
     goodToKnow: [
-      "Start at 7am — there is almost no shade on the open platforms after 10am.",
+      "Start at 7am, as there is almost no shade on the open platforms after 10am.",
       "Shoulders and knees covered for the shrines, shoes off at each one.",
       "Watch bags near the Quadrangle; the macaques are practised thieves.",
     ],
@@ -478,7 +478,7 @@ export const experiences: readonly Experience[] = [
     destinationSlug: "anuradhapura",
     category: "culture",
     summary:
-      "A guided day through a capital that ran for over a thousand years — the Sri Maha Bodhi, the great stupas of Ruwanwelisaya, Abhayagiri and Jetavanarama, and the rock temple of Isurumuniya — finishing with the evening pilgrimage.",
+      "A guided day through a capital that ran for over a thousand years (the Sri Maha Bodhi, the great stupas of Ruwanwelisaya, Abhayagiri and Jetavanarama, and the rock temple of Isurumuniya), finishing with the evening pilgrimage.",
     description: [
       "Anuradhapura is too large to walk, so the day moves by vehicle between the main precincts with short walks at each. Start at Isurumuniya and the Twin Ponds while it is cool, take the middle of the day slowly, and return to the Ruwanwelisaya for dusk.",
       "The evening is the point. As the light goes, white-clad pilgrims circle the stupa with lotus flowers and oil lamps, and a site that can feel like archaeology at noon becomes very plainly a living religious centre.",
@@ -508,7 +508,7 @@ export const experiences: readonly Experience[] = [
       "Sri Lanka's most venerated Buddhist shrine, best seen at one of the three daily pujas when the drummers play and the inner chamber housing the relic is opened to the queue of pilgrims.",
     description: [
       "The Sri Dalada Maligawa holds a tooth relic of the Buddha, brought to the island in the fourth century and long treated as the emblem of the right to rule. The evening puja begins around 6.30pm; arriving thirty minutes early gets you a position before the crowd builds.",
-      "The relic itself is never displayed — what you see is the golden casket chamber. The experience is the ritual around it: horanewa pipes, drummers in the corridor and several hundred people with lotus offerings.",
+      "The relic itself is never displayed. What you see is the golden casket chamber. The experience is the ritual around it: horanewa pipes, drummers in the corridor and several hundred people with lotus offerings.",
     ],
     durationHours: 2,
     intensity: "easy",
@@ -522,7 +522,7 @@ export const experiences: readonly Experience[] = [
     included: ["Licensed guide", "Entrance arrangement", "Hotel transfer within Kandy"],
     goodToKnow: [
       "White or modest clothing covering shoulders and knees; shoes and hats removed.",
-      "Security screening at the entrance — take as little as possible with you.",
+      "Security screening at the entrance, so take as little as possible with you.",
       "Puja times are roughly 5.30am, 9.30am and 6.30pm and are worth confirming on the day.",
     ],
   },
@@ -532,10 +532,10 @@ export const experiences: readonly Experience[] = [
     destinationSlug: "kandy",
     category: "nature",
     summary:
-      "Six to seven hours of tea estates, tunnels, waterfalls and open doorways on the hill-country line between Kandy, Nanu Oya and Ella — routinely called one of the most beautiful train journeys in the world, and for once the claim holds.",
+      "Six to seven hours of tea estates, tunnels, waterfalls and open doorways on the hill-country line between Kandy, Nanu Oya and Ella, routinely called one of the most beautiful train journeys in the world, and for once the claim holds.",
     description: [
       "The line was built by the British to move tea and climbs from 500 metres at Kandy to over 1,800 metres at Pattipola before dropping into the Uva basin at Ella. The best scenery is the Nanu Oya to Ella section, which takes about three hours if your time is limited.",
-      "Reserved first and second-class seats sell out weeks ahead in season. Unreserved second and third class can always be boarded but usually means standing. The famous open doorway is in the unreserved carriages — enjoy it sensibly, and do not lean out on the bends.",
+      "Reserved first and second-class seats sell out weeks ahead in season. Unreserved second and third class can always be boarded but usually means standing. The famous open doorway is in the unreserved carriages. Enjoy it sensibly, and do not lean out on the bends.",
     ],
     durationHours: 7,
     intensity: "easy",
@@ -549,7 +549,7 @@ export const experiences: readonly Experience[] = [
     goodToKnow: [
       "Book reserved seats several weeks in advance in season, or travel unreserved and expect to stand.",
       "Sit or stand on the right-hand side leaving Kandy for the better views.",
-      "Trains run late as a matter of course — do not plan a same-day onward connection.",
+      "Trains run late as a matter of course, so do not plan a same-day onward connection.",
     ],
   },
   {
@@ -573,7 +573,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.royalBotanicGardensPeradeniya,
     included: ["Transfer from Kandy", "Garden guide on request", "Drinking water"],
     goodToKnow: [
-      "Distances inside the gardens are longer than they look — allow three hours.",
+      "Distances inside the gardens are longer than they look: allow three hours.",
       "Very busy at weekends and on public holidays.",
       "There is a café, but taking a picnic is the better option.",
     ],
@@ -587,7 +587,7 @@ export const experiences: readonly Experience[] = [
       "Walk a high-grown estate with a plucker, then follow the leaf through withering, rolling, oxidation, firing and grading in a working factory, and finish with a tasting that ranks the grades side by side.",
     description: [
       "High-grown Nuwara Eliya tea is picked from bushes that may be over a century old, at altitudes above 1,800 metres, which is what gives it its light, brisk character. Seeing the two leaves and a bud standard in the hand makes the price difference on a supermarket shelf suddenly obvious.",
-      "Factories are noisy, hot and entirely unstaged — the same machinery has been running since the 1930s in several of them. The tasting at the end covers the orthodox grades from BOP through to silver tips, and you can buy at estate prices.",
+      "Factories are noisy, hot and entirely unstaged: the same machinery has been running since the 1930s in several of them. The tasting at the end covers the orthodox grades from BOP through to silver tips, and you can buy at estate prices.",
     ],
     durationHours: 3,
     intensity: "easy",
@@ -599,7 +599,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.teaEstateAndFactoryTour,
     included: ["Estate walk with a plucker", "Guided factory tour", "Tasting of four to six grades", "Transfer from Nuwara Eliya"],
     goodToKnow: [
-      "Most factories do not run on Sunday — check before you go.",
+      "Most factories do not run on Sunday, so check before you go.",
       "Photography inside the factory is sometimes restricted.",
       "The estate paths are steep, uneven and often wet.",
     ],
@@ -610,10 +610,10 @@ export const experiences: readonly Experience[] = [
     destinationSlug: "ella",
     category: "adventure",
     summary:
-      "A four to five hour return hike from the village along the railway line and up through tea and eucalyptus to a clifftop with the whole Ella gap below it — the harder and far quieter of the two Ella climbs.",
+      "A four to five hour return hike from the village along the railway line and up through tea and eucalyptus to a clifftop with the whole Ella gap below it. It is the harder and far quieter of the two Ella climbs.",
     description: [
       "The route leaves in the dark, follows the track past Kithal Ella, crosses a stream and climbs steeply through estate land to the summit ridge. It is not technical, but it is two to three hours up and the junctions are unmarked.",
-      "People get lost on Ella Rock every week, and a few have been hurt. Take a guide or a downloaded offline track, start early, and turn back if the cloud comes in — the drop at the top is unfenced.",
+      "People get lost on Ella Rock every week, and a few have been hurt. Take a guide or a downloaded offline track, start early, and turn back if the cloud comes in, as the drop at the top is unfenced.",
     ],
     durationHours: 5,
     intensity: "challenging",
@@ -625,7 +625,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.ellaRockSunriseHike,
     included: ["Local guide", "Head torch", "Water and a packed breakfast"],
     goodToKnow: [
-      "Part of the route follows a live railway line — step well clear when a train comes.",
+      "Part of the route follows a live railway line, so step well clear when a train comes.",
       "Proper shoes, not flip-flops; the climb is steep and loose.",
       "The summit is unfenced with a long drop; keep children close.",
     ],
@@ -647,12 +647,12 @@ export const experiences: readonly Experience[] = [
     bestMonths: [2, 3, 4, 7, 8, 9],
     shoulderMonths: [1, 5, 6],
     avoidMonths: [10, 11, 12],
-    seasonNote: "Go at first light in any month — the gap usually fills with cloud by late morning.",
+    seasonNote: "Go at first light in any month, as the gap usually fills with cloud by late morning.",
     image: experiencePhotos.littleAdamsPeakAndNineArch,
     included: ["Local guide", "Train timings for the bridge", "Drinking water"],
     goodToKnow: [
       "The bridge carries live traffic; get off the track well before a train arrives.",
-      "Both walks start from the village — no transfer needed.",
+      "Both walks start from the village, so no transfer is needed.",
       "Tea shop stalls on the route take cash only.",
     ],
   },
@@ -678,7 +678,7 @@ export const experiences: readonly Experience[] = [
     included: ["Mat and props", "Herbal tea afterwards"],
     goodToKnow: [
       "Drop-in classes; arrive ten minutes early to register.",
-      "Mornings are cool at this altitude — take a layer for the start.",
+      "Mornings are cool at this altitude, so take a layer for the start.",
       "Tell the teacher about injuries before the class, not during it.",
     ],
   },
@@ -688,7 +688,7 @@ export const experiences: readonly Experience[] = [
     destinationSlug: "horton-plains",
     category: "nature",
     summary:
-      "A pre-dawn start and a 9 km loop across montane grassland and cloud forest to a 900-metre escarpment drop, returning by Baker's Falls — the only national park in Sri Lanka you may walk in on foot.",
+      "A pre-dawn start and a 9 km loop across montane grassland and cloud forest to a 900-metre escarpment drop, returning by Baker's Falls. It is the only national park in Sri Lanka you may walk in on foot.",
     description: [
       "Leave Nuwara Eliya around 5am. The escarpment clouds over almost every morning between 9 and 10, so the whole point of the early start is to stand at World's End while you can still see the plains 900 metres below.",
       "The loop takes three to four hours at over 2,000 metres. It is not technical, but the ground is uneven, it can be near freezing at the start and hot by the finish, and there is no shelter. Sambar deer are common on the grassland and several endemic birds live in the forest patches.",
@@ -703,7 +703,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.hortonPlainsWorldsEnd,
     included: ["Vehicle from Nuwara Eliya or Ohiya", "Park entry arrangement", "Guide", "Packed breakfast"],
     goodToKnow: [
-      "A 5am departure and near-freezing temperatures at the trailhead — take layers.",
+      "A 5am departure and near-freezing temperatures at the trailhead, so take layers.",
       "All plastic is recorded at the gate and must be carried back out.",
       "No facilities on the loop beyond the visitor centre at the start.",
     ],
@@ -716,7 +716,7 @@ export const experiences: readonly Experience[] = [
     summary:
       "Start at 2am and climb around 5,500 steps through the night with pilgrims and tea stalls to reach the 2,243-metre summit for sunrise and the mountain's famous triangular shadow.",
     description: [
-      "In season — December's full moon to May's — the path is lit, the stalls are open all night and you climb in company. It is relentless stair-climbing rather than mountaineering, and takes most people three to four hours up.",
+      "In season (December's full moon to May's) the path is lit, the stalls are open all night and you climb in company. It is relentless stair-climbing rather than mountaineering, and takes most people three to four hours up.",
       "The summit is cold, windy and crowded, and you will wait there in the dark for the sun. Take warm layers, cash for tea, and expect two to three hard hours on the knees coming back down in daylight.",
     ],
     durationHours: 8,
@@ -730,7 +730,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.adamsPeakNightClimb,
     included: ["Guide", "Head torch", "Transfer to and from Nallathanniya", "Tea stops on the route"],
     goodToKnow: [
-      "This is a sacred pilgrimage, not a hike — dress and behave accordingly.",
+      "This is a sacred pilgrimage, not a hike, so dress and behave accordingly.",
       "Poya days and weekends in season can mean queuing on the steps for hours.",
       "Serious knee strain on the descent; walking poles help more than you expect.",
     ],
@@ -742,7 +742,7 @@ export const experiences: readonly Experience[] = [
     destinationSlug: "galle",
     category: "culture",
     summary:
-      "Two hours inside the ramparts with a guide who knows the families as well as the dates — Dutch warehouses, the coral-stone church, the lighthouse, and the streets the fort is still lived on.",
+      "Two hours inside the ramparts with a guide who knows the families as well as the dates: Dutch warehouses, the coral-stone church, the lighthouse, and the streets the fort is still lived on.",
     description: [
       "Galle Fort was built by the Portuguese, rebuilt by the Dutch from 1663 and handed to the British in 1796, and all three are legible in its walls. A good walk covers the bastions, the Dutch Reformed Church with its floor of tombstones, the old warehouses on Church Street and the Meera mosque beside the lighthouse.",
       "The other half of the tour is the living town: goldsmiths, lacemakers, the families who have traded here for generations, and the arguments about what boutique hotels have done to the place. Finish on the ramparts for sunset.",
@@ -753,11 +753,11 @@ export const experiences: readonly Experience[] = [
     bestMonths: [12, 1, 2, 3],
     shoulderMonths: [4, 7, 8, 11],
     avoidMonths: [5, 6, 9, 10],
-    seasonNote: "Walk in the late afternoon in any month — the fort's stone is punishing at midday.",
+    seasonNote: "Walk in the late afternoon in any month, as the fort's stone is punishing at midday.",
     image: experiencePhotos.galleFortWalkingTour,
     included: ["Licensed local guide", "Museum entry where applicable", "Drinking water"],
     goodToKnow: [
-      "The ramparts are unfenced in places — keep children away from the edge.",
+      "The ramparts are unfenced in places, so keep children away from the edge.",
       "Cover shoulders and knees for the mosque and the temple.",
       "Late afternoon starts avoid the worst of the heat and end at sunset.",
     ],
@@ -768,10 +768,10 @@ export const experiences: readonly Experience[] = [
     destinationSlug: "galle",
     category: "food",
     summary:
-      "Shop the morning market, then cook six or seven dishes — a rice, three or four curries, a sambol and a pol roti — over a wood fire or gas in a family kitchen, and eat what you made.",
+      "Shop the morning market, then cook six or seven dishes (a rice, three or four curries, a sambol and a pol roti) over a wood fire or gas in a family kitchen, and eat what you made.",
     description: [
       "The market trip is half the lesson: how to choose a coconut, what the ten unlabelled dried fish are, why the curry powder is roasted dark in the south and left pale in the north. Then three hours of grinding, scraping and tempering.",
-      "You will learn the two or three techniques the whole cuisine runs on — tempering spices in oil, scraping and pressing coconut milk into first and second extractions, and building a sambol — and go home able to reproduce it. Recipes are sent afterwards.",
+      "You will learn the two or three techniques the whole cuisine runs on (tempering spices in oil, scraping and pressing coconut milk into first and second extractions, and building a sambol) and go home able to reproduce it. Recipes are sent afterwards.",
     ],
     durationHours: 4.5,
     intensity: "easy",
@@ -779,13 +779,13 @@ export const experiences: readonly Experience[] = [
     bestMonths: [12, 1, 2, 3],
     shoulderMonths: [4, 5, 6, 7, 8, 9, 10, 11],
     avoidMonths: [],
-    seasonNote: "Indoors and available all year — a good option on a wet south-coast afternoon.",
+    seasonNote: "Indoors and available all year, and a good option on a wet south-coast afternoon.",
     image: experiencePhotos.sriLankanCookingClass,
     included: ["Market visit with the cook", "All ingredients", "Hands-on class", "The meal you cook", "Recipes by email"],
     goodToKnow: [
       "Vegetarian, vegan and no-chilli versions are straightforward with notice.",
       "Kitchens are hot and often open-sided; dress for it.",
-      "Declare allergies at booking — coconut and dried fish are in almost everything.",
+      "Declare allergies at booking, as coconut and dried fish are in almost everything.",
     ],
   },
   {
@@ -810,7 +810,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.stiltFishingKoggala,
     included: ["Transfer from Unawatuna or Galle", "Guide to negotiate and interpret", "Agreed payment to the fishermen"],
     goodToKnow: [
-      "Agree the fee before photographing — this avoids the common roadside dispute.",
+      "Agree the fee before photographing, as this avoids the common roadside dispute.",
       "Sunrise and the hour before sunset are the only times worth going.",
       "Do not climb onto a pole; it is not as easy or as safe as it looks.",
     ],
@@ -838,7 +838,7 @@ export const experiences: readonly Experience[] = [
     included: ["Boat trip with a marine guide", "Breakfast and water on board", "Life jacket", "Harbour transfer"],
     goodToKnow: [
       "Sightings are never guaranteed; most operators offer a second trip rather than a refund.",
-      "The sea is often choppy — take motion sickness tablets the night before, not on the boat.",
+      "The sea is often choppy, so take motion sickness tablets the night before, not on the boat.",
       "Ask the operator directly about their distance policy before booking.",
     ],
   },
@@ -848,7 +848,7 @@ export const experiences: readonly Experience[] = [
     destinationSlug: "mirissa",
     category: "beach",
     summary:
-      "A two-hour lesson on the sandy-bottomed beach break at Weligama Bay — the gentlest, most forgiving place in Sri Lanka to stand up on a board for the first time.",
+      "A two-hour lesson on the sandy-bottomed beach break at Weligama Bay, the gentlest, most forgiving place in Sri Lanka to stand up on a board for the first time.",
     description: [
       "Weligama is a wide bay with a sand bottom and small, slow waves that reform all the way to the beach, which is exactly what a beginner needs. Lessons start on the sand with positioning and pop-ups, then an hour and a half in waist-deep water with the instructor pushing you into waves.",
       "Boards, rash vests and instructors are available along the whole beachfront, and most people stand up in the first session. Ten minutes from Mirissa by tuk-tuk.",
@@ -865,7 +865,7 @@ export const experiences: readonly Experience[] = [
     included: ["Soft-top board", "Rash vest", "Instructor, maximum four students", "Beach and in-water coaching"],
     goodToKnow: [
       "You must be able to swim comfortably out of your depth.",
-      "Reef shoes help — there is coral debris at the eastern end of the bay.",
+      "Reef shoes help, as there is coral debris at the eastern end of the bay.",
       "Apply reef-safe sunscreen before the lesson; the water reflects hard.",
     ],
   },
@@ -877,7 +877,7 @@ export const experiences: readonly Experience[] = [
     summary:
       "Snorkel the shallow marine sanctuary straight off the main beach, where green turtles feed in the seagrass a few metres from the sand and glass-bottom boats run out to the coral heads.",
     description: [
-      "The sanctuary is shallow and entered directly from the beach, which makes it one of the easiest snorkel sites in the country — no boat needed, and the turtles are often in water you can stand up in.",
+      "The sanctuary is shallow and entered directly from the beach, which makes it one of the easiest snorkel sites in the country: no boat needed, and the turtles are often in water you can stand up in.",
       "Expect a working reef rather than a pristine one: bleaching events and decades of boat traffic have taken a toll, and the honest description is modest coral with good fish life and reliable turtles. Reef-safe sunscreen or a rash vest, please, and no standing on coral.",
     ],
     durationHours: 2,
@@ -891,7 +891,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.hikkaduwaReefSnorkelling,
     included: ["Mask, snorkel and fins", "Guide in the water", "Glass-bottom boat option"],
     goodToKnow: [
-      "Do not touch, ride or feed the turtles — it is illegal and it harms them.",
+      "Do not touch, ride or feed the turtles, as it is illegal and it harms them.",
       "Use reef-safe sunscreen or cover up instead.",
       "Currents pick up at the channel ends; stay inside the marked sanctuary.",
     ],
@@ -915,13 +915,13 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [1, 8, 12],
     avoidMonths: [9, 10, 11],
     seasonNote:
-      "Sightings peak in the dry months February to July. Block 1 normally closes for around six weeks from early September — confirm the current dates before booking.",
+      "Sightings peak in the dry months February to July. Block 1 normally closes for around six weeks from early September, so confirm the current dates before booking.",
     image: experiencePhotos.yalaLeopardSafari,
     included: ["Jeep with driver and tracker", "Park entry arrangement", "Breakfast and water", "Hotel transfer in Tissamaharama"],
     goodToKnow: [
       "A 4.45am pick-up; the gate queue starts long before opening.",
       "Stay in the vehicle and keep noise down at sightings.",
-      "Dusty and open-sided — bring a cover for camera gear.",
+      "Dusty and open-sided, so bring a cover for camera gear.",
     ],
   },
   {
@@ -930,10 +930,10 @@ export const experiences: readonly Experience[] = [
     destinationSlug: "yala",
     category: "wellness",
     summary:
-      "A thatched villa with a private pool on the forest edge outside the park — first position at the gate in the morning, and nothing but birdsong and the occasional elephant for the rest of the day.",
+      "A thatched villa with a private pool on the forest edge outside the park, with first position at the gate in the morning, and nothing but birdsong and the occasional elephant for the rest of the day.",
     description: [
       "Staying on the boundary rather than in Tissamaharama town buys you twenty minutes of sleep and the first jeep through the gate, which in Yala is worth more than it sounds.",
-      "These are small properties — a handful of villas or tented suites, a naturalist on site, meals cooked to order. Between drives there is a pool, a hammock and a genuinely quiet afternoon, which after four days of temples and stairs is usually the point.",
+      "These are small properties: a handful of villas or tented suites, a naturalist on site, meals cooked to order. Between drives there is a pool, a hammock and a genuinely quiet afternoon, which after four days of temples and stairs is usually the point.",
     ],
     durationHours: 24,
     intensity: "easy",
@@ -945,7 +945,7 @@ export const experiences: readonly Experience[] = [
     image: ownedPhotos.jungleVilla,
     included: ["Villa or tented suite", "All meals", "Resident naturalist", "One park drive per day in most rates"],
     goodToKnow: [
-      "Wild elephants pass through the grounds — follow the property's after-dark escort rules.",
+      "Wild elephants pass through the grounds, so follow the property's after-dark escort rules.",
       "Limited mobile signal and occasional generator power.",
       "Book several months ahead for February to July.",
     ],
@@ -958,7 +958,7 @@ export const experiences: readonly Experience[] = [
     summary:
       "An open-grassland jeep drive with near-certain wild elephant sightings in any month, plus buffalo, jackals, crocodiles and exceptional raptor numbers over the reservoir.",
     description: [
-      "Udawalawe's landscape is scrub and open grass rather than closed forest, so you watch elephants behave — family groups at the water, young bulls testing each other, big solitary tuskers — instead of catching a glimpse of one in the trees.",
+      "Udawalawe's landscape is scrub and open grass rather than closed forest, so you watch elephants behave (family groups at the water, young bulls testing each other, big solitary tuskers) instead of catching a glimpse of one in the trees.",
       "Drives run at 6am and 2pm for about four hours. Pair a morning drive with the Elephant Transit Home, which rehabilitates orphaned calves for release and holds public feeding sessions; there is no riding, bathing or contact with animals there, which is exactly as it should be.",
     ],
     durationHours: 4,
@@ -972,7 +972,7 @@ export const experiences: readonly Experience[] = [
     included: ["Jeep with driver-tracker", "Park entry arrangement", "Water", "Hotel transfer"],
     goodToKnow: [
       "Never let a driver block an elephant's path for a photograph.",
-      "The Transit Home feeding times are fixed — plan the drive around them.",
+      "The Transit Home feeding times are fixed, so plan the drive around them.",
       "Very little shade in the park; take a hat and sunscreen.",
     ],
   },
@@ -982,7 +982,7 @@ export const experiences: readonly Experience[] = [
     destinationSlug: "wilpattu",
     category: "wildlife",
     summary:
-      "A slower, quieter safari in Sri Lanka's largest park — dense dry-zone forest scattered with villu lakes, leopards, sloth bears and often not another jeep in sight.",
+      "A slower, quieter safari in Sri Lanka's largest park: dense dry-zone forest scattered with villu lakes, leopards, sloth bears and often not another jeep in sight.",
     description: [
       "Wilpattu asks for patience. The forest is thick, sightings take longer than in Yala, and some drives produce nothing but birds and a lot of empty track. When a leopard does appear on a sand road with no other vehicle there, it is a completely different experience.",
       "June and July are the months for sloth bears, when the palu trees fruit and the bears come out to feed on them. Full-day drives with a packed lunch are the best use of the park's size.",
@@ -997,7 +997,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.wilpattuWildernessSafari,
     included: ["Jeep with driver-tracker", "Park entry arrangement", "Packed lunch on full-day drives", "Transfer from Anuradhapura"],
     goodToKnow: [
-      "Sightings are less frequent than Yala — come for the solitude, not the certainty.",
+      "Sightings are less frequent than Yala, so come for the solitude, not the certainty.",
       "Long distances on rough track; not comfortable for bad backs.",
       "Take everything you need; there are no facilities inside the park.",
     ],
@@ -1011,7 +1011,7 @@ export const experiences: readonly Experience[] = [
     summary:
       "Main Point's long right-hand wall from May to September, with gentler beginner waves at Baby Point and Whiskey Point a few minutes up the coast.",
     description: [
-      "Main Point breaks right over sand and rock and runs for a long way on a good swell. It holds a crowd, and the crowd knows what it is doing — earn your place in the lineup rather than dropping in on it.",
+      "Main Point breaks right over sand and rock and runs for a long way on a good swell. It holds a crowd, and the crowd knows what it is doing, so earn your place in the lineup rather than dropping in on it.",
       "Beginners and improvers are better served at Baby Point, Peanut Farm and Whiskey Point, all within a short tuk-tuk ride. Board hire, repairs and coaching are all available in the village, and the season's consistency means you will surf every day you are there.",
     ],
     durationHours: 2.5,
@@ -1025,9 +1025,9 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.arugamBaySurfSession,
     included: ["Board hire", "Rash vest", "Instructor or guide on request", "Transfer to the outer points"],
     goodToKnow: [
-      "Main Point is not a beginner wave — start at Baby Point.",
+      "Main Point is not a beginner wave, so start at Baby Point.",
       "Reef and rock at low tide; reef shoes are worth having.",
-      "Crocodiles live in the lagoons behind the beach — do not swim in them.",
+      "Crocodiles live in the lagoons behind the beach, so do not swim in them.",
     ],
   },
   {
@@ -1052,7 +1052,7 @@ export const experiences: readonly Experience[] = [
     image: experiencePhotos.pigeonIslandSnorkelling,
     included: ["Return boat", "National park entry arrangement", "Mask, snorkel and fins", "Guide in the water"],
     goodToKnow: [
-      "No sunscreen in the water — wear a rash vest.",
+      "No sunscreen in the water, so wear a rash vest.",
       "Standing on coral kills it and is enforced by park wardens.",
       "Go on the first boat; the site is capped but still crowded by 10am.",
     ],
@@ -1066,7 +1066,7 @@ export const experiences: readonly Experience[] = [
       "A major Hindu temple on a cliff a hundred metres directly above the Indian Ocean, with a painted gopuram, a colossal Shiva statue and one of the great views on the east coast.",
     description: [
       "Koneswaram has stood on Swami Rock in some form for well over a thousand years. The Portuguese destroyed the medieval temple in 1622 and threw much of it into the sea, where divers found parts of it again in the 1950s; the present temple was rebuilt around them.",
-      "Come for the evening puja, walk out to Lover's Leap at the cliff edge, and look for blue whales and dolphins from the rock in the eastern season — they pass unusually close to shore here.",
+      "Come for the evening puja, walk out to Lover's Leap at the cliff edge, and look for blue whales and dolphins from the rock in the eastern season, as they pass unusually close to shore here.",
     ],
     durationHours: 2,
     intensity: "easy",
@@ -1090,7 +1090,7 @@ export const experiences: readonly Experience[] = [
     destinationSlug: "jaffna",
     category: "culture",
     summary:
-      "A full day across the peninsula — Nallur Kandaswamy Kovil, the Dutch fort, the rebuilt public library, the causeways to the islands, and a Jaffna crab curry that is worth the journey on its own.",
+      "A full day across the peninsula: Nallur Kandaswamy Kovil, the Dutch fort, the rebuilt public library, the causeways to the islands, and a Jaffna crab curry that is worth the journey on its own.",
     description: [
       "The day mixes the obvious sites with the things that give Jaffna its character: palmyra toddy tappers, the point at Keerimalai where a freshwater spring meets the sea, Hindu shrines in bright paint, and the long causeways out to Kayts and Karainagar.",
       "The public library, burned in 1981 with 97,000 volumes and rebuilt since, is the place to understand the recent past. A local guide will talk about the war if you ask respectfully and will not if you do not; either way, come informed.",
@@ -1106,7 +1106,7 @@ export const experiences: readonly Experience[] = [
     included: ["Vehicle and driver for the day", "Local guide", "Temple entry arrangements", "Lunch of Jaffna specialities"],
     goodToKnow: [
       "Shoes off and shoulders covered at kovils; men remove shirts in the inner shrine at Nallur.",
-      "Very little shade and fierce sun on the peninsula — plan around the middle of the day.",
+      "Very little shade and fierce sun on the peninsula, so plan around the middle of the day.",
       "Ask before photographing people, military installations or memorials.",
     ],
   },
