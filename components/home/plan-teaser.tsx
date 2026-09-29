@@ -23,7 +23,7 @@ export function PlanTeaser() {
         <div className="grid items-center gap-10 lg:grid-cols-[7fr_5fr] lg:gap-16">
           <div>
             <p className="text-overline uppercase text-jungle-600">Plan</p>
-            <h2 className="mt-3 font-display text-h2 text-ink-900">
+            <h2 className="np-reveal mt-3 font-display text-h2 text-ink-900">
               Tell us what you love. We&rsquo;ll route the island.
             </h2>
             <p className="mt-4 np-measure-lead text-lead text-ink-600">

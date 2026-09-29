@@ -545,3 +545,69 @@
   .np-fade-up { animation: none !important; opacity: 1; transform: none; }
   .np-pop { animation: none !important; opacity: 1; transform: none; }
 }
+
+/* ---- Scrollytelling (D-31) ----
+   Every effect here is a CSS scroll-driven animation: the browser ties the
+   keyframes to scroll position, so there is no JavaScript, no scroll listener
+   and no animation library. Two gates keep it safe:
+   - @supports: browsers without scroll timelines (Firefox, for now) skip the
+     block and render every element in its final, fully visible state;
+   - prefers-reduced-motion: no-preference: visitors who asked for less motion
+     get the static page.
+   The pinned "journey" chapter's photo switching is the only part that needs
+   JavaScript (components/home/journey-chapters.tsx). */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Rise into place as the element enters the viewport. */
+    .np-reveal {
+      animation: np-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 25%;
+    }
+
+    /* Siblings in a row share a scroll position, so offset each one's range
+       to produce a stagger without any timers. */
+    .np-reveal-stagger > :nth-child(3n + 2).np-reveal,
+    .np-reveal-stagger > :nth-child(3n + 2) .np-reveal { animation-range: entry 8% cover 31%; }
+    .np-reveal-stagger > :nth-child(3n + 3).np-reveal,
+    .np-reveal-stagger > :nth-child(3n + 3) .np-reveal { animation-range: entry 16% cover 37%; }
+
+    /* Full-bleed band photographs settle from a slight zoom as they pass. */
+    .np-scroll-zoom {
+      animation: np-scroll-zoom linear both;
+      animation-timeline: view();
+      animation-range: entry 0% exit 100%;
+    }
+
+    /* The hero video drifts slower than the page as you leave it. */
+    .np-hero-parallax {
+      animation: np-hero-parallax linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100svh;
+    }
+
+    /* Journey chapter text: in from below, hold, out above. */
+    .np-chapter-text {
+      animation: np-chapter-text linear both;
+      animation-timeline: view();
+      animation-range: cover 5% cover 95%;
+    }
+  }
+}
+
+@keyframes np-reveal {
+  from { opacity: 0; transform: translate3d(0, 40px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes np-scroll-zoom {
+  from { transform: scale(1.14); }
+  to   { transform: scale(1); }
+}
+@keyframes np-hero-parallax {
+  to { transform: translate3d(0, 22%, 0) scale(1.06); }
+}
+@keyframes np-chapter-text {
+  0%       { opacity: 0; transform: translate3d(0, 64px, 0); }
+  25%, 70% { opacity: 1; transform: translate3d(0, 0, 0); }
+  100%     { opacity: 0; transform: translate3d(0, -48px, 0); }
+}

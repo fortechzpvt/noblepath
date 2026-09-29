@@ -1158,6 +1158,62 @@ owner chose the free Abril Fatface instead of licensing it.
 
 ---
 
+## D-31 - Scrollytelling: a pinned "journey" chapter and scroll-driven reveals
+
+**Date:** 2026-09-30 · **Decided by:** Orchestrator (UI/UX Designer and Full-Stack Engineer), with the owner choosing the scope
+
+**Decision:**
+1. **Journey chapter** (`components/home/journey-chapters.tsx`). This is a new home section
+   between "Why Noble Path" and the destinations preview. A full-screen photograph stays
+   pinned (`position: sticky`) while five text cards scroll over it: Cultural Triangle,
+   Hill Country, South Coast, Wilderness and East Coast. The photo cross-fades to each region
+   as its card reaches the middle of the screen, and a route line at the bottom fills in.
+   Each card links to `/destinations?region=…`.
+2. **Scroll reveals, site-wide.** Section headings (`SectionHeading`), every destination,
+   experience and trip card, and the home headings rise into place as they enter the screen.
+   Rows stagger, the two full-bleed photo bands settle from a slight zoom, and the hero video
+   drifts slower than the page.
+
+**Reason:** Requested ("use the Scrollytelling animation for this website"). The owner
+chose "story chapter plus reveals" over reveals only or the chapter only.
+
+**Alternatives considered:**
+- **GSAP ScrollTrigger or Framer Motion:** rejected. That is a JS animation library on
+  every page, when CSS scroll-driven animations do the same work off the main thread with no
+  dependency.
+- **Scroll event listeners:** rejected, because they are janky and battery-costly.
+
+**Chosen solution:**
+- **Reveals, zoom and parallax** are CSS scroll-driven animations (`animation-timeline:
+  view()` / `scroll()`) in `app/globals.css`, gated by `@supports` and
+  `prefers-reduced-motion: no-preference`. There is no JavaScript. A browser without scroll
+  timelines (currently Firefox) renders everything in its final visible state.
+- **The journey chapter's text** is normal document content in reading order, so it
+  works for screen readers, keyboard users and with JavaScript off. The only JavaScript is
+  one `IntersectionObserver` that picks the active photograph. Under reduced motion the
+  cross-fade is an instant swap and the text does not move.
+- **Chapter content** comes from `content/regions.ts` (name, character and the first two
+  sentences of the description), and the photographs from existing destination and
+  experience entries, so alt text and credits stay defined in one place.
+
+**Impact:**
+- The home page gains one small client component, which is below the fold, so the LCP is
+  unaffected.
+- The home page is five screens taller.
+- No new dependency, CSP change or environment variable.
+
+**Known limitations:**
+- **No browser check yet.** Nothing has been checked in a real browser: the Chrome
+  extension was not connected. Timing values (`animation-range`, the cross-fade speed and
+  the card position) may need tuning by eye.
+- **Firefox and older Safari** get the static page and the chapter's photo switching, but
+  not the reveal animations.
+- **Horizontal rails:** reveal classes on cards inside horizontally scrolling rails do
+  nothing, because the timeline follows the rail, which only scrolls sideways. Those cards
+  simply show.
+
+---
+
 ## Pending decisions (not yet made)
 
 These are open and must be decided before the relevant work starts. Listed so they are visible rather than rediscovered mid-build.

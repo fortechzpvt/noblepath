@@ -21,13 +21,13 @@ export function QuoteBand() {
         aria-hidden
         fill
         sizes="100vw"
-        className="z-0 object-cover object-center"
+        className="np-scroll-zoom z-0 object-cover object-center"
       />
       <div className="absolute inset-0 z-[1] np-scrim-wash" aria-hidden />
       <div className="absolute inset-0 z-[1] np-scrim-vertical" aria-hidden />
 
       <div className="np-container relative z-[2] text-center">
-        <blockquote className="mx-auto max-w-[18ch] font-display text-display-sm np-on-image">
+        <blockquote className="np-reveal mx-auto max-w-[18ch] font-display text-display-sm np-on-image">
           An island you can cross in a day, and spend a lifetime learning.
         </blockquote>
         <p className="np-on-image-secondary mt-6 text-small">

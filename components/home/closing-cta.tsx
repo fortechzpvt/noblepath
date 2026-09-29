@@ -16,7 +16,7 @@ export function ClosingCta() {
       <Container wide className="np-section-tight">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="np-measure-lead">
-            <h2 className="font-display text-h2">Ready when you are</h2>
+            <h2 className="np-reveal font-display text-h2">Ready when you are</h2>
             <p className="mt-3 text-lead text-[var(--color-on-image-secondary)]">
               Build your own route in a few minutes, or tell us what you have in mind
               and we&rsquo;ll come back to you with a plan.

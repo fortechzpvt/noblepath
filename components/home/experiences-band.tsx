@@ -32,7 +32,7 @@ export function ExperiencesBand({
         aria-hidden
         fill
         sizes="100vw"
-        className="z-0 object-cover object-center"
+        className="np-scroll-zoom z-0 object-cover object-center"
       />
       <div className="absolute inset-0 z-[1] np-scrim-wash" aria-hidden />
       <div className="absolute inset-0 z-[1] bg-ink-950/60" aria-hidden />
@@ -41,7 +41,7 @@ export function ExperiencesBand({
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-10">
           <div className="np-measure-lead">
             <p className="np-on-image-secondary text-overline uppercase">What to do</p>
-            <h2 className="np-on-image mt-3 font-display text-h2">
+            <h2 className="np-reveal np-on-image mt-3 font-display text-h2">
               Experiences worth the detour
             </h2>
             <p className="np-on-image-secondary mt-4 text-lead">

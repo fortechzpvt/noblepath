@@ -54,7 +54,7 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
         preload="auto"
         aria-hidden
         tabIndex={-1}
-        className="absolute inset-0 z-0 h-full w-full object-cover object-[50%_45%] motion-reduce:hidden"
+        className="np-hero-parallax absolute inset-0 z-0 h-full w-full object-cover object-[50%_45%] motion-reduce:hidden"
       >
         <source src="/images/hero/sigiriya.mp4" type="video/mp4" />
       </video>

@@ -32,7 +32,7 @@ export function DestinationCard({
   return (
     <article
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-border",
+        "np-reveal group relative flex flex-col overflow-hidden rounded-xl border border-border",
         "bg-surface shadow-sm transition-[transform,box-shadow] duration-[var(--dur-3)]",
         "ease-[var(--ease-standard)] hover:-translate-y-1 hover:shadow-md active:-translate-y-px",
         "focus-within:shadow-md",

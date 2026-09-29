@@ -64,7 +64,7 @@ export function SectionHeading({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-10",
+        "np-reveal flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-10",
         className,
       )}
     >
