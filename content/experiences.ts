@@ -1,5 +1,226 @@
-import type { Experience } from "@/lib/types";
+import type { Experience, ImageAsset } from "@/lib/types";
 import { ownedPhotos } from "@/content/destinations";
+
+/**
+ * One photograph per experience (D-27), showing the activity rather than the
+ * town where Commons allows it. Same sourcing rules as `destinationPhotos`
+ * (ADR-006, D-26): Wikimedia Commons, 2400 px, self-hosted, credited on
+ * /credits and in docs/design/photography-credits.md. Three experiences keep an
+ * owned photograph that already shows exactly that activity: the tuk-tuk road
+ * trip, the Yala jungle villa and the Weligama surf lesson.
+ */
+const experiencePhotos = {
+  adamsPeakNightClimb: {
+    src: "/images/experiences/adams-peak-night-climb.jpg",
+    alt: "At sunrise, Adam's Peak casts a perfect triangular shadow over a sea of cloud, with rays of light fanning across the sky above dark mountain ridges.",
+    credit: "Photo by Sameera Madusanka / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Shadow_of_the_peak_when_sun_rising.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  anuradhapuraSacredCityTour: {
+    src: "/images/experiences/anuradhapura-sacred-city-tour.jpg",
+    alt: "The vast dome of the Jetavanaramaya stupa silhouetted against a blazing orange sunset in Anuradhapura, framed by overhanging tree branches as the sun sinks behind the forest.",
+    credit: "Photo by MinugaV / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:The_Jetavanarama_stupa.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  arugamBaySurfSession: {
+    src: "/images/experiences/arugam-bay-surf-session.jpg",
+    alt: "A surfer pops up on a breaking wave while others paddle out beyond granite boulders on Sri Lanka's east-coast surf belt near Arugam Bay.",
+    credit: "Photo by Steffen Schmitz / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Panama,_Beach,_2025-07_CN-02.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  ayurvedaWellnessRetreat: {
+    src: "/images/experiences/ayurveda-wellness-retreat.jpg",
+    alt: "Overhead view of steel bowls heaped with cinnamon bark, green cardamom pods, cloves, dried ginger and mace, traditional Sri Lankan spices and Ayurvedic ingredients laid out at a market stall.",
+    credit: "Photo by Adam Jones from Kelowna, BC, Canada / CC BY-SA 2.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Spices_for_Sale_-_Negombo_-_Sri_Lanka_(14050176727).jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0",
+  },
+  colomboStreetFoodWalk: {
+    src: "/images/experiences/colombo-street-food-walk.jpg",
+    alt: "Pettah Floating Market in Colombo at dusk, lantern-lit food stalls reflected in the still canal under an orange and blue sky, with the city skyline beyond.",
+    credit: "Photo by Heshan93 / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Floating_Market_Lk.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  dambullaCaveTemple: {
+    src: "/images/experiences/dambulla-cave-temple.jpg",
+    alt: "The serene gilded face of the great reclining Buddha in the Dambulla cave temple, resting on an ornate lotus-patterned pillow beneath a painted rock ceiling, with standing figures in the shadows.",
+    credit: "Photo by Jakub Hałun / CC BY 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Statue_of_the_Buddha_reclining_in_the_Dambulla_cave_temple,_Dambulla,_Sri_Lanka,_20260201_1419_8127.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/4.0",
+  },
+  ellaRockSunriseHike: {
+    src: "/images/experiences/ella-rock-sunrise-hike.jpg",
+    alt: "The sun rising in an orange sky over layered hill-country ridges, with the dark silhouette of Ella Rock's slope on the right.",
+    credit: "Photo by Thavi21 / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:The_beautiful_sun_rise_in_ELLA_Srilanka.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  ellaYogaMorning: {
+    src: "/images/experiences/ella-yoga-morning.jpg",
+    alt: "Morning cloud rolling up through the forested Ella Gap below a quiet grassy ridge dotted with a few lone trees.",
+    credit: "Photo by Vyacheslav Argenberg / CC BY 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Ella_Gap_(Valley),_mountains_of_Sri_Lanka.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/4.0",
+  },
+  galleFortWalkingTour: {
+    src: "/images/experiences/galle-fort-walking-tour.jpg",
+    alt: "Galle Fort's stone sea rampart curving along the shore under a glowing sunset sky, with walkers on the wall, the white Meeran Mosque and the lighthouse beyond.",
+    credit: "Photo by calflier001 / CC BY-SA 2.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:GALLE_FORT_AND_LIGHTHOUSE_GALLE_SRI_LANKA_JAN2013_(8510167078).jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0",
+  },
+  hikkaduwaReefSnorkelling: {
+    src: "/images/experiences/hikkaduwa-reef-snorkelling.jpg",
+    alt: "A green sea turtle glides low over a seagrass-covered seabed in clear turquoise shallows, its patterned flipper sweeping past the camera.",
+    credit: "Photo by Jithma Kalingu / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Follow_the_sea_turtle.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  hortonPlainsWorldsEnd: {
+    src: "/images/experiences/horton-plains-worlds-end.jpg",
+    alt: "Clouds pouring down the sheer forested escarpment at World's End in Horton Plains, with high ridges and a bright sky beyond.",
+    credit: "Photo by Schnobby / CC BY-SA 3.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:World%27s_End_2.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/3.0",
+  },
+  jaffnaPeninsulaTour: {
+    src: "/images/experiences/jaffna-peninsula-tour.jpg",
+    alt: "Palmyra palms and a spreading tree silhouetted against a golden sunset over a still Jaffna lagoon, the sun reflected in the water.",
+    credit: "Photo by Indi Samarajiva / CC BY 2.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Sunset_Over_Lagoon2.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/2.0",
+  },
+  kandyToEllaTrain: {
+    src: "/images/experiences/kandy-to-ella-train.jpg",
+    alt: "A traveller's hand grips the door rail of a blue hill-country train as it runs past tall grass and tea-covered hills under a dramatic, stormy sky.",
+    credit: "Photo by Deshanktd / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Railway_track_from_Kandy_to_Ella,_Sri_Lanka.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  koneswaramTempleVisit: {
+    src: "/images/experiences/koneswaram-temple-visit.jpg",
+    alt: "The giant blue-skinned Shiva statue at Koneswaram Temple sits in meditation with raised hands, trident and Nandi bull beneath a deep blue sky.",
+    credit: "Photo by Alexey Komarov / CC BY 3.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Koneswaram_Temple_-_panoramio.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/3.0",
+  },
+  littleAdamsPeakAndNineArch: {
+    src: "/images/experiences/little-adams-peak-and-nine-arch.jpg",
+    alt: "Golden-hour haze over the summit of Little Adam's Peak, where a hiker sits beside small Buddha shrines looking out over misty mountain ridges.",
+    credit: "Photo by Hs Lamahewage / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Little_adams_park_sri_lanka.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  minneriyaElephantGathering: {
+    src: "/images/experiences/minneriya-elephant-gathering.jpg",
+    alt: "A large herd of wild elephants grazing on the green plains of the Minneriya reservoir at blue hour, low hills and water stretching behind them under a deep blue sky.",
+    credit: "Photo by Al Jazeera English / CC BY-SA 2.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Elephants_gather_for_water_in_the_plains_at_Minneriya_National_Park_in_Sri_Lanka._It_is_one_of_the_largest_gathering_of_-_Flickr_-_Al_Jazeera_English.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0",
+  },
+  mirissaWhaleWatching: {
+    src: "/images/experiences/mirissa-whale-watching.jpg",
+    alt: "A blue whale raises its broad tail fluke above the dark rolling sea in warm evening light as whale-watching boats wait nearby.",
+    credit: "Photo by TatianaPashko / CC BY 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Big_blue_fish_2.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/4.0",
+  },
+  negomboLagoonAndCanalBoat: {
+    src: "/images/experiences/negombo-lagoon-and-canal-boat.jpg",
+    alt: "Colourful wooden fishing boats moored along both banks of the Negombo Lagoon, their hulls mirrored in still blue water under a cloudless tropical sky.",
+    credit: "Photo by Deshan Ruhunage / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Boats_Anchored_in_Negambo_Lagoon.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  pidurangalaSunrise: {
+    src: "/images/experiences/pidurangala-sunrise.jpg",
+    alt: "Sigiriya rock rising from misty jungle plains at sunrise, seen from the summit of Pidurangala with hazy golden light over the distant mountains.",
+    credit: "Photo by Abishek Palraj / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Sunrise_at_Sigiriya.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  pigeonIslandSnorkelling: {
+    src: "/images/experiences/pigeon-island-snorkelling.jpg",
+    alt: "A scuba diver swims over a field of branching coral in sunlit turquoise water at Pigeon Island, a trail of bubbles rising to the surface.",
+    credit: "Photo by Kalana Weeramuni / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Dive_in_pigeon_island.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  polonnaruwaCycleTour: {
+    src: "/images/experiences/polonnaruwa-cycle-tour.jpg",
+    alt: "Carved moonstone steps flanked by ornate guardstones lead up into the Polonnaruwa Vatadage, where a seated stone Buddha sits between ancient brick walls and pillars.",
+    credit: "Photo by Stuart Pinkney / CC BY 2.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Polonnaruwa_quadrangle_Sri_Lanka_2.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/2.0",
+  },
+  royalBotanicGardensPeradeniya: {
+    src: "/images/experiences/royal-botanic-gardens-peradeniya.jpg",
+    alt: "The domed glass conservatory at Peradeniya's Royal Botanic Gardens mirrored in a still lily pond, framed by giant tropical trees under a clear blue sky.",
+    credit: "Photo by Royal Botanic Gardens, Peradeniya / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Conservatory_near_the_Palmyra_palm_avenue.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  sigiriyaSunriseClimb: {
+    src: "/images/experiences/sigiriya-sunrise-climb.jpg",
+    alt: "The Lion Staircase at Sigiriya: two colossal carved lion's paws flank brick steps that lead to an iron stairway climbing the sheer, orange-streaked rock face.",
+    credit: "Photo by Michael Gunther / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Sigiriya_0168.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  sriLankanCookingClass: {
+    src: "/images/experiences/sri-lankan-cooking-class.jpg",
+    alt: "Overhead view of a homemade Sri Lankan rice-and-curry spread in clay pots with black serving spoons on a bright checked cloth, with curries, a small bowl of sambol and a pot of papadums.",
+    credit: "Photo by Weldon Kennedy from London, UK / CC BY 2.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Sri_Lanka_Trip_-104_(32115057607).jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/2.0",
+  },
+  stiltFishingKoggala: {
+    src: "/images/experiences/stilt-fishing-koggala.jpg",
+    alt: "Stilt fishermen perched on wooden poles in the shallow surf, silhouetted against a hazy golden sunset sky with a rocky headland and breaking waves behind them.",
+    credit: "Photo by Ellis jarton / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Riti_Panna.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  teaEstateAndFactoryTour: {
+    src: "/images/experiences/tea-estate-and-factory-tour.jpg",
+    alt: "Two tea pluckers in head scarves working among bright green tea bushes, framed by broad banana leaves in the foreground.",
+    credit: "Photo by Dan Lundberg / CC BY-SA 2.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:20160127_Sri_Lanka_4060_crop_sRGB_(25674524341).jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0",
+  },
+  templeOfTheTooth: {
+    src: "/images/experiences/temple-of-the-tooth.jpg",
+    alt: "The white octagonal Paththirippuwa of the Temple of the Sacred Tooth Relic in Kandy at dusk, its pavilion glowing with warm lamplight beneath a tiled roof, Buddhist flags and forested hills behind.",
+    credit: "Photo by Zarniwoop und Zarquon / CC BY 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Temple_of_the_tooth_2023.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/4.0",
+  },
+  udawalaweElephantSafari: {
+    src: "/images/experiences/udawalawe-elephant-safari.jpg",
+    alt: "A Sri Lankan elephant and her calf graze side by side in tall grass at Udawalawe, their backs lit orange by low evening sun.",
+    credit: "Photo by Ganiarachchi / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Udawalawe_national_park.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  wilpattuWildernessSafari: {
+    src: "/images/experiences/wilpattu-wilderness-safari.jpg",
+    alt: "A Sri Lankan leopard walks straight towards the camera out of dark Wilpattu scrub, framed by silhouetted branches against a glowing amber sky.",
+    credit: "Photo by Senthiaathavan / CC BY 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Sri_Lankan_leopard-Panthera_pardus_kotiya.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by/4.0",
+  },
+  yalaLeopardSafari: {
+    src: "/images/experiences/yala-leopard-safari.jpg",
+    alt: "A Sri Lankan leopard lies on a granite boulder in Yala, gazing straight at the camera beside a tree trunk and green undergrowth.",
+    credit: "Photo by Byrdyak / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Leopard_on_stone_in_Yala_National_Park.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+} as const satisfies Record<string, ImageAsset>;
 
 /**
  * All experiences (FR-2).
@@ -33,7 +254,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [4, 7, 8, 11],
     avoidMonths: [5, 6, 9, 10],
     seasonNote: "Runs all year; heavy monsoon rain in May, June and October can shorten the walking sections.",
-    image: ownedPhotos.tuktukRoadTrip,
+    image: experiencePhotos.colomboStreetFoodWalk,
     included: ["English-speaking food guide", "All tastings", "Bottled water", "Tuk-tuk between the two districts"],
     goodToKnow: [
       "Come hungry — this replaces dinner.",
@@ -59,7 +280,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [4, 7, 8, 11],
     avoidMonths: [5, 6, 9, 10],
     seasonNote: "Year-round on the sheltered lagoon, but mornings in the drier months are the most comfortable.",
-    image: ownedPhotos.surfSouthCoast,
+    image: experiencePhotos.negomboLagoonAndCanalBoat,
     included: ["Boat and boatman", "Naturalist guide", "Drinking water", "Hotel pick-up in Negombo"],
     goodToKnow: [
       "Leaves around 6am to catch the fleet returning.",
@@ -85,7 +306,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [4, 5, 6, 7, 8, 9, 10, 11],
     avoidMonths: [],
     seasonNote: "Indoors and available all year — one of the better wet-weather options on the west coast.",
-    image: ownedPhotos.jungleVilla,
+    image: experiencePhotos.ayurvedaWellnessRetreat,
     included: ["Doctor's consultation", "Two to three prescribed treatments", "Herbal steam", "Ayurvedic lunch and herbal tea"],
     goodToKnow: [
       "Declare pregnancy, heart conditions and recent surgery at the consultation.",
@@ -138,7 +359,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [1, 2, 3, 4, 12],
     avoidMonths: [10, 11],
     seasonNote: "Best in the dry months. The upper stairways close in high wind, which is most likely in October and November.",
-    image: ownedPhotos.sigiriyaSunrise,
+    image: experiencePhotos.sigiriyaSunriseClimb,
     included: ["Licensed site guide", "Drinking water", "Transfer from Sigiriya or Dambulla hotels"],
     goodToKnow: [
       "Entry is ticketed separately and is one of the more expensive site fees in the country.",
@@ -164,7 +385,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [1, 2, 3, 4, 12],
     avoidMonths: [10, 11],
     seasonNote: "Avoid after rain — the final scramble is slick granite and genuinely dangerous when wet.",
-    image: ownedPhotos.sigiriyaSunrise,
+    image: experiencePhotos.pidurangalaSunrise,
     included: ["Guide", "Head torch", "Transfer from Sigiriya hotels"],
     goodToKnow: [
       "Shoulders and knees must be covered — the path passes through a monastery.",
@@ -191,7 +412,7 @@ export const experiences: readonly Experience[] = [
     avoidMonths: [1, 2, 3, 12],
     seasonNote:
       "The Gathering peaks between July and October. In the wetter months the herds disperse into the surrounding forest and sightings are smaller.",
-    image: ownedPhotos.jungleVilla,
+    image: experiencePhotos.minneriyaElephantGathering,
     included: ["Jeep and driver-tracker", "Park entrance arrangement", "Drinking water", "Hotel transfer"],
     goodToKnow: [
       "Which park you enter is decided on the day based on where the herds are.",
@@ -217,7 +438,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [1, 2, 3, 4, 12],
     avoidMonths: [10, 11],
     seasonNote: "Open all year; the terrace stone gets very hot underfoot at midday in the dry season.",
-    image: ownedPhotos.sigiriyaSunrise,
+    image: experiencePhotos.dambullaCaveTemple,
     included: ["Licensed guide", "Drinking water", "Transfer from Sigiriya or Dambulla"],
     goodToKnow: [
       "Shoulders and knees covered; shoes off at the terrace, where the stone can burn — take socks.",
@@ -243,7 +464,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [1, 2, 3, 4, 12],
     avoidMonths: [10, 11],
     seasonNote: "Ride early in any month. From late October the north-east monsoon can flood parts of the site.",
-    image: ownedPhotos.sigiriyaSunrise,
+    image: experiencePhotos.polonnaruwaCycleTour,
     included: ["Bicycle and helmet", "Licensed archaeological guide", "Drinking water"],
     goodToKnow: [
       "Start at 7am — there is almost no shade on the open platforms after 10am.",
@@ -269,7 +490,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [1, 2, 3, 4, 12],
     avoidMonths: [10, 11],
     seasonNote: "Dry and clear May to September. October to December can be genuinely wet.",
-    image: ownedPhotos.sigiriyaSunrise,
+    image: experiencePhotos.anuradhapuraSacredCityTour,
     included: ["Vehicle and driver for the day", "Licensed guide", "Drinking water"],
     goodToKnow: [
       "White or light clothing covering shoulders and knees is expected in the sacred precinct.",
@@ -297,7 +518,7 @@ export const experiences: readonly Experience[] = [
     avoidMonths: [10, 11],
     seasonNote:
       "Open year-round. During the Esala Perahera in July or August the city is extremely busy and access to the temple is restricted.",
-    image: ownedPhotos.ellaRoadSign,
+    image: experiencePhotos.templeOfTheTooth,
     included: ["Licensed guide", "Entrance arrangement", "Hotel transfer within Kandy"],
     goodToKnow: [
       "White or modest clothing covering shoulders and knees; shoes and hats removed.",
@@ -323,7 +544,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [5, 6, 12],
     avoidMonths: [10, 11],
     seasonNote: "Runs all year. Mist and rain in October and November can hide the views entirely.",
-    image: ownedPhotos.ellaRoadSign,
+    image: experiencePhotos.kandyToEllaTrain,
     included: ["Seat reservation where available", "Station transfer at both ends", "Luggage forwarding by road on request"],
     goodToKnow: [
       "Book reserved seats several weeks in advance in season, or travel unreserved and expect to stand.",
@@ -349,7 +570,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [5, 6, 7, 8, 9, 12],
     avoidMonths: [10, 11],
     seasonNote: "Pleasant all year; mornings are best before the afternoon hill-country showers.",
-    image: ownedPhotos.ellaRoadSign,
+    image: experiencePhotos.royalBotanicGardensPeradeniya,
     included: ["Transfer from Kandy", "Garden guide on request", "Drinking water"],
     goodToKnow: [
       "Distances inside the gardens are longer than they look — allow three hours.",
@@ -375,7 +596,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [5, 6, 7, 8, 9, 12],
     avoidMonths: [10, 11],
     seasonNote: "Factories run year-round but are quietest on Sundays; the estates are greenest just after the rains.",
-    image: ownedPhotos.ellaRoadSign,
+    image: experiencePhotos.teaEstateAndFactoryTour,
     included: ["Estate walk with a plucker", "Guided factory tour", "Tasting of four to six grades", "Transfer from Nuwara Eliya"],
     goodToKnow: [
       "Most factories do not run on Sunday — check before you go.",
@@ -401,7 +622,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [1, 5, 6],
     avoidMonths: [10, 11, 12],
     seasonNote: "Clearest in the Uva dry months. The path is slippery and the summit usually clouded from October to December.",
-    image: ownedPhotos.ellaRoadSign,
+    image: experiencePhotos.ellaRockSunriseHike,
     included: ["Local guide", "Head torch", "Water and a packed breakfast"],
     goodToKnow: [
       "Part of the route follows a live railway line — step well clear when a train comes.",
@@ -427,7 +648,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [1, 5, 6],
     avoidMonths: [10, 11, 12],
     seasonNote: "Go at first light in any month — the gap usually fills with cloud by late morning.",
-    image: ownedPhotos.ellaRoadSign,
+    image: experiencePhotos.littleAdamsPeakAndNineArch,
     included: ["Local guide", "Train timings for the bridge", "Drinking water"],
     goodToKnow: [
       "The bridge carries live traffic; get off the track well before a train arrives.",
@@ -453,7 +674,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [1, 5, 6],
     avoidMonths: [10, 11, 12],
     seasonNote: "Classes run all year; decks are open-sided, so heavy rain moves them indoors.",
-    image: ownedPhotos.ellaRoadSign,
+    image: experiencePhotos.ellaYogaMorning,
     included: ["Mat and props", "Herbal tea afterwards"],
     goodToKnow: [
       "Drop-in classes; arrive ten minutes early to register.",
@@ -479,7 +700,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [4, 5, 6, 7, 8, 9, 12],
     avoidMonths: [10, 11],
     seasonNote: "Clearest January to March. In any month, be at World's End before 9am or you will see cloud.",
-    image: ownedPhotos.ellaRoadSign,
+    image: experiencePhotos.hortonPlainsWorldsEnd,
     included: ["Vehicle from Nuwara Eliya or Ohiya", "Park entry arrangement", "Guide", "Packed breakfast"],
     goodToKnow: [
       "A 5am departure and near-freezing temperatures at the trailhead — take layers.",
@@ -506,7 +727,7 @@ export const experiences: readonly Experience[] = [
     avoidMonths: [6, 7, 8, 9, 10, 11],
     seasonNote:
       "Pilgrimage season runs from the December full moon to the May full moon. Outside it the path is unlit, stalls are closed and the weather is usually poor.",
-    image: ownedPhotos.ellaRoadSign,
+    image: experiencePhotos.adamsPeakNightClimb,
     included: ["Guide", "Head torch", "Transfer to and from Nallathanniya", "Tea stops on the route"],
     goodToKnow: [
       "This is a sacred pilgrimage, not a hike — dress and behave accordingly.",
@@ -533,7 +754,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [4, 7, 8, 11],
     avoidMonths: [5, 6, 9, 10],
     seasonNote: "Walk in the late afternoon in any month — the fort's stone is punishing at midday.",
-    image: ownedPhotos.surfSouthCoast,
+    image: experiencePhotos.galleFortWalkingTour,
     included: ["Licensed local guide", "Museum entry where applicable", "Drinking water"],
     goodToKnow: [
       "The ramparts are unfenced in places — keep children away from the edge.",
@@ -559,7 +780,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [4, 5, 6, 7, 8, 9, 10, 11],
     avoidMonths: [],
     seasonNote: "Indoors and available all year — a good option on a wet south-coast afternoon.",
-    image: ownedPhotos.surfSouthCoast,
+    image: experiencePhotos.sriLankanCookingClass,
     included: ["Market visit with the cook", "All ingredients", "Hands-on class", "The meal you cook", "Recipes by email"],
     goodToKnow: [
       "Vegetarian, vegan and no-chilli versions are straightforward with notice.",
@@ -586,7 +807,7 @@ export const experiences: readonly Experience[] = [
     avoidMonths: [5, 6, 7, 8, 9, 10],
     seasonNote:
       "The poles are used in the calmer months, roughly November to April. During the south-west monsoon the swell makes it impossible.",
-    image: ownedPhotos.surfSouthCoast,
+    image: experiencePhotos.stiltFishingKoggala,
     included: ["Transfer from Unawatuna or Galle", "Guide to negotiate and interpret", "Agreed payment to the fishermen"],
     goodToKnow: [
       "Agree the fee before photographing — this avoids the common roadside dispute.",
@@ -613,7 +834,7 @@ export const experiences: readonly Experience[] = [
     avoidMonths: [5, 6, 7, 8, 9, 10],
     seasonNote:
       "The season runs roughly November to April. Most operators stop during the south-west monsoon when the sea is too rough.",
-    image: ownedPhotos.surfSouthCoast,
+    image: experiencePhotos.mirissaWhaleWatching,
     included: ["Boat trip with a marine guide", "Breakfast and water on board", "Life jacket", "Harbour transfer"],
     goodToKnow: [
       "Sightings are never guaranteed; most operators offer a second trip rather than a refund.",
@@ -667,7 +888,7 @@ export const experiences: readonly Experience[] = [
     avoidMonths: [5, 6, 7, 8, 9, 10],
     seasonNote:
       "Visibility is good from November to April. During the south-west monsoon the water is churned up and the sanctuary is effectively unusable.",
-    image: ownedPhotos.surfSouthCoast,
+    image: experiencePhotos.hikkaduwaReefSnorkelling,
     included: ["Mask, snorkel and fins", "Guide in the water", "Glass-bottom boat option"],
     goodToKnow: [
       "Do not touch, ride or feed the turtles — it is illegal and it harms them.",
@@ -695,7 +916,7 @@ export const experiences: readonly Experience[] = [
     avoidMonths: [9, 10, 11],
     seasonNote:
       "Sightings peak in the dry months February to July. Block 1 normally closes for around six weeks from early September — confirm the current dates before booking.",
-    image: ownedPhotos.jungleVilla,
+    image: experiencePhotos.yalaLeopardSafari,
     included: ["Jeep with driver and tracker", "Park entry arrangement", "Breakfast and water", "Hotel transfer in Tissamaharama"],
     goodToKnow: [
       "A 4.45am pick-up; the gate queue starts long before opening.",
@@ -747,7 +968,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [1, 2, 3, 4, 12],
     avoidMonths: [10, 11],
     seasonNote: "Elephants are present all year. Tracks are easiest in the dry months and can be muddy in October and November.",
-    image: ownedPhotos.jungleVilla,
+    image: experiencePhotos.udawalaweElephantSafari,
     included: ["Jeep with driver-tracker", "Park entry arrangement", "Water", "Hotel transfer"],
     goodToKnow: [
       "Never let a driver block an elephant's path for a photograph.",
@@ -773,7 +994,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [8, 9],
     avoidMonths: [10, 11, 12, 1],
     seasonNote: "Best February to July; sloth bears peak in June and July. Tracks flood under the north-east monsoon from late October.",
-    image: ownedPhotos.jungleVilla,
+    image: experiencePhotos.wilpattuWildernessSafari,
     included: ["Jeep with driver-tracker", "Park entry arrangement", "Packed lunch on full-day drives", "Transfer from Anuradhapura"],
     goodToKnow: [
       "Sightings are less frequent than Yala — come for the solitude, not the certainty.",
@@ -801,7 +1022,7 @@ export const experiences: readonly Experience[] = [
     avoidMonths: [11, 12, 1, 2, 3],
     seasonNote:
       "Swell is consistent from roughly May to September. From November to March the surf disappears and much of the village closes.",
-    image: ownedPhotos.surfSouthCoast,
+    image: experiencePhotos.arugamBaySurfSession,
     included: ["Board hire", "Rash vest", "Instructor or guide on request", "Transfer to the outer points"],
     goodToKnow: [
       "Main Point is not a beginner wave — start at Baby Point.",
@@ -828,7 +1049,7 @@ export const experiences: readonly Experience[] = [
     avoidMonths: [10, 11, 12, 1, 2],
     seasonNote:
       "Visibility is best in the eastern season, roughly April to September. Boats generally do not run during the north-east monsoon.",
-    image: ownedPhotos.surfSouthCoast,
+    image: experiencePhotos.pigeonIslandSnorkelling,
     included: ["Return boat", "National park entry arrangement", "Mask, snorkel and fins", "Guide in the water"],
     goodToKnow: [
       "No sunscreen in the water — wear a rash vest.",
@@ -854,7 +1075,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [3, 4, 9],
     avoidMonths: [10, 11, 12, 1, 2],
     seasonNote: "Open all year. The cliff is exposed and unpleasant in the north-east monsoon winds.",
-    image: ownedPhotos.surfSouthCoast,
+    image: experiencePhotos.koneswaramTempleVisit,
     included: ["Guide", "Transfer from Uppuveli or Nilaveli"],
     goodToKnow: [
       "Shoes off at the temple entrance; shoulders and knees covered.",
@@ -881,7 +1102,7 @@ export const experiences: readonly Experience[] = [
     shoulderMonths: [5, 6],
     avoidMonths: [10, 11, 12, 1],
     seasonNote: "February to September is dry; May and June are extremely hot. The north-east monsoon soaks the peninsula from October.",
-    image: ownedPhotos.tuktukRoadTrip,
+    image: experiencePhotos.jaffnaPeninsulaTour,
     included: ["Vehicle and driver for the day", "Local guide", "Temple entry arrangements", "Lunch of Jaffna specialities"],
     goodToKnow: [
       "Shoes off and shoulders covered at kovils; men remove shirts in the inner shrine at Nallur.",

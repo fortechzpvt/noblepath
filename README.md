@@ -85,10 +85,10 @@ Production is never modified without explicit human approval.
 
 These are tracked openly rather than discovered later:
 
-- **Stock photography.** Five photographs are owned. Each destination has its own
-  freely-licensed Wikimedia Commons photograph, credited at `/credits`
-  (`docs/design/photography-credits.md`, D-26). Experiences and trips still reuse the five
-  owned photos. Commissioned photography remains the goal before commercial launch (ADR-006).
+- **Stock photography.** Five photographs are owned. Each destination and experience has
+  its own freely-licensed Wikimedia Commons photograph, or an owned one where it fits, credited
+  at `/credits` (`docs/design/photography-credits.md`, D-26/D-27). Trip packages still
+  reuse the five owned photos. Commissioned photography remains the goal before commercial launch (ADR-006).
 - **Enquiries are not persisted.** `POST /api/bookings` validates and returns a reference,
   but v1 has no datastore. Durability depends on the notification path (ADR-003).
 - **Rate limiting is in-memory.** It does not survive a restart and does not work across
