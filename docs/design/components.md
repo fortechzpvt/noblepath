@@ -176,6 +176,7 @@ The headline breaks manually into two lines at ≥768 using `<br>` inside a `<sp
 | Ken Burns | `scale(1) → scale(1.06)` with `object-position` drifting `50% 45% → 52% 42%` over `--dur-ken`, `--ease-linear`, `alternate infinite`. `will-change: transform` set only while running |
 | Parallax | Image translates at `0.25×` scroll rate, capped at 120 px total. Implemented with a scroll-linked animation or `transform` on rAF — never on a scroll event handler that writes layout |
 | Route line | `stroke-dashoffset` draw over `--dur-route` `--ease-cinematic`, fires at 25 % intersection, once. Pin fades + drops 8 px over `--dur-5` after the draw completes |
+| Scroll fade (D-34) | The whole hero, video included, fades `opacity 1 → 0` over the first 85 svh of scroll (`.np-hero-fade`, a `scroll(root)` timeline). Browsers without scroll timelines and reduced-motion visitors get a plain scroll |
 | Scroll cue | A 24 px chevron, 1.2 s gentle 6 px bob, fades out after the first scroll. `aria-hidden` |
 
 ### 2.7 Semantics

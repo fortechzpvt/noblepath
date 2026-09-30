@@ -6,7 +6,8 @@ import type { Region, TripPackage } from "@/lib/types";
 
 /**
  * Home S6 (page-specs §1 S6). Every trip on a 3D cylindrical carousel (D-33),
- * then a centred "See all".
+ * with "See all trips" beside the controls. The vertical padding shrinks on
+ * short laptop screens so the whole section fits under the nav (D-34).
  *
  * The cards are rendered here, on the server, and handed to the client
  * carousel, which only turns the ring. The section clips horizontally because
@@ -22,36 +23,38 @@ export function TripsPreview({
   readonly regionsByTrip: Readonly<Record<string, readonly Region[]>>;
 }) {
   return (
-    <section className="np-section overflow-x-clip bg-surface">
+    <section className="overflow-x-clip bg-surface py-[var(--section-y)] lg:py-[clamp(1.5rem,5svh,var(--section-y))]">
       <Container wide>
-        <SectionHeading
-          overline="Ready to go"
-          title="Trips you can book today"
-          lead="Complete routes with the driving, the stays and the timing already worked out. Take one as it is, or use it as a starting point."
+        <TripCarousel
+          label="Trips you can book today"
+          header={
+            <SectionHeading
+              overline="Ready to go"
+              title="Trips you can book today"
+              lead="Complete routes with the driving, the stays and the timing already worked out. Take one as it is, or use it as a starting point."
+              // On a short laptop screen the lead would cost the carousel a
+              // fifth of its size; the cards say the same thing (D-34).
+              leadClassName="lg:[@media(max-height:859px)]:hidden"
+            />
+          }
+          aside={
+            <LinkButton href="/trips" variant="ghost" size="md">
+              See all trips
+            </LinkButton>
+          }
+          items={trips.map((trip) => ({
+            key: trip.slug,
+            name: trip.name,
+            card: (
+              <TripCard
+                trip={trip}
+                regions={regionsByTrip[trip.slug] ?? []}
+                compact
+                className="h-full"
+              />
+            ),
+          }))}
         />
-
-        <div className="mt-10">
-          <TripCarousel
-            label="Trips you can book today"
-            items={trips.map((trip) => ({
-              key: trip.slug,
-              name: trip.name,
-              card: (
-                <TripCard
-                  trip={trip}
-                  regions={regionsByTrip[trip.slug] ?? []}
-                  className="h-full"
-                />
-              ),
-            }))}
-          />
-        </div>
-
-        <div className="mt-10 flex justify-center">
-          <LinkButton href="/trips" variant="ghost" size="md">
-            See all trips
-          </LinkButton>
-        </div>
       </Container>
     </section>
   );

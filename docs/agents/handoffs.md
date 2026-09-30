@@ -943,3 +943,53 @@ to clear them.
 1. On desktop and a phone, try the controls and the swipe.
 2. Confirm the vertical-axis interpretation (see the D-33 interpretation note).
 3. Commit and open a PR.
+
+---
+
+## Handoff: hero scroll fade and laptop-fit trips section (D-34), 2026-09-30
+
+**From:** Orchestrator (UI/UX Designer plus Full-Stack Engineer)
+**To:** Human reviewer
+
+**Completed:**
+- The hero fades out as you scroll past it.
+- "Trips you can book today" fits entirely on a laptop screen, from 1280×680 to 1920×950.
+
+**Files changed:**
+- `components/home/hero.tsx`, `components/home/trips-preview.tsx`,
+  `components/home/trip-carousel.tsx`
+- `components/cards/trip-card.tsx`, `components/ui/section.tsx`
+- `app/globals.css`
+- Docs: D-34, page-specs S6, components.md §2.6, accessibility.md §6, and this handoff.
+
+**Tests:** `next build` passes. The headless Chrome fit table is in D-34.
+
+**Not done:** a person scrolling on a real laptop.
+
+**Next:** the trip-photo swap (D-35), which was paused while the auto-mode permission check
+was failing.
+
+---
+
+## Handoff: trip photography (D-35), 2026-09-30
+
+**From:** Orchestrator (UI/UX curation plus Full-Stack Engineer)
+**To:** Human reviewer
+
+**Completed:** all 7 trips have their own Commons photograph. Each is credited on `/credits`
+and listed in the register.
+
+**Files changed:**
+- `public/images/trips/*.jpg` (7 files, overwritten)
+- `content/trips.ts` (`tripPhotos`)
+- Docs: D-35 (and a pointer from D-27), `design/photography-credits.md`, and this handoff.
+
+**Tests:**
+- `next build` passes.
+- `/credits` lists all 7, and each image serves through `/_next/image`.
+- **Not done:** a visual check in the browser.
+
+**Required action (human):**
+1. Review the five judgement calls in the register.
+2. Look at the home carousel and at `/trips`.
+3. Commit.

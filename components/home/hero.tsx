@@ -34,7 +34,7 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
       data-surface="dark"
       // min-h, not h: on a short window the content is taller than the screen, and a
       // fixed height pushed the headline up underneath the fixed header.
-      className="relative isolate flex min-h-svh flex-col justify-end overflow-hidden"
+      className="np-hero-fade relative isolate flex min-h-svh flex-col justify-end overflow-hidden"
     >
       {/* Fallback behind the video. If it fails to load the hero is still
           readable — white on jungle-900 measures 11.7:1. */}
