@@ -44,9 +44,15 @@ content pages are static and served from the edge. The itinerary planner is a pu
 deterministic function that runs in the browser. The only dynamic server work is a
 single validated, rate-limited booking-enquiry endpoint.
 
-There is no database, no login and no payment processing in v1 — each of those is a
-recorded decision with a documented exit, not an oversight. Start with
-`docs/architecture/system-architecture.md`.
+Since D-36:
+- content, prices, photos and enquiries are managed in a **separate admin app** (`admin/`),
+  backed by **Aiven PostgreSQL**;
+- each site build pulls the published content into a static snapshot, and "Publish" in the
+  admin triggers that build;
+- without a database configured (local development), the site uses the bundled `content/*.ts`.
+
+There is still no payment processing. Start with `docs/architecture/system-architecture.md`
+(§11 for the admin and database) and `docs/deployment/admin.md` to set it up.
 
 ## Documentation
 
@@ -61,7 +67,8 @@ project knowledge.
 | Runtime topology, monitoring | `docs/architecture/infrastructure-architecture.md` |
 | Design tokens, components, flows, a11y | `docs/design/` |
 | API reference | `docs/api/` |
-| Forward database design | `docs/database/database-schema.md` |
+| Database schema, roles, retention | `docs/database/database-schema.md` |
+| Admin app: setup, daily use, recovery | `docs/deployment/admin.md`, `admin/README.md` |
 | Security architecture, threat model, review | `docs/security/` |
 | Deploy, environments, rollback | `docs/deployment/` |
 | Testing strategy and recorded results | `docs/testing/` |

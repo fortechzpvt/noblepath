@@ -1,9 +1,14 @@
-import { accommodations } from "@/content/accommodations";
-import { activities, type Activity } from "@/content/activities";
-import { destinations } from "@/content/destinations";
-import { experiences } from "@/content/experiences";
-import { regions } from "@/content/regions";
-import { trips } from "@/content/trips";
+import type { Activity } from "@/content/activities";
+import { findContentProblems } from "@/lib/content-integrity";
+import {
+  accommodations,
+  activities,
+  activityCategories,
+  destinations,
+  experiences,
+  regions,
+  trips,
+} from "@/lib/content-source";
 import { ROAD_SPEED_KMH, ROAD_WINDING_FACTOR, haversineKm } from "@/lib/geo";
 import type {
   Accommodation,
@@ -343,146 +348,9 @@ export function getTravelMinutes(fromSlug: string, toSlug: string): number {
  * fails `next build` instead of producing a 404 in front of a visitor.
  */
 export function checkContentIntegrity(): string[] {
-  const problems: string[] = [];
-  const regionSlugs = new Set(regions.map((r) => r.slug));
-
-  const seenDestinations = new Set<string>();
-  for (const destination of destinations) {
-    if (seenDestinations.has(destination.slug)) {
-      problems.push(`Duplicate destination slug "${destination.slug}".`);
-    }
-    seenDestinations.add(destination.slug);
-
-    if (!regionSlugs.has(destination.region)) {
-      problems.push(`Destination "${destination.slug}" has unknown region "${destination.region}".`);
-    }
-    for (const experienceSlug of destination.experienceSlugs) {
-      if (!experienceBySlug.has(experienceSlug)) {
-        problems.push(
-          `Destination "${destination.slug}" references unknown experience "${experienceSlug}".`,
-        );
-      }
-    }
-    for (const nearbySlug of destination.nearbySlugs) {
-      if (!destinationBySlug.has(nearbySlug)) {
-        problems.push(
-          `Destination "${destination.slug}" references unknown nearby destination "${nearbySlug}".`,
-        );
-      }
-      if (nearbySlug === destination.slug) {
-        problems.push(`Destination "${destination.slug}" lists itself as nearby.`);
-      }
-    }
-    for (const link of destination.travel) {
-      if (!destinationBySlug.has(link.to)) {
-        problems.push(
-          `Destination "${destination.slug}" has a travel link to unknown destination "${link.to}".`,
-        );
-      }
-      if (!Number.isFinite(link.minutes) || link.minutes <= 0) {
-        problems.push(
-          `Destination "${destination.slug}" has a non-positive travel time to "${link.to}".`,
-        );
-      }
-    }
-    if (destination.suggestedNights < 1) {
-      problems.push(`Destination "${destination.slug}" has suggestedNights below 1.`);
-    }
-    if (destination.image.alt.trim().length === 0) {
-      problems.push(`Destination "${destination.slug}" has an image with empty alt text.`);
-    }
-    for (const month of destination.bestMonths) {
-      if (destination.avoidMonths.includes(month)) {
-        problems.push(
-          `Destination "${destination.slug}" lists month ${month} as both best and avoid.`,
-        );
-      }
-    }
-  }
-
-  const seenStays = new Set<string>();
-  for (const stay of accommodations) {
-    if (seenStays.has(stay.slug)) problems.push(`Duplicate accommodation slug "${stay.slug}".`);
-    seenStays.add(stay.slug);
-    if (!destinationBySlug.has(stay.destinationSlug)) {
-      problems.push(
-        `Accommodation "${stay.slug}" references unknown destination "${stay.destinationSlug}".`,
-      );
-    }
-    if (!Number.isFinite(stay.coordinates.lat) || !Number.isFinite(stay.coordinates.lng)) {
-      problems.push(`Accommodation "${stay.slug}" has invalid coordinates.`);
-    }
-  }
-
-  const seenExperiences = new Set<string>();
-  for (const experience of experiences) {
-    if (seenExperiences.has(experience.slug)) {
-      problems.push(`Duplicate experience slug "${experience.slug}".`);
-    }
-    seenExperiences.add(experience.slug);
-
-    if (!destinationBySlug.has(experience.destinationSlug)) {
-      problems.push(
-        `Experience "${experience.slug}" references unknown destination "${experience.destinationSlug}".`,
-      );
-    }
-    if (experience.image.alt.trim().length === 0) {
-      problems.push(`Experience "${experience.slug}" has an image with empty alt text.`);
-    }
-    if (!Number.isFinite(experience.durationHours) || experience.durationHours <= 0) {
-      problems.push(`Experience "${experience.slug}" has a non-positive durationHours.`);
-    }
-  }
-
-  const seenTrips = new Set<string>();
-  for (const trip of trips) {
-    if (seenTrips.has(trip.slug)) problems.push(`Duplicate trip slug "${trip.slug}".`);
-    seenTrips.add(trip.slug);
-
-    if (trip.days.length !== trip.durationDays) {
-      problems.push(
-        `Trip "${trip.slug}" declares ${trip.durationDays} days but has ${trip.days.length} day entries.`,
-      );
-    }
-    for (const destinationSlug of trip.destinationSlugs) {
-      if (!destinationBySlug.has(destinationSlug)) {
-        problems.push(`Trip "${trip.slug}" references unknown destination "${destinationSlug}".`);
-      }
-    }
-    trip.days.forEach((day, index) => {
-      if (day.day !== index + 1) {
-        problems.push(`Trip "${trip.slug}" day at position ${index + 1} is numbered ${day.day}.`);
-      }
-      if (!destinationBySlug.has(day.destinationSlug)) {
-        problems.push(
-          `Trip "${trip.slug}" day ${day.day} references unknown destination "${day.destinationSlug}".`,
-        );
-      }
-      if (day.overnightIn !== null && !destinationBySlug.has(day.overnightIn)) {
-        problems.push(
-          `Trip "${trip.slug}" day ${day.day} overnights in unknown destination "${day.overnightIn}".`,
-        );
-      }
-      for (const experienceSlug of day.experienceSlugs) {
-        if (!experienceBySlug.has(experienceSlug)) {
-          problems.push(
-            `Trip "${trip.slug}" day ${day.day} references unknown experience "${experienceSlug}".`,
-          );
-        }
-      }
-      if (day.driveMinutes < 0) {
-        problems.push(`Trip "${trip.slug}" day ${day.day} has a negative drive time.`);
-      }
-      // FR-4.5 applies to generated plans; packages we publish ourselves must never breach it.
-      if (day.driveMinutes > 300) {
-        problems.push(
-          `Trip "${trip.slug}" day ${day.day} requires ${day.driveMinutes} minutes of driving, over the 300 minute limit.`,
-        );
-      }
-    });
-  }
-
-  return problems;
+  // The rules live in lib/content-integrity.ts so the admin app runs the same
+  // ones before it lets anything be published (D-36).
+  return findContentProblems({ regions, destinations, experiences, trips, accommodations, activities, activityCategories });
 }
 
 const integrityProblems = checkContentIntegrity();

@@ -141,6 +141,38 @@ Every variable in `.env.example`, plus the pipeline variables.
 
 ---
 
+### 2.x Database and admin variables (D-36)
+
+These are all **SERVER-ONLY** secrets, apart from `REQUIRE_DATABASE_CONTENT` and
+`PUBLIC_SITE_URL`. None may use the `NEXT_PUBLIC_` prefix. The setup order is in
+`admin.md`.
+
+**Public site**
+
+| Variable | When | Purpose | Required | If wrong or missing |
+| --- | --- | --- | --- | --- |
+| `CONTENT_DATABASE_URL` | **Build** | `np_site_build` connection string. `scripts/pull-content.ts` reads published content and uploaded images | Production: yes | Unset: the site builds from the bundled `content/*.ts`. With `REQUIRE_DATABASE_CONTENT=true`, the build fails and the previous deployment stays live |
+| `REQUIRE_DATABASE_CONTENT` | **Build** | `true` makes a build without the content database fail | Production: `true`. Elsewhere: unset | Unset in production: a misconfigured build silently publishes old bundled content |
+| `DATABASE_URL` | Runtime | `np_site_runtime` connection string. Saves enquiries for the admin, and counts visits | Production: yes | Unset: enquiries are only emailed; no statistics |
+| `DATABASE_CA_CERT` | Build + runtime | Aiven CA certificate (PEM text, or base64 of it). TLS is always verified | Whenever a database URL is set (except a local database) | TLS handshake fails: build fails (if required), enquiries are only emailed |
+
+**Admin app** (`admin/`)
+
+| Variable | When | Purpose | Required | If wrong or missing |
+| --- | --- | --- | --- | --- |
+| `DATABASE_URL` | Runtime | `np_admin` connection string | Yes | Every page errors |
+| `DATABASE_CA_CERT` | Runtime | As above | Yes (Aiven) | Every page errors |
+| `ADMIN_ENCRYPTION_KEY` | Runtime | 32 random bytes, base64. Encrypts the TOTP secret | Yes | Wrong value: no one can pass two-step sign-in until `admin:create --reset-2fa` |
+| `PUBLIC_SITE_URL` | Build + runtime | The public site's origin, for previews, links and the image CSP | Yes | Previews of site images blocked by CSP |
+| `SITE_DEPLOY_HOOK_URL` | Runtime | The site's deploy hook. **A secret**: anyone with it can trigger builds | For publishing | Publish button disabled |
+
+**Scripts** (run by hand from a trusted computer, never set on a platform)
+
+| Variable | Purpose |
+| --- | --- |
+| `MIGRATION_DATABASE_URL` | The `avnadmin` connection string, for `npm run db:migrate` |
+| `ADMIN_DATABASE_URL` | The `np_admin` connection string, for `npm run db:seed` |
+
 ## 3. Pipeline configuration (GitHub)
 
 These are **not** application variables. They are never read by application code and
@@ -271,6 +303,7 @@ deploy → verify canonical tags and Open Graph URLs → update this document.
 | 2 | No automated check that a server-only variable has not leaked into the client bundle. | Medium — NFR-6 is enforced by convention only | Full-Stack / DevOps: add a post-build grep step (see §1) to `ci.yml` once the variable list is stable. |
 | 3 | The rate-limit variables have no effect across instances (in-memory limiter). | Medium — NFR-8 is weaker in practice than the configured value implies | Documented limitation for v1; revisit when a datastore exists. |
 | 4 | Vercel token expiry is a calendar reminder, not an automated alert. | Low — an expired token breaks deploys, not the site | DevOps: revisit if deploy frequency increases. |
+| 5 | D-36 database variables have been tested against a local PostgreSQL only, not against Aiven's TLS/CA setup. | Medium — first production build may fail at the TLS step | DevOps: run `npm run db:migrate` and a site build against Aiven before launch. |
 
 ---
 
@@ -281,3 +314,4 @@ deploy → verify canonical tags and Open Graph URLs → update this document.
 | 2026-09-19 | Initial specification of all four application variables from `.env.example`, pipeline secrets, per-environment storage, rotation procedures and known gaps. Nothing provisioned. | DevOps Engineer |
 | 2026-09-23 | Added `RESEND_API_KEY` and `RESEND_FROM_EMAIL` (D-23, booking delivery). Closed gap #1 — `lib/env.ts`'s startup validation is now actually exercised by `POST /api/bookings`, not dead code. | Full-Stack Engineer |
 | 2026-09-25 | D-24: `POST /api/rides` uses the same five variables as `/api/bookings`; no new variables. Updated purposes and the rate-limit caveat. | DevOps Engineer |
+| 2026-09-30 | D-36: added the database variables for the site (`CONTENT_DATABASE_URL`, `REQUIRE_DATABASE_CONTENT`, `DATABASE_URL`, `DATABASE_CA_CERT`), the admin app's variables, and the script-only variables. Gap #5. | Full-Stack Engineer (Orchestrator) |

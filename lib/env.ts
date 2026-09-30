@@ -66,6 +66,16 @@ const serverEnvSchema = z
       .default("onboarding@resend.dev"),
     BOOKING_RATE_LIMIT_MAX: positiveInt(DEFAULT_RATE_LIMIT_MAX),
     BOOKING_RATE_LIMIT_WINDOW_MS: positiveInt(DEFAULT_RATE_LIMIT_WINDOW_MS),
+    /**
+     * Aiven connection string for the `np_site_runtime` role (D-36). With it,
+     * booking and ride requests are also saved for the admin app, and page
+     * views are counted. Optional: without it, requests are still emailed and
+     * nothing is counted. Never the np_admin connection string.
+     */
+    DATABASE_URL: z
+      .string()
+      .regex(/^postgres(ql)?:\/\//, { message: "must be a postgres:// connection string" })
+      .optional(),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === "production" && !env.BOOKINGS_NOTIFICATION_EMAIL) {
@@ -103,6 +113,7 @@ function loadServerEnv(): ServerEnv {
     RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || undefined,
     BOOKING_RATE_LIMIT_MAX: process.env.BOOKING_RATE_LIMIT_MAX,
     BOOKING_RATE_LIMIT_WINDOW_MS: process.env.BOOKING_RATE_LIMIT_WINDOW_MS,
+    DATABASE_URL: process.env.DATABASE_URL || undefined,
   });
 
   if (parsed.success) return parsed.data;

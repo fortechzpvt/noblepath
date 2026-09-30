@@ -1,3 +1,5 @@
+import { vehicleOverrides } from "@/lib/content-source";
+
 /**
  * Airport transfer and vehicle choice, shared by the trip page and the plan builder.
  *
@@ -22,10 +24,12 @@ export type VehicleId = (typeof VEHICLE_IDS)[number];
 export interface Vehicle {
   readonly id: VehicleId;
   readonly label: string;
+  /** Per day with a driver, in US dollars, set in the admin (D-36). */
+  readonly priceFromUsd?: number;
 }
 
 /** Offered in this order: cars first, then group transport, then two-/three-wheelers. */
-export const VEHICLES: readonly Vehicle[] = [
+export const DEFAULT_VEHICLES: readonly Vehicle[] = [
   { id: "sedan", label: "Sedan" },
   { id: "sedan-electric", label: "Sedan (electric)" },
   { id: "mini-car", label: "Mini car" },
@@ -35,6 +39,21 @@ export const VEHICLES: readonly Vehicle[] = [
   { id: "scooter", label: "Scooter" },
   { id: "tuk-tuk", label: "Tuk tuk" },
 ];
+
+/**
+ * The defaults, with any label and price edited in the admin (D-36). Vehicles
+ * the admin has unpublished are left out. New vehicle types still need a code
+ * change: `VEHICLE_IDS` is what booking requests are validated against.
+ */
+export const VEHICLES: readonly Vehicle[] = applyOverrides(vehicleOverrides);
+
+function applyOverrides(overrides: typeof vehicleOverrides): readonly Vehicle[] {
+  if (!overrides) return DEFAULT_VEHICLES;
+  return DEFAULT_VEHICLES.flatMap((vehicle) => {
+    const override = overrides.find((item) => item.id === vehicle.id);
+    return override ? [{ ...vehicle, label: override.label, priceFromUsd: override.priceFromUsd }] : [];
+  });
+}
 
 export interface TransferSelection {
   readonly airportPickup: boolean;

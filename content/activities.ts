@@ -61,6 +61,8 @@ export interface Activity {
   readonly duration: string;
   readonly difficulty: Intensity;
   readonly priceBand: PriceBand;
+  /** A real "from" price per person, in US dollars, set in the admin (D-36). Shown instead of the band when present. */
+  readonly priceFromUsd?: number;
 }
 
 const E: Intensity = "easy";

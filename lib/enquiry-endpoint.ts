@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import type { z } from "zod";
 
 import { generateBookingRequestId } from "@/lib/booking-request";
+import { saveEnquiry, type EnquiryRecord } from "@/lib/enquiry-store";
 import { serverEnv } from "@/lib/env";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { ApiErrorBody, ApiErrorCode, BookingResponse } from "@/lib/types";
@@ -102,6 +103,8 @@ export interface EnquiryEndpointConfig<Schema extends z.ZodType<{ website: strin
     enquiry: z.output<Schema>,
     id: string,
   ) => { readonly subject: string; readonly text: string; readonly replyTo: string };
+  /** What to save for the admin app (D-36). The honeypot has already been checked. */
+  readonly toRecord: (enquiry: z.output<Schema>) => EnquiryRecord;
 }
 
 export async function handleEnquiryPost<Schema extends z.ZodType<{ website: string }>>(
@@ -175,10 +178,14 @@ export async function handleEnquiryPost<Schema extends z.ZodType<{ website: stri
 
   // 6. Delivery configuration. `lib/env.ts` hard-fails production startup if
   // either of these is unset, so reaching this branch at all means a
-  // development environment without a real Resend account configured — the
-  // rest of the app must still be usable in that state, so this is a
-  // graceful 503, not a crash.
+  // development environment without a real Resend account configured. The
+  // request is still saved for the admin app when a database is configured
+  // (D-36); with neither, it would go nowhere, so it is refused.
+  const record = config.toRecord(parsed.data);
   if (!serverEnv.RESEND_API_KEY || !serverEnv.BOOKINGS_NOTIFICATION_EMAIL) {
+    if (await saveEnquiry(id, record, "not-configured")) {
+      return NextResponse.json<BookingResponse>({ id }, { status: 200 });
+    }
     console.warn(
       `${tag} Delivery is not configured (RESEND_API_KEY or BOOKINGS_NOTIFICATION_EMAIL unset); ` +
         `refusing request ${id} (correlation ${correlationId}).`,
@@ -195,6 +202,7 @@ export async function handleEnquiryPost<Schema extends z.ZodType<{ website: stri
   // client — only a correlation id, which is what support uses to find the
   // matching server log line.
   const { subject, text, replyTo } = config.buildEmail(parsed.data, id);
+  let delivered = false;
   try {
     const resend = new Resend(serverEnv.RESEND_API_KEY);
     const { error } = await resend.emails.send({
@@ -208,18 +216,21 @@ export async function handleEnquiryPost<Schema extends z.ZodType<{ website: stri
       console.error(
         `${tag} Resend rejected request ${id} (correlation ${correlationId}): ${error.name} — ${error.message}`,
       );
-      return errorResponse(
-        502,
-        "delivery_failed",
-        "We could not send your request right now. Please try again or contact us directly.",
-        correlationId,
-      );
+    } else {
+      delivered = true;
     }
   } catch (err) {
     console.error(
       `${tag} Resend call threw for request ${id} (correlation ${correlationId}): ` +
         (err instanceof Error ? err.message : "unknown error"),
     );
+  }
+
+  // 8. Save for the admin app (D-36). If the email failed but the request is
+  // saved, the lead is not lost, so the traveller sees a success rather than
+  // being asked to resubmit (which would only create a duplicate).
+  const saved = await saveEnquiry(id, record, delivered ? "sent" : "failed");
+  if (!delivered && !saved) {
     return errorResponse(
       502,
       "delivery_failed",
@@ -227,6 +238,7 @@ export async function handleEnquiryPost<Schema extends z.ZodType<{ website: stri
       correlationId,
     );
   }
+  if (!delivered) console.warn(`${tag} Request ${id} was saved but not emailed (correlation ${correlationId}).`);
 
   return NextResponse.json<BookingResponse>({ id }, { status: 200 });
 }

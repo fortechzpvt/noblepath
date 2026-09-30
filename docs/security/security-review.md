@@ -6,6 +6,98 @@ requires it.
 
 ---
 
+## D-36 — Admin app, Aiven PostgreSQL, stored enquiries and visitor statistics (2026-09-30)
+
+**Reviewer:** the implementing agent (Orchestrator acting in the Cybersecurity role). **This
+is a self-review.** Fortechz rule 8 requires an independent Cybersecurity review before
+production; it is listed as a required action in the D-36 handoff.
+
+**Scope:**
+- `admin/` in full;
+- `lib/content-schema.ts`, `lib/content-integrity.ts`, `lib/pg-config.ts`, `lib/db.ts`,
+  `lib/enquiry-store.ts`, `lib/enquiry-endpoint.ts` (changed);
+- `lib/analytics.ts`, `app/api/track/route.ts`, `components/analytics-beacon.tsx`;
+- `scripts/pull-content.ts`, `scripts/seed-content.ts`, `admin/db/*`;
+- both Dockerfiles.
+
+### Threat model (what changed)
+
+| Asset | Before D-36 | After D-36 | Main threats |
+|---|---|---|---|
+| Site content | In git, changed only by a reviewed commit | Editable by whoever controls the admin session | Account takeover leading to defacement or malicious links; stored XSS through content |
+| Enquiries (name, email, phone, nationality, travel dates, notes) | Transient: emailed, never stored | **Stored for 24 months** | Database or admin compromise leading to a leak; over-retention |
+| Admin account | Did not exist | One account, password and TOTP | Credential stuffing, phishing, brute force, session theft, CSRF |
+| Database credentials | Did not exist | Three roles, on two platforms | Leak through logs, image layers or the client bundle |
+| Visit statistics | None | Daily aggregates | Accidental personal data (IPs, emails in URLs); inflation by bots |
+
+### Attack surface added
+
+- **The admin app:** every page and Server Action, plus `GET /media/[file]`.
+- **`POST /api/track`** on the public site: unauthenticated, same-origin only.
+- **Build step:** content from the database is compiled into the site, including into client
+  bundles.
+
+### Controls
+
+| Area | Control | Where |
+|---|---|---|
+| Authentication | Email and password, then a 6-digit TOTP code. The password stage only creates a 10-minute `mfa` session that can do nothing but submit a code | `admin/app/login/actions.ts` |
+| Passwords | scrypt N=2^17, r=8, p=1 with a 16-byte salt; the cost is stored with the hash; comparison is constant-time. Minimum 14 characters. An unknown email still runs scrypt against a dummy hash, so timing does not reveal it | `admin/lib/auth/password.ts` |
+| TOTP | Secret AES-256-GCM-encrypted with `ADMIN_ENCRYPTION_KEY`; ±1 step drift; each time step accepted once (`totp_last_step`) | `admin/lib/auth/totp.ts`, `secret-box.ts` |
+| Enrolment | TOTP set up only by the CLI (`admin:create`), after a code is confirmed. No web enrolment path, so a stolen password cannot enrol an attacker's authenticator | `admin/scripts/create-admin.ts` |
+| Brute force | Per client (keyed IP hash): 10 failures in 15 min. Per account: 5 failures lock it for 15 min. One generic message for every failure | `admin/lib/auth/throttle.ts` |
+| Sessions | 256-bit random token; only its SHA-256 is stored. Cookie `__Host-np_admin`: HttpOnly, Secure, SameSite=Strict, Path=/. Limits: 12 h absolute, 60 min idle. A new token after the code step (no fixation). Password change and CLI resets revoke other sessions | `admin/lib/auth/session.ts` |
+| Authorisation | `requireAdmin()` against the database in every page, Server Action and route. The proxy's cookie check is only a first filter; a forged cookie was tested and refused | `admin/proxy.ts`, all `actions.ts` |
+| CSRF | Server Actions check Origin against Host (Next.js) and the cookie is SameSite=Strict | Framework, plus cookie |
+| Input validation | Every content write is validated by the shared zod schema; the site build validates again. Image `src` is limited to `/images/…`, `/media/<uuid>.<ext>` or Unsplash. Credit links are **https only** (found and fixed in this review; one existing `http://` licence link upgraded) | `lib/content-schema.ts` |
+| Stored XSS | React escapes all content. The two JSON-LD blocks escape `<`. Leaflet labels use `textContent`. No `dangerouslySetInnerHTML` with content anywhere else (searched) | Site |
+| Uploads | Real format detected from the bytes, not the name or MIME. Decompression bomb limit (100 MP). Always re-encoded, so polyglots and embedded payloads do not survive. All metadata (EXIF/GPS/XMP/ICC) removed, verified on a real upload. 10 MB cap. Served with `nosniff` and `default-src 'none'` | `admin/lib/media.ts`, `admin/app/media/[file]/route.ts` |
+| Headers (admin) | CSP (`frame-ancestors 'none'`, `base-uri 'none'`, `form-action 'self'`, `object-src 'none'`), `X-Robots-Tag: noindex`, `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, HSTS, CORP/COOP | `admin/next.config.ts` |
+| Database | TLS always verified against Aiven's CA (`rejectUnauthorized: true`). Three least-privilege roles: site runtime cannot read enquiries or content; site build sees published content only. **Tested.** 15 s statement timeout. Parameterised queries throughout (no string-built SQL with user input) | `lib/pg-config.ts`, `admin/db/roles.sql` |
+| Secrets in images | Site Docker build takes the database URL and CA as BuildKit secrets, not build args. Both `.dockerignore` files exclude `.env*` and `*.pem` | `Dockerfile`, `admin/Dockerfile` |
+| Privacy (stats) | No cookies. No IP stored. Query strings stripped (tested with an email in the URL). Referrer reduced to a host. Unique visitors via a daily salted hash, with the salt deleted after 2 days. DNT and GPC honoured | `app/api/track/route.ts`, `lib/analytics.ts` |
+| Accountability | Audit log of sign-ins, failures (with reason), edits, deletes (with the deleted data), uploads, publishes and enquiry status changes. It never holds secrets or traveller data | `admin/lib/audit.ts` |
+| Publishing | Deploy hook URL is a server-side secret. Publishing is blocked while integrity rules fail. At most one publish a minute | `admin/app/(panel)/publish/actions.ts` |
+
+### Findings
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| F-36-1 | Medium | Credit `sourceUrl`/`licenceUrl` accepted any URL scheme (`z.url()`), which would allow a `javascript:` link on `/credits` if the admin were compromised. React 19 blocks it at render, but defence in depth was missing | **Fixed**: https only, with a unit test |
+| F-36-2 | Medium | Admin CSP keeps `script-src 'unsafe-inline'`, which Next.js needs without nonces. Every admin page is dynamic, so a nonce-based CSP is feasible | Open: recommended hardening |
+| F-36-3 | Medium | The admin is reachable from the whole internet. Two factors and lockout protect it, but an access proxy (Cloudflare Access, Vercel Deployment Protection, or an IP allow-list) would remove the exposure | Open: recommended before launch (`docs/deployment/admin.md` §6) |
+| F-36-4 | Low | Account lockout can be triggered deliberately by anyone who knows the admin email (lockout as denial of service) | Accepted: the email is not published; lock lasts 15 min; `--reset-password` clears it |
+| F-36-5 | Low | Client throttling trusts the last `x-forwarded-for` hop (same assumption as the site's limiter, unverified on the real host). If spoofable, per-client throttling weakens, but per-account lockout still applies | Open: verify on the chosen host |
+| F-36-6 | Low | `/api/track` rate limit is in memory per instance, so the statistics can be inflated by a determined script. No confidentiality or integrity impact on anything else | Accepted |
+| F-36-7 | Low | Enquiry retention (24 months) is enforced by an admin button, not automatically | Open: add a scheduled purge, or accept the manual step in the privacy notice |
+| F-36-8 | Info | A privacy notice describing stored enquiries and cookie-free counting does not exist on the site | Open: **required before launch** (human / legal) |
+| F-36-9 | Info | The whole setup was tested against local PostgreSQL 18.4, not against Aiven (TLS with Aiven's CA is unverified) | Open |
+
+### Security testing performed
+
+- Unit tests (15 in total: 7 site, 8 admin):
+  - password hash, verify and policy;
+  - AES-GCM round trip, plus wrong key and tampered ciphertext rejected;
+  - TOTP window;
+  - analytics path, referrer and bot handling;
+  - https-only credit links.
+- End-to-end, production builds, real PostgreSQL:
+  - no cookie → redirect to sign-in (pages and `/media`);
+  - a forged cookie is refused;
+  - sign-in needs a live TOTP code;
+  - 5 wrong passwords lock the account, and the correct password is then refused with the same
+    generic message, with the audit log showing every attempt;
+  - security headers present;
+  - cookie flags confirmed (`HttpOnly`, `Secure`, `SameSite=Strict`);
+  - uploaded image has no EXIF, ICC or XMP;
+  - role denials (`permission denied` for the site roles on enquiries and content);
+  - `/api/track` ignores bots and cross-site requests and strips a query string containing an
+    email address.
+- **Not performed:** an independent review, dependency audit beyond `npm install`'s report (0
+  vulnerabilities in both apps), a penetration test, and testing against Aiven.
+
+---
+
 ## D-25 — Single-trip map and place search review (2026-09-25)
 
 **Reviewer:** Cybersecurity / Application Security Agent

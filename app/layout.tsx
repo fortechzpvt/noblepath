@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Abril_Fatface, Poppins } from "next/font/google";
 
+import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { SiteHeader } from "@/components/site-header";
 import { ScrollRevealFallback } from "@/components/scroll-reveal-fallback";
 import { SiteFooter } from "@/components/site-footer";
@@ -108,6 +109,7 @@ export default function RootLayout({
         <main id="main">{children}</main>
         <SiteFooter />
         <ScrollRevealFallback />
+        <AnalyticsBeacon />
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 # Noble Path — System Architecture
 
 **Status:** Approved for v1
-**Last updated:** 2026-09-19
+**Last updated:** 2026-09-30 (D-36: admin app and Aiven PostgreSQL; see §11)
 
 ---
 
@@ -12,6 +12,16 @@ experiences, trip packages) is typed TypeScript compiled into the build, so almo
 page is static or statically revalidated and served from a CDN edge. The only dynamic
 server work in v1 is a single validated, rate-limited `POST /api/bookings` enquiry
 endpoint. There is no database, no user accounts and no payment processing in v1.
+
+> **Updated by D-36 (2026-09-30).**
+> - Content is now edited in a separate **admin app** and stored in **Aiven PostgreSQL**.
+> - The site is still static: each build pulls the published content into a snapshot, and
+>   "Publish" in the admin triggers that build.
+> - Enquiries are now also saved (for 24 months), and page views are counted without cookies.
+> - There is exactly one user account: the admin's.
+>
+> §11 describes the current shape; the sections above describe v1 and the reasoning that still
+> holds.
 
 ## 2. Why this shape
 
@@ -128,3 +138,51 @@ Each of these is a deliberate v1 trade-off with a known exit, not an oversight.
 - `docs/architecture/infrastructure-architecture.md` — runtime topology (DevOps)
 - `docs/security/security-architecture.md` — controls and threat model
 - `docs/decisions/architecture-decisions.md` — the ADRs referenced above
+
+## 11. Since D-36: admin app and database
+
+```
+                 ┌───────────────────────────── Aiven PostgreSQL ─────────────────────────────┐
+                 │ content_items · media · booking_requests · page_views_daily · visitors_daily │
+                 │ admin_users · admin_sessions · login_attempts · audit_log · site_publishes   │
+                 └────▲──────────────────▲───────────────────────▲──────────────────▲──────────┘
+      np_admin (all)  │   np_site_build   │ (published only)       │ np_site_runtime  │ (insert only)
+                      │                   │                        │                  │
+┌─────────────────────┴───┐    ┌──────────┴───────────┐    ┌───────┴──────────────────┴───────┐
+│ Admin app (admin/)      │    │ Site BUILD           │    │ Site RUNTIME                      │
+│ separate host, 2FA login│    │ scripts/pull-content │    │ /api/bookings, /api/rides → save  │
+│ edit · upload · stats   │    │ → content/generated/ │    │ /api/track → daily counters       │
+│ Publish ──deploy hook──►│───►│   snapshot.json      │───►│ pages read lib/content-source.ts  │
+└─────────────────────────┘    │ → public/media/      │    │ (static, as before)               │
+                               └──────────────────────┘    └───────────────────────────────────┘
+```
+
+**How content moves from the admin to the live site:**
+1. **Edit:** the admin validates the change (`lib/content-schema.ts`) and saves it
+   (`content_items`, status Draft or Published).
+2. **Publish:** the admin checks the cross-references (`lib/content-integrity.ts`) and refuses
+   if any fail, then calls the site's deploy hook.
+3. **Site build:** `scripts/pull-content.ts` reads `published_content`, validates it again, and
+   writes the snapshot and the referenced images. `lib/content.ts` runs the integrity rules once
+   more at module load. Any failure fails the build, and the previous deployment stays live.
+4. **Result:** the pages are static again. Content reaches client components through the same
+   `lib/content-source.ts` import, so the planner and booking form needed no change.
+
+**Trust boundaries added:**
+
+| Boundary | What crosses it | Control |
+| --- | --- | --- |
+| Internet → admin | Credentials, content edits, uploads | Password, TOTP and lockout; `__Host-` SameSite=Strict session; `requireAdmin()` on every page and action; strict CSP; noindex |
+| Admin → database | Everything | `np_admin` over verified TLS |
+| Build → database | Published content | `np_site_build`, a read-only view |
+| Site runtime → database | Enquiries, counters | `np_site_runtime`, insert-only; cannot read personal data back |
+| Admin → site host | Deploy hook | Secret URL, server-side only |
+
+**What still does not change without a code change:**
+- the sets of regions and vehicle types (the planner and booking validation depend on them);
+- page layout;
+- page copy outside the home hero, trust bar and trips heading;
+- the owned photos in `ownedPhotos`.
+
+See D-36 in `docs/decisions/architecture-decisions.md` and `docs/deployment/admin.md`.
+

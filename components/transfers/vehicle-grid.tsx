@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { cn } from "@/lib/cn";
+import { formatUsd } from "@/lib/format";
 import { VEHICLES, type VehicleId } from "@/lib/transfers";
 
 /**
@@ -52,6 +53,9 @@ export function VehicleGrid({
               className="h-auto w-full max-w-[140px]"
             />
             <span className="text-body-sm font-semibold text-ink-900">{vehicle.label}</span>
+            {vehicle.priceFromUsd ? (
+              <span className="text-small text-text-meta">From {formatUsd(vehicle.priceFromUsd)} a day</span>
+            ) : null}
           </span>
         </label>
       ))}

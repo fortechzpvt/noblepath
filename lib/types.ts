@@ -187,6 +187,8 @@ export interface Experience extends Seasonal {
   readonly durationHours: number;
   readonly intensity: Intensity;
   readonly priceBand: PriceBand;
+  /** A real "from" price per person, in US dollars, set in the admin (D-36). Shown instead of the band when present. */
+  readonly priceFromUsd?: number;
   readonly image: ImageAsset;
   /** What the indicative price covers. */
   readonly included: readonly string[];
@@ -214,6 +216,8 @@ export interface Accommodation {
   readonly summary: string;
   /** Approximate WGS84 position, for the map pin. */
   readonly coordinates: Coordinates;
+  /** A real "from" price per room per night, in US dollars, set in the admin (D-36). Shown instead of the band when present. */
+  readonly priceFromUsd?: number;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -254,6 +258,8 @@ export interface TripPackage {
   readonly excludes: readonly string[];
   /** Indicative per-person band, not a quote. */
   readonly priceBandPerPerson: PriceBand;
+  /** A real "from" price per person, in US dollars, set in the admin (D-36). Shown instead of the band when present. */
+  readonly priceFromUsd?: number;
   readonly image: ImageAsset;
   /** Months the package works best in, given the regions it crosses. */
   readonly bestMonths: readonly Month[];

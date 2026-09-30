@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Noble Path — production container image
 #
 # PROPOSED AND APPROVED-FOR-V1 DESIGN. The primary v1 target is Vercel
@@ -63,8 +64,23 @@ COPY . .
 # value is inlined into JavaScript served to the browser (NFR-6).
 ARG NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+# D-36: set to "true" for production images, so a build without the content
+# database fails instead of shipping the bundled fallback content.
+ARG REQUIRE_DATABASE_CONTENT=false
+ENV REQUIRE_DATABASE_CONTENT=${REQUIRE_DATABASE_CONTENT}
 
-RUN npm run build
+# The build pulls published content from Aiven (scripts/pull-content.ts). The
+# np_site_build connection string and the Aiven CA are BuildKit secrets, never
+# build args: build args are readable in the image history. They exist only
+# for this one RUN step and are not written to any layer.
+#   docker build --secret id=content_database_url,env=CONTENT_DATABASE_URL \
+#                --secret id=database_ca_cert,src=ca.pem \
+#                --build-arg REQUIRE_DATABASE_CONTENT=true .
+RUN --mount=type=secret,id=content_database_url \
+    --mount=type=secret,id=database_ca_cert \
+    sh -c 'if [ -f /run/secrets/content_database_url ]; then export CONTENT_DATABASE_URL="$(cat /run/secrets/content_database_url)"; fi; \
+           if [ -f /run/secrets/database_ca_cert ]; then export DATABASE_CA_CERT="$(cat /run/secrets/database_ca_cert)"; fi; \
+           npm run build'
 
 # -----------------------------------------------------------------------------
 # Stage 3: runner — minimal runtime. No source, no dev dependencies, no npm ci.

@@ -2,6 +2,7 @@ import { TripCard } from "@/components/cards/trip-card";
 import { TripCarousel } from "@/components/home/trip-carousel";
 import { LinkButton } from "@/components/ui/button";
 import { Container, SectionHeading } from "@/components/ui/section";
+import { siteSettings } from "@/lib/content-source";
 import type { Region, TripPackage } from "@/lib/types";
 
 /**
@@ -26,12 +27,12 @@ export function TripsPreview({
     <section className="overflow-x-clip bg-surface py-[var(--section-y)] lg:py-[clamp(1.5rem,5svh,var(--section-y))]">
       <Container wide>
         <TripCarousel
-          label="Trips you can book today"
+          label={siteSettings.tripsTitle}
           header={
             <SectionHeading
-              overline="Ready to go"
-              title="Trips you can book today"
-              lead="Complete routes with the driving, the stays and the timing already worked out. Take one as it is, or use it as a starting point."
+              overline={siteSettings.tripsOverline}
+              title={siteSettings.tripsTitle}
+              lead={siteSettings.tripsLead}
               // On a short laptop screen the lead would cost the carousel a
               // fifth of its size; the cards say the same thing (D-34).
               leadClassName="lg:[@media(max-height:859px)]:hidden"

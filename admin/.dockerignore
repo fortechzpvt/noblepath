@@ -1,0 +1,12 @@
+# Admin image build context (D-36). No secrets, no local builds, no scripts' test data.
+.env
+.env.*
+*.pem
+*.key
+node_modules
+.next
+*.tsbuildinfo
+.DS_Store
+*.log
+Dockerfile
+.dockerignore

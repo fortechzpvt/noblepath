@@ -1,7 +1,7 @@
 # Noble Path — Testing Strategy
 
 **Status:** Approved for v1
-**Last updated:** 2026-09-19
+**Last updated:** 2026-09-30 (D-36, §8)
 
 ---
 
@@ -107,3 +107,58 @@ These are deliberate omissions, recorded so that nobody mistakes them for covera
 A change is not complete until: types pass, lint passes, the production build succeeds,
 the affected manual checks are re-run and recorded, documentation is updated, and — if the
 change touches input handling, PII or headers — the Cybersecurity Agent has reviewed it.
+
+## 8. D-36: automated tests and the end-to-end run
+
+**Unit tests** use `node:test` through `tsx`, with no extra test framework.
+
+| Suite | Command | Covers | Result (2026-09-30) |
+| --- | --- | --- | --- |
+| Site | `npm test` (root) | `lib/analytics.ts` (path stripping, referrer, device, bot, country); `lib/content-integrity.ts` (bundled content is clean, a removed destination is caught, the 300-minute drive rule); https-only credit links | 7 / 7 pass |
+| Admin | `npm test` (in `admin/`) | scrypt hash, verify and policy; AES-GCM seal and open, wrong key, tampering; TOTP window; form parsing for a full trip (days, prices, months, lines, null overnight), blank price, paragraphs, friendly error mapping | 8 / 8 pass |
+
+**Static checks:** lint and typecheck pass in both apps; `next build` passes in both apps.
+
+**End-to-end run.** Performed once by the implementing agent, not automated. It used local
+PostgreSQL 18.4 (embedded, from the scratchpad) and production builds of both apps:
+1. **Database setup:**
+   - migrations applied, and a re-run was a no-op;
+   - `roles.sql` applied;
+   - the site roles got "permission denied" on `booking_requests` and `content_items`.
+2. **Seed:** 363 items loaded; a re-run wrote 0.
+3. **Site build from the database:** the same 48 pages. `REQUIRE_DATABASE_CONTENT=true` fails
+   with no URL and with a wrong password.
+4. **Admin sign-in:**
+   - no cookie → redirect;
+   - a forged cookie → redirect;
+   - password, then a live TOTP code → dashboard;
+   - cookie flags verified;
+   - five wrong passwords → locked, with every attempt audited.
+5. **Admin editing:**
+   - enquiry status and notes saved;
+   - trip price set;
+   - an empty new trip shows 11 field errors;
+   - image uploaded, with EXIF, ICC and XMP stripped (checked with sharp);
+   - the uploaded image set as a trip photo;
+   - unpublishing Ella blocks Publish, listing each reference to it;
+   - re-publishing Ella unblocks it;
+   - Publish called the deploy hook (seen by a mock hook server).
+6. **Site after publish:**
+   - rebuilt from the database, with the uploaded image copied to `public/media/`;
+   - "From $1,450" on the home carousel and the trip page;
+   - the trip page uses the uploaded image.
+7. **Site runtime:**
+   - two ride requests with a deliberately invalid Resend key were saved with
+     `email_status = failed` and still answered 200;
+   - page views counted per path, country, device and referrer, with the query string stripped;
+   - bot and cross-site beacons ignored.
+8. **Screens:** the dashboard charts (colours checked with the dataviz palette validator; hover
+   tooltip; legend) and the phone width (no horizontal scroll; the menu collapses).
+
+**Not tested:**
+- against Aiven (TLS with Aiven's CA);
+- on the real hosting platforms (deploy hook, `x-forwarded-for`, geo header);
+- a real Resend send;
+- real touch devices or screen readers for the admin;
+- load.
+

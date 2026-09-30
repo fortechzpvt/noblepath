@@ -25,6 +25,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const enquiry = toBookingDraftEnquiry(validated);
       return { ...buildBookingEmail(enquiry, id), replyTo: enquiry.traveller.email };
     },
+    toRecord: (validated) => {
+      const enquiry = toBookingDraftEnquiry(validated);
+      const { traveller } = enquiry;
+      return {
+        kind: "booking",
+        planChoice: enquiry.planChoice,
+        packageSlug: enquiry.packageSlug || null,
+        travellerName: traveller.fullName,
+        email: traveller.email,
+        travelDate: enquiry.dates.arrivalDate,
+        partySize: Number(traveller.adults) + Number(traveller.children) + Number(traveller.infants),
+        payload: enquiry,
+      };
+    },
   });
 }
 

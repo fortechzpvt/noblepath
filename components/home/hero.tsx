@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ChevronDown } from "lucide-react";
@@ -5,6 +6,7 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 import { LinkButton } from "@/components/ui/button";
 import { RouteLine } from "@/components/home/route-line";
 import { TrustBar } from "@/components/home/trust-bar";
+import { siteSettings } from "@/lib/content-source";
 import type { Destination } from "@/lib/types";
 
 /**
@@ -93,7 +95,7 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
             className="np-enter-left np-on-image-secondary text-kicker"
             style={{ animationDelay: "0ms" }}
           >
-            Sri Lanka is waiting ….
+            {siteSettings.heroKicker}
           </p>
 
           <h1
@@ -103,23 +105,31 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
             // headline that fills the whole screen. Never below 2.25rem.
             style={{ animationDelay: "80ms", fontSize: "min(var(--text-display), max(2.25rem, 9svh))" }}
           >
-            Explore
-            <br className="hidden md:inline" />{" "}
-            <span className="md:hidden"> </span>
-            Sri Lanka with us
+            {/* Admin-editable (D-36): each line break in the title is a
+                break from tablet up, and a plain space on phones. */}
+            {siteSettings.heroTitle.split("\n").map((line, index) => (
+              <Fragment key={index}>
+                {index > 0 ? (
+                  <>
+                    <br className="hidden md:inline" />
+                    <span className="md:hidden"> </span>
+                  </>
+                ) : null}
+                {line}
+              </Fragment>
+            ))}
           </h1>
 
           <p
             className="np-enter-left np-on-image-secondary mt-4 text-lead md:mt-5 lg:mt-6"
             style={{ animationDelay: "160ms" }}
           >
-            Discover breathtaking destinations, unique experiences and unforgettable
-            memories across Sri Lanka.
+            {siteSettings.heroLead}
           </p>
 
           <div className="np-enter-left mt-6 md:mt-7 lg:mt-8" style={{ animationDelay: "240ms" }}>
             <LinkButton href="/plan" variant="primary" size="lg">
-              Plan Your Trip
+              {siteSettings.heroCta}
               <ArrowRight size={20} aria-hidden />
             </LinkButton>
           </div>

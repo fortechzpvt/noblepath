@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/ui/page-header";
 import { Container, Section } from "@/components/ui/section";
-import { destinations, ownedPhotos } from "@/content/destinations";
-import { experiences } from "@/content/experiences";
-import { trips } from "@/content/trips";
+import { ownedPhotos } from "@/content/destinations";
+import { destinations, experiences, trips } from "@/lib/content-source";
 import type { ImageAsset } from "@/lib/types";
 
 export const metadata: Metadata = {
