@@ -1162,8 +1162,9 @@ paths in these records refer to that repository. The Aiven CA certificate that s
 3. **Vercel (admin): variables replaced by the owner.** The first sign-in failed with "self-signed
    certificate in certificate chain" because `DATABASE_CA_CERT` was not the Supabase CA. An agent
    set it to the base64 Supabase CA and redeployed (Ready); see troubleshooting §12a. The sign-in page
-   serves. **Still to check:** sign in, and confirm that the dashboard shows today's page views
-   and that an edit saves. The in-progress Supabase Auth code, once committed,
+   serves. **Verified:** after `np_admin` got a URL-safe password (`openssl rand -hex 24`;
+   base64 passwords containing `+ / =` break connection URLs), the owner signed in successfully
+   (2026-09-30). The in-progress Supabase Auth code, once committed,
    also needs `SUPABASE_URL` and `SUPABASE_ANON_KEY`. Commit the admin's
    in-progress Supabase Auth work separately; it was not touched here.
 4. **Aiven:** export anything needed (enquiries saved there), then delete the service (F-37-3).

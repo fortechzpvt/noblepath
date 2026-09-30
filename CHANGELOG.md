@@ -3,6 +3,11 @@
 Significant changes, newest first (Fortechz policy §16). Decisions behind each entry are in
 `docs/decisions/architecture-decisions.md`.
 
+## 2026-09-30 — Security: Next.js 16.3.8
+
+### Security
+- `next` and `eslint-config-next` upgraded from 16.3.5 to 16.3.8 (critical GHSA-vcvr-r3jv-pc5j, `next/og` RCE; not used here, so not exploitable). The admin repository has the same upgrade.
+
 ## 2026-09-30 — D-38: search engine optimisation
 
 ### Added

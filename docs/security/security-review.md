@@ -6,6 +6,23 @@ requires it.
 
 ---
 
+## Dependency: Next.js GHSA-vcvr-r3jv-pc5j (2026-09-30)
+
+- **Found by:** the CI `npm audit --audit-level=high` job, on the D-38 push.
+- **Advisory:** [GHSA-vcvr-r3jv-pc5j](https://github.com/advisories/GHSA-vcvr-r3jv-pc5j), **Critical**.
+  Remote code execution in `next/og` `ImageResponse`, affecting `next` 16.2.0–16.3.5.
+- **Exposure:** none in practice. Neither the site nor the admin imports `next/og` or `ImageResponse`
+  (searched both repositories). Both pinned the affected `16.3.5`.
+- **Remediation:** `next` and `eslint-config-next` upgraded to **16.3.8** (exact pins) in both the
+  site and `noblepathadmin`.
+  - `npm audit`: 0 vulnerabilities in both.
+  - Lint, typecheck, tests (12 site, 5 admin) and production builds pass in both.
+- **Status:** Fixed in code. Closed once both are deployed.
+- **Note:** a future `app/opengraph-image.tsx` (suggested in D-38) would use `ImageResponse`. Add it
+  only on a patched `next`.
+
+---
+
 ## D-38 — SEO changes (2026-09-30)
 
 **Scope:** a self-review of robots/sitemap, indexing control, JSON-LD and cache headers. It is not an

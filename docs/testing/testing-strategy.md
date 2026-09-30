@@ -188,7 +188,7 @@ PostgreSQL 18.4 (embedded, from the scratchpad) and production builds of both ap
 **Not yet performed:**
 - a local `npm run dev` against Supabase (needs the role passwords in `.env.local`);
 - a real enquiry saved through `np_site_runtime`;
-- a signed-in admin session against Supabase. The redeploy is Ready and `/login` serves, but only the owner can sign in.
+- ~~a signed-in admin session against Supabase~~ **Done 2026-09-30:** the owner signed in to the live admin successfully, after the `np_admin` password was reset to a URL-safe hex value.
 
 ## 10. D-38: SEO (2026-09-30)
 

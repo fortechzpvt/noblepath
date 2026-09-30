@@ -304,7 +304,7 @@ deploy → verify canonical tags and Open Graph URLs → update this document.
 | 2 | No automated check that a server-only variable has not leaked into the client bundle. | Medium — NFR-6 is enforced by convention only | Full-Stack / DevOps: add a post-build grep step (see §1) to `ci.yml` once the variable list is stable. |
 | 3 | The rate-limit variables have no effect across instances (in-memory limiter). | Medium — NFR-8 is weaker in practice than the configured value implies | Documented limitation for v1; revisit when a datastore exists. |
 | 4 | Vercel token expiry is a calendar reminder, not an automated alert. | Low — an expired token breaks deploys, not the site | DevOps: revisit if deploy frequency increases. |
-| 5 | D-37: the site's production build and runtime are verified on Supabase. The admin project's variables were replaced and it redeployed; a signed-in check is pending. | Low | Owner: sign in and confirm the dashboard reads Supabase. |
+| 5 | D-37: the site's production build and runtime are verified on Supabase. The admin's variables were replaced, and the owner signed in successfully (2026-09-30). | Closed | — |
 
 ---
 

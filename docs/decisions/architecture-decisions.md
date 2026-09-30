@@ -1726,8 +1726,8 @@ admin repository is already moving its sign-in to Supabase Auth (uncommitted wor
   production build pulled content from the database. A visit to `www.noblepathsrilanka.com`
   raised Supabase's `page_views_daily` count from 2 to 3, with `np_site_runtime` connected. The
   owner then replaced the **admin** project's `DATABASE_URL` and `DATABASE_CA_CERT`, and the
-  redeploy is Ready with the sign-in page serving. A signed-in check by the owner is still
-  pending. Enquiries saved to Aiven before the switch are not copied. Export them first if any
+  redeploy is Ready with the sign-in page serving. The owner then signed in successfully
+  (2026-09-30), after `np_admin` was given a URL-safe hex password. Enquiries saved to Aiven before the switch are not copied. Export them first if any
   matter.
 - **Backups:** the free plan has short daily backups and no point-in-time recovery.
 - **Documentation:** `database-schema.md`, `admin.md`, `environment.md`, the security review
