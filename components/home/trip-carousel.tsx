@@ -1,0 +1,208 @@
+"use client";
+
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+
+import { cn } from "@/lib/cn";
+
+export interface CarouselItem {
+  readonly key: string;
+  /** Used for the control labels and the live announcement. */
+  readonly name: string;
+  /** The server-rendered card. */
+  readonly card: ReactNode;
+}
+
+/** Swipes shorter than this are treated as taps. */
+const SWIPE_THRESHOLD = 48;
+
+/**
+ * The home trips section as a 3D cylindrical carousel (D-33).
+ *
+ * The cards stand on the wall of a cylinder: card i is turned `i × 360/N` deg
+ * about the vertical axis and pushed out by the cylinder's radius. Choosing a
+ * trip turns the whole ring so that card faces the viewer. The ring's rotation
+ * is an unbounded step count, not an index, so going from the last card to the
+ * first turns one step forward instead of spinning all the way back.
+ *
+ * Only the ring's transform and each card's opacity change, and both are CSS
+ * transitions (`.np-ring` in globals.css). The radius comes from CSS `tan()`
+ * rather than a measurement, so there is no layout read and no resize listener.
+ *
+ * Accessibility follows the APG carousel pattern:
+ * - only the front card is interactive; the rest are `inert`, so tab order and
+ *   the accessibility tree hold one trip at a time;
+ * - previous/next buttons, one button per trip, and the arrow keys (while focus
+ *   is inside) change the front card;
+ * - a polite live region announces the new trip, but only after the visitor
+ *   has acted, so nothing is announced on page load;
+ * - under reduced motion the turn is instant.
+ *
+ * The cards are rendered on the server and passed in, so this component ships
+ * only the rotation logic.
+ */
+export function TripCarousel({
+  items,
+  label,
+}: {
+  readonly items: readonly CarouselItem[];
+  readonly label: string;
+}) {
+  const count = items.length;
+  const [step, setStep] = useState(0);
+  const [announce, setAnnounce] = useState(false);
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+  const suppressClick = useRef(false);
+
+  const active = ((step % count) + count) % count;
+
+  function turnBy(delta: number) {
+    if (delta === 0) return;
+    setStep((s) => s + delta);
+    setAnnounce(true);
+  }
+
+  /** Turn to card `index` the short way round. */
+  function goTo(index: number) {
+    let delta = (((index - active) % count) + count) % count;
+    if (delta > count / 2) delta -= count;
+    turnBy(delta);
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "ArrowRight") turnBy(1);
+    else if (event.key === "ArrowLeft") turnBy(-1);
+    else return;
+    event.preventDefault();
+  }
+
+  if (count === 0) return null;
+
+  const angle = 360 / count;
+
+  return (
+    <div
+      role="region"
+      aria-roledescription="carousel"
+      aria-label={label}
+      onKeyDown={onKeyDown}
+      className="relative"
+    >
+      <div
+        className="np-ring-stage"
+        onPointerDown={(event) => {
+          swipe.current = { x: event.clientX, y: event.clientY };
+        }}
+        onPointerUp={(event) => {
+          const start = swipe.current;
+          swipe.current = null;
+          if (!start) return;
+          const dx = event.clientX - start.x;
+          const dy = event.clientY - start.y;
+          if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy)) return;
+          // A drag that ends on a link must not also follow it.
+          suppressClick.current = true;
+          turnBy(dx < 0 ? 1 : -1);
+        }}
+        onPointerCancel={() => {
+          swipe.current = null;
+        }}
+        onClickCapture={(event) => {
+          if (suppressClick.current) {
+            suppressClick.current = false;
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }}
+      >
+        <ul
+          className="np-ring"
+          style={
+            {
+              "--np-ring-count": count,
+              "--np-ring-turn": `${-step * angle}deg`,
+            } as CSSProperties
+          }
+        >
+          {items.map((item, index) => {
+            // How many places this card is from the front, either way round.
+            const raw = Math.abs(index - active);
+            const distance = Math.min(raw, count - raw);
+            const isActive = distance === 0;
+            return (
+              <li
+                key={item.key}
+                aria-roledescription="slide"
+                aria-label={`${index + 1} of ${count}: ${item.name}`}
+                className="np-ring-item"
+                data-distance={Math.min(distance, 3)}
+                style={{ "--np-ring-angle": `${index * angle}deg` } as CSSProperties}
+              >
+                <div inert={!isActive} className="h-full">
+                  {item.card}
+                </div>
+                {!isActive ? (
+                  // Pointer shortcut only: keyboard and screen-reader users have
+                  // the labelled controls below, so this stays out of both.
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-hidden
+                    onClick={() => goTo(index)}
+                    className="absolute inset-0 z-[2] cursor-pointer rounded-xl"
+                  />
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div className="mt-8 flex items-center justify-center gap-4">
+        <button
+          type="button"
+          onClick={() => turnBy(-1)}
+          aria-label="Previous trip"
+          className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-surface text-ink-900 transition-colors duration-[var(--dur-2)] hover:border-jungle-600 hover:text-jungle-700"
+        >
+          <ChevronLeft size={20} aria-hidden />
+        </button>
+
+        <ul className="flex items-center gap-1" aria-label="Choose a trip">
+          {items.map((item, index) => (
+            <li key={item.key}>
+              <button
+                type="button"
+                onClick={() => goTo(index)}
+                aria-label={`Show ${item.name}`}
+                aria-current={index === active ? "true" : undefined}
+                className="group inline-flex size-6 items-center justify-center rounded-full"
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "block h-2 rounded-full transition-all duration-[var(--dur-3)] ease-[var(--ease-standard)]",
+                    index === active ? "w-6 bg-jungle-700" : "w-2 bg-ink-300 group-hover:bg-ink-500",
+                  )}
+                />
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        <button
+          type="button"
+          onClick={() => turnBy(1)}
+          aria-label="Next trip"
+          className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-surface text-ink-900 transition-colors duration-[var(--dur-2)] hover:border-jungle-600 hover:text-jungle-700"
+        >
+          <ChevronRight size={20} aria-hidden />
+        </button>
+      </div>
+
+      <p aria-live="polite" aria-atomic="true" className="np-sr-only">
+        {announce ? `Trip ${active + 1} of ${count}: ${items[active]?.name ?? ""}` : ""}
+      </p>
+    </div>
+  );
+}

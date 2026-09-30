@@ -77,7 +77,8 @@ function journeyChapters(): JourneyChapter[] {
 export default function HomePage() {
   const featured = getFeaturedDestinations();
   const experiences = getAllExperiences().slice(0, 6);
-  const trips = getAllTrips().slice(0, 3);
+  // Every trip: they ride the S6 carousel (D-33).
+  const trips = getAllTrips();
 
   // Resolve the lookups the presentational components need, once, here — the
   // cards stay dumb and the content layer is queried in one place.

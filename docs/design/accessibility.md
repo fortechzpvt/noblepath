@@ -178,6 +178,7 @@ The sticky nav and sticky bottom bars can cover a focused element when tabbing. 
 | **Ken Burns** on the hero | `scale(1 → 1.06)` + `object-position` drift over `--dur-ken`, alternating | **Static image rendered at the animation's mid-point crop** (`scale(1.03)`, `object-position: 51% 43.5%`). Not the start frame — the mid-point is the composition we art-directed the scrim against |
 | **Parallax** on hero/band images | 0.25× scroll rate, capped 120 px | No transform. Image is positioned at its scroll-zero offset |
 | **Route-line draw-on** | `stroke-dashoffset` over `--dur-route` | Path renders fully drawn, immediately, no transition |
+| **Trip carousel turn** (D-33) | Ring rotates over `--dur-ring` (1000 ms), side cards fade | Instant turn, no transition |
 | **Hero split entrance** (D-32) | Left column slides in from the left, right column from the right, `translateX(∓40vw)` + fade over `--dur-enter`, 80 ms stagger | Both columns at full opacity, in place, no transform, no delay |
 | **Card hover lift** | `translateY(-4px)` + media `scale(1.05)` | Border colour change to `--color-jungle-600` + `--shadow-md` only; no transform |
 | **Skeleton shimmer** | 1.4 s sweep | Static `--color-sand-100` blocks |
