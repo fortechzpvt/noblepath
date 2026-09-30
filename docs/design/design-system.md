@@ -351,6 +351,7 @@ Shadows are tinted with ink, never neutral black, so they sit correctly on warm 
 | `--dur-5` | `560ms` | Drawer, modal, page section reveal |
 | `--dur-6` | `900ms` | Cinematic reveal (hero text stagger) |
 | `--dur-enter` | `1100ms` | Hero split entrance (D-32) |
+| `--dur-ring` | `1000ms` | Trip carousel turn (D-33) |
 | `--dur-route` | `2400ms` | Route-line draw-on |
 | `--dur-ken` | `18000ms` | Ken Burns cycle |
 | `--ease-standard` | `cubic-bezier(0.2, 0, 0, 1)` | Default for UI |

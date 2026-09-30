@@ -268,6 +268,7 @@
   --dur-4: 360ms; --dur-5: 560ms; --dur-6: 900ms;
   --dur-route: 2400ms; --dur-ken: 18000ms;
   --dur-enter: 1100ms;
+  --dur-ring: 1000ms;
   /* How far off-screen the hero split entrance starts (D-32). */
   --np-enter-distance: 40vw;
 
@@ -506,6 +507,40 @@
   .np-enter-left  { --np-enter-from: calc(-1 * var(--np-enter-distance)); }
   .np-enter-right { --np-enter-from: var(--np-enter-distance); }
 
+  /* Trip carousel (D-33): cards stand on the wall of a cylinder that turns
+     about its vertical axis (components/home/trip-carousel.tsx sets the count
+     and the turn). The radius is the one at which N cards of this width just
+     meet, from `tan()`, plus a little air, so no JavaScript measures anything.
+     The ring is pushed back by that radius so the front card sits at z = 0 and
+     renders at its true size. */
+  .np-ring-stage {
+    perspective: 1600px;
+    perspective-origin: 50% 35%;
+  }
+  .np-ring {
+    --np-ring-card: min(360px, 80vw);
+    --np-ring-radius: calc(var(--np-ring-card) / 2 / tan(180deg / var(--np-ring-count)) * 1.12);
+    display: grid;
+    transform-style: preserve-3d;
+    transform: translateZ(calc(-1 * var(--np-ring-radius))) rotateY(var(--np-ring-turn));
+    transition: transform var(--dur-ring) var(--ease-cinematic);
+  }
+  .np-ring-item {
+    position: relative;
+    grid-area: 1 / 1;
+    justify-self: center;
+    width: var(--np-ring-card);
+    transform: rotateY(var(--np-ring-angle)) translateZ(var(--np-ring-radius));
+    /* Cards on the far side would otherwise show mirror-image through the ring. */
+    backface-visibility: hidden;
+    transition: opacity var(--dur-ring) var(--ease-cinematic);
+  }
+  /* Depth cue: the further round the ring, the fainter. Opacity, not filter,
+     per design-system §8. */
+  .np-ring-item[data-distance="1"] { opacity: 0.55; }
+  .np-ring-item[data-distance="2"] { opacity: 0.2; }
+  .np-ring-item[data-distance="3"] { opacity: 0; pointer-events: none; }
+
   /* Single-trip map pins (D-25): A = pickup, B = drop-off. Leaflet divIcons,
      so no marker image assets or extra CSP origins are needed. White text on
      jungle-700 / clay-600 both clear 4.5:1. */
@@ -565,6 +600,7 @@
   .np-ken-burns { animation: none !important; transform: none; }
   .np-fade-up { animation: none !important; opacity: 1; transform: none; }
   .np-enter-left, .np-enter-right { animation: none !important; opacity: 1; transform: none; }
+  .np-ring, .np-ring-item { transition: none !important; }
   .np-pop { animation: none !important; opacity: 1; transform: none; }
 }
 

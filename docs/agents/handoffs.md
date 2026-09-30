@@ -913,3 +913,33 @@ to clear them.
 1. Load `/` on desktop and mobile and judge the feel. `--np-enter-distance` and `--dur-enter`
    are the two knobs.
 2. Commit and open a PR.
+
+---
+
+## Handoff: 3D trip carousel (D-33), 2026-09-30
+
+**From:** Orchestrator (UI/UX Designer plus Full-Stack Engineer)
+**To:** Human reviewer
+
+**Completed:**
+- Home "Trips you can book today" is now a 3D cylindrical carousel of all 7 trips.
+- **Controls:** buttons, dots, arrow keys, swipe, and clicking a side card.
+
+**Files changed:**
+- `components/home/trip-carousel.tsx` (new, client)
+- `components/home/trips-preview.tsx`
+- `app/page.tsx` (passes all trips)
+- `app/globals.css` (`.np-ring*`, `--dur-ring`)
+- Docs: D-33 (and a D-32 test note), page-specs S6, design-system §8, accessibility §6, this
+  handoff.
+
+**Tests:**
+- `next build` passes.
+- Headless Chrome, desktop and mobile: every control, the short-way wrap, `inert`, the live
+  region, no horizontal overflow, and reduced motion. The results are in D-33.
+- **Not done:** swipe on a real touch device, and a person judging the feel live.
+
+**Required action (human):**
+1. On desktop and a phone, try the controls and the swipe.
+2. Confirm the vertical-axis interpretation (see the D-33 interpretation note).
+3. Commit and open a PR.

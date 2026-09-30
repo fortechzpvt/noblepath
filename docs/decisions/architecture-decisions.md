@@ -1287,10 +1287,81 @@ and 390×844, with the animations frozen at 150 / 450 / 3000 ms:
 - everything ends at `matrix(1,0,0,1,0,0)` and opacity 1;
 - `scrollWidth` equals the viewport width at every step.
 
-The reduced-motion override was confirmed in the compiled CSS, but not in an emulated browser.
+The reduced-motion override was confirmed in an emulated browser during the D-33 testing: no animation, full opacity.
 
 **Known limitations:** the timing was tuned by frozen-frame screenshots, not watched live by a
 person.
+
+---
+
+## D-33 - Home trips section as a 3D cylindrical carousel
+
+**Date:** 2026-09-30 · **Decided by:** Orchestrator (UI/UX Designer and Full-Stack Engineer), at the owner's request
+
+**Decision:** Home S6, "Trips you can book today", is no longer a three-card grid. It shows
+**all trips** on a 3D ring.
+- The chosen card turns to the centre at full size.
+- The rest stand around the ring behind it, fading with distance.
+- **Interaction:** previous/next buttons, one dot per trip, the arrow keys, a horizontal
+  swipe, or a click on a side card.
+- There is no auto-rotation, so nothing moves until the visitor acts (WCAG 2.2.2).
+
+**Reason:** Requested: an immersive carousel where the selected card rotates to centre
+stage.
+
+**Interpretation note:** the request said the card rotates "around a horizontal axis". We
+built the conventional carousel, where the ring turns horizontally (about the vertical
+axis), because the cards are tall (~650 px). On a drum turning about the horizontal axis,
+the side cards would sit above and below, off-screen. Switching is a CSS change: swap
+`rotateY` for `rotateX`.
+
+**Alternatives considered:**
+- **Swiper, or another carousel library:** rejected. It is a dependency for about 100 lines
+  of logic.
+- **Measuring the card width in JS to compute the radius:** rejected. CSS `tan()` gives the
+  radius, so there is no layout read and no resize listener.
+- **A flat rail below 768 px:** rejected, so every width gets the same experience. The card is
+  `min(360px, 80vw)`, and the section clips the side cards.
+
+**Chosen solution:**
+- **`components/home/trip-carousel.tsx`** (client) holds only the rotation state. The cards
+  are rendered on the server in `trips-preview.tsx` and passed in.
+- **CSS:** `.np-ring-stage`, `.np-ring` and `.np-ring-item` in `globals.css`, with a
+  1600 px perspective, `preserve-3d` and `backface-visibility: hidden`. The radius is
+  `card / 2 / tan(180° / N) × 1.12`. Only `transform` and `opacity` transition.
+- **Short-way rotation:** the rotation is an unbounded step count, so going last → first
+  turns one step and does not spin back.
+- **Accessibility (APG carousel pattern):**
+  - the region has `aria-roledescription="carousel"` and each slide is labelled "k of N";
+  - non-front cards are `inert`;
+  - the side-card click targets are pointer-only (`aria-hidden`, `tabIndex -1`), because the
+    labelled controls cover keyboard and screen-reader use;
+  - a polite live region announces the new trip, but only after the visitor acts;
+  - reduced motion makes the turn instant.
+- **Clipping:** the section uses `overflow-x: clip`, not hidden, so the cards'
+  scroll-driven reveals keep working (D-31).
+- `app/page.tsx` now passes every trip (7) instead of the first 3.
+
+**Impact:** one small client component on the home page, below the fold, so LCP is
+unaffected. No new dependency, CSP change or environment variable.
+
+**Testing:** `next build` passes. Headless Chrome at 1440×900 and 390×844 over the DevTools
+protocol:
+- **Next:** turns to trip 2.
+- **Side-card click:** turns back to trip 1.
+- **3 × ArrowLeft from trip 1:** reaches trip 5, the short way through 7 and 6.
+- **After each turn:**
+  - the live region matched the front trip;
+  - exactly 6 cards were `inert`;
+  - the front card was 360 px (312 px on mobile) and centred;
+  - `scrollWidth` equalled the viewport width.
+- **Reduced-motion emulation:** the transition is effectively zero.
+
+**Known limitations:**
+- **Few cards visible:** with 7 trips, only the front card and its two neighbours show. The
+  cards further round face away and are hidden, to avoid mirror images.
+- **Not checked by hand:** swipe was not tested on a real touch device, and the feel was
+  judged from screenshots, not live.
 
 ---
 
