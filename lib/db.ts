@@ -8,7 +8,7 @@ import { pgConfig } from "@/lib/pg-config";
 /**
  * The public site's database connection (D-36), as `np_site_runtime`: it can
  * add booking requests and visit counts, and read nothing personal back
- * (admin/db/roles.sql).
+ * (`db/roles.sql` in the `noblepathadmin` repository).
  *
  * `null` when `DATABASE_URL` is not set; callers then skip the write, and the
  * site works exactly as it did before the admin app existed.

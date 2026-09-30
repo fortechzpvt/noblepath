@@ -1,6 +1,6 @@
 # Noble Path — Database Schema (Aiven PostgreSQL)
 
-**Introduced by:** D-36 (2026-09-30) · **Source of truth:** `admin/db/migrations/*.sql`
+**Introduced by:** D-36 (2026-09-30) · **Source of truth:** `db/migrations/*.sql` (noblepathadmin repository)
 
 Before D-36 there was no database (ADR-003). Now:
 - Aiven PostgreSQL holds everything the admin app edits and reads.
@@ -10,7 +10,7 @@ Before D-36 there was no database (ADR-003). Now:
 
 ## 1. Roles (least privilege)
 
-Created by hand from `admin/db/roles.sql` after the first migration.
+Created by hand from `db/roles.sql` (noblepathadmin repository) after the first migration.
 
 | Role | Used by | Can | Cannot |
 |---|---|---|---|
@@ -34,9 +34,7 @@ These denials were checked against a real PostgreSQL:
 | `id` | uuid PK | `gen_random_uuid()` |
 | `email` | text unique | lower-case, ≤ 254 |
 | `password_hash` | text | `scrypt$17$8$1$salt$hash`, never the password |
-| `totp_secret_enc` | text | AES-256-GCM ciphertext (key `ADMIN_ENCRYPTION_KEY`) |
-| `totp_enabled` | boolean | set only by `admin:create` |
-| `totp_last_step` | bigint | last accepted TOTP step; a code is accepted once |
+| `totp_secret_enc`, `totp_enabled`, `totp_last_step` | text, boolean, bigint | **Unused since the D-36 revision** (sign-in is password only). Kept so two-step verification can be restored without a migration |
 | `failed_logins`, `locked_until` | int, timestamptz | 5 failures → locked 15 min |
 | `created_at`, `last_login_at`, `password_changed_at` | timestamptz | |
 
@@ -129,8 +127,8 @@ with one click (the action is audited). Retention is not yet automatic; see the 
 
 ## 3. Migrations
 
-- **What:** `admin/db/migrations/NNN_name.sql`, applied in name order by `npm run db:migrate`
-  (in `admin/`). Each file is applied once, in a transaction, and recorded in
+- **What:** `db/migrations/NNN_name.sql` in the noblepathadmin repository, applied in name order by `npm run db:migrate`
+  (in the noblepathadmin repository). Each file is applied once, in a transaction, and recorded in
   `schema_migrations`.
 - **How:** run with `MIGRATION_DATABASE_URL`, the `avnadmin` connection string. Every statement
   in `001_init.sql` is idempotent (`if not exists`).

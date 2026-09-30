@@ -156,7 +156,7 @@ These are all **SERVER-ONLY** secrets, apart from `REQUIRE_DATABASE_CONTENT` and
 | `DATABASE_URL` | Runtime | `np_site_runtime` connection string. Saves enquiries for the admin, and counts visits | Production: yes | Unset: enquiries are only emailed; no statistics |
 | `DATABASE_CA_CERT` | Build + runtime | Aiven CA certificate (PEM text, or base64 of it). TLS is always verified | Whenever a database URL is set (except a local database) | TLS handshake fails: build fails (if required), enquiries are only emailed |
 
-**Admin app** (`admin/`)
+**Admin app** (the noblepathadmin repository)
 
 | Variable | When | Purpose | Required | If wrong or missing |
 | --- | --- | --- | --- | --- |

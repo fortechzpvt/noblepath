@@ -39,6 +39,10 @@ production; it is listed as a required action in the D-36 handoff.
 
 ### Controls
 
+> **Revision (2026-09-30):** two-step verification was removed at the owner's request (F-36-10).
+> The **Authentication**, **TOTP** and **Enrolment** rows below describe the original design;
+> sign-in is now email and password, and the other controls are unchanged.
+
 | Area | Control | Where |
 |---|---|---|
 | Authentication | Email and password, then a 6-digit TOTP code. The password stage only creates a 10-minute `mfa` session that can do nothing but submit a code | `admin/app/login/actions.ts` |
@@ -71,7 +75,9 @@ production; it is listed as a required action in the D-36 handoff.
 | F-36-6 | Low | `/api/track` rate limit is in memory per instance, so the statistics can be inflated by a determined script. No confidentiality or integrity impact on anything else | Accepted |
 | F-36-7 | Low | Enquiry retention (24 months) is enforced by an admin button, not automatically | Open: add a scheduled purge, or accept the manual step in the privacy notice |
 | F-36-8 | Info | A privacy notice describing stored enquiries and cookie-free counting does not exist on the site | Open: **required before launch** (human / legal) |
-| F-36-9 | Info | The whole setup was tested against local PostgreSQL 18.4, not against Aiven (TLS with Aiven's CA is unverified) | Open |
+| F-36-9 | Info | The whole setup was tested against local PostgreSQL 18.4, not against Aiven (TLS with Aiven's CA is unverified) | **Closed**: verified on Aiven (TLS 1.3, CA-verified, refused without the CA; role denials checked) |
+| F-36-10 | **High** | **Admin sign-in is single-factor** (password only), on the open internet, guarding stored personal data. A phished or reused password gives full access. Removed two-step verification at the owner's explicit request, after they were offered a 30-day remembered-device option | **Accepted by owner.** Mitigations in place: lockouts, 14+ character passwords, audit log. **Strongly recommended:** Vercel Deployment Protection (makes F-36-3's fix mandatory in practice) |
+| F-36-11 | Medium | During setup, the `avnadmin` connection string was pasted into the AI chat, and the three role connection strings and `ADMIN_ENCRYPTION_KEY` were visible in plain text in screenshots taken while pasting them into Vercel | Open: reset `avnadmin` in Aiven; rotate the three role passwords and the key (runbook §9) |
 
 ### Security testing performed
 

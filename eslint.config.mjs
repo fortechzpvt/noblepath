@@ -14,8 +14,7 @@ const eslintConfig = [
       ],
     },
   },
-  // admin/ is a separate app with its own lint config (D-36).
-  { ignores: [".next/**", "node_modules/**", "untitled folder/**", "admin/**", "content/generated/**"] },
+  { ignores: [".next/**", "node_modules/**", "untitled folder/**", "content/generated/**"] },
 ];
 
 export default eslintConfig;

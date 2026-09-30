@@ -44,3 +44,10 @@ Significant changes, newest first (Fortechz policy §16). Decisions behind each 
   - it has its own `.gitignore`;
   - Node is pinned to 24.x;
   - `sync-schema` takes the site repository's path.
+
+### Security (later on 2026-09-30)
+- Admin sign-in changed to password only at the owner's request (F-36-10, accepted risk).
+- Deployed: Aiven migrated and seeded, roles verified, site building from the database, and
+  admin live on Vercel.
+- Removed the outdated `admin/` copy from the site repository. The admin lives only in
+  `fortechzpvt/noblepathadmin`.

@@ -45,20 +45,22 @@ ADMIN_DATABASE_URL='postgres://np_admin:…@…/defaultdb?sslmode=require' \
 DATABASE_CA_CERT="$(cat ca.pem)" npm run db:seed
 ```
 
-## 4. Create the admin account (with two-step verification)
+## 4. Create the admin account
 
 In the **admin repository**:
 
 ```bash
-DATABASE_URL='postgres://np_admin:…' DATABASE_CA_CERT="$(cat ca.pem)" \
-ADMIN_ENCRYPTION_KEY='<the same value the admin app will use>' npm run admin:create
+DATABASE_URL='postgres://np_admin:…' DATABASE_CA_CERT="$(cat ca.pem)" npm run admin:create
 ```
 
-- Generate `ADMIN_ENCRYPTION_KEY` once with `openssl rand -base64 32`.
-- The script asks for the email and password at prompts, never as arguments.
-- It shows a QR code for an authenticator app and switches two-step verification on only after
-  a correct code.
+- The script asks for the email and a password (at least 14 characters) at prompts, never as
+  arguments.
+- Sign-in is **password only** (the owner's choice, D-36 revision), so use a long password that
+  is not used anywhere else.
 - There can be only one admin account.
+
+`ADMIN_ENCRYPTION_KEY` (for the admin's Vercel settings) is generated separately with
+`openssl rand -base64 32`. It keys the hashing of client IPs for the sign-in rate limit.
 
 ## 5. Deploy the public site with the database
 
@@ -77,7 +79,7 @@ Hooks). Its URL is `SITE_DEPLOY_HOOK_URL` below, and it is a secret.
 
 ## 6. Deploy the admin (its own repository, on Vercel)
 
-The admin lives in **its own Git repository**, a copy of this project's `admin/` folder, and is a
+The admin lives in **its own Git repository**, a copy of this project's former `admin/` folder, and is a
 **separate Vercel project** on its own hostname (e.g. `admin.noblepath.lk`). Do not put it on a
 path under the public site.
 
@@ -95,7 +97,7 @@ database):
 |---|---|
 | `DATABASE_URL` | `np_admin` connection string |
 | `DATABASE_CA_CERT` | Contents of `ca.pem` |
-| `ADMIN_ENCRYPTION_KEY` | The value used in step 4. Changing it makes the stored authenticator secret unreadable; reset 2FA afterwards (§8) |
+| `ADMIN_ENCRYPTION_KEY` | 32 random bytes, base64 (step 4). Keys the sign-in rate limit's IP hashing; changing it only resets the per-client failure counts |
 | `PUBLIC_SITE_URL` | `https://noblepath.lk`. Also read at **build** time for the image CSP, so redeploy after changing it |
 | `SITE_DEPLOY_HOOK_URL` | From step 5 |
 
@@ -144,8 +146,7 @@ in the admin repository, then run with the variables above on port 3100.
 | Situation | Action |
 |---|---|
 | Forgot the password | `npm run admin:create -- --reset-password` (needs `DATABASE_URL`) |
-| Lost the authenticator | `npm run admin:create -- --reset-2fa` (needs `DATABASE_URL`, `ADMIN_ENCRYPTION_KEY`) |
-| Suspect someone else signed in | Check *Activity log*; reset password and 2FA; *Sign out all other sessions*; rotate `ADMIN_ENCRYPTION_KEY` and `np_admin`'s password |
+| Suspect someone else signed in | Check *Activity log*; reset the password; *Sign out all other sessions*; rotate `ADMIN_ENCRYPTION_KEY` and `np_admin`'s password |
 | Locked out after failed attempts | Wait 15 minutes, or reset the password (which clears the lock) |
 | A publish broke something | Vercel → Deployments → promote the previous deployment. Then fix the content and publish again |
 | Deleted content by mistake | Activity log → the `content.deleted` entry holds its data; recreate it from that |
@@ -155,6 +156,5 @@ in the admin repository, then run with the variables above on port 3100.
 
 - **Database passwords:** `alter role np_… password '…'` as `avnadmin`, then update the platform
   variable and redeploy.
-- **`ADMIN_ENCRYPTION_KEY`:** set the new value, redeploy the admin, then run `--reset-2fa` with
-  the new value.
+- **`ADMIN_ENCRYPTION_KEY`:** set a new value and redeploy the admin. Nothing else depends on it.
 - **Deploy hook:** delete it in Vercel, create a new one, and update `SITE_DEPLOY_HOOK_URL`.

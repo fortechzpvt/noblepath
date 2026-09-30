@@ -149,8 +149,8 @@ Each of these is a deliberate v1 trade-off with a known exit, not an oversight.
       np_admin (all)  │   np_site_build   │ (published only)       │ np_site_runtime  │ (insert only)
                       │                   │                        │                  │
 ┌─────────────────────┴───┐    ┌──────────┴───────────┐    ┌───────┴──────────────────┴───────┐
-│ Admin app (admin/)      │    │ Site BUILD           │    │ Site RUNTIME                      │
-│ separate host, 2FA login│    │ scripts/pull-content │    │ /api/bookings, /api/rides → save  │
+│ Admin app (own repo)    │    │ Site BUILD           │    │ Site RUNTIME                      │
+│ separate host, login    │    │ scripts/pull-content │    │ /api/bookings, /api/rides → save  │
 │ edit · upload · stats   │    │ → content/generated/ │    │ /api/track → daily counters       │
 │ Publish ──deploy hook──►│───►│   snapshot.json      │───►│ pages read lib/content-source.ts  │
 └─────────────────────────┘    │ → public/media/      │    │ (static, as before)               │
@@ -172,7 +172,7 @@ Each of these is a deliberate v1 trade-off with a known exit, not an oversight.
 
 | Boundary | What crosses it | Control |
 | --- | --- | --- |
-| Internet → admin | Credentials, content edits, uploads | Password, TOTP and lockout; `__Host-` SameSite=Strict session; `requireAdmin()` on every page and action; strict CSP; noindex |
+| Internet → admin | Credentials, content edits, uploads | Password and lockout (single factor, owner-accepted, F-36-10); `__Host-` SameSite=Strict session; `requireAdmin()` on every page and action; strict CSP; noindex |
 | Admin → database | Everything | `np_admin` over verified TLS |
 | Build → database | Published content | `np_site_build`, a read-only view |
 | Site runtime → database | Enquiries, counters | `np_site_runtime`, insert-only; cannot read personal data back |

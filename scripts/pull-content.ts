@@ -15,7 +15,7 @@
  *   deployment, instead of silently publishing stale bundled content.
  *
  * Connects as `np_site_build`, which can read only the `published_content`
- * view and the media bytes (admin/db/roles.sql).
+ * view and the media bytes (`db/roles.sql` in the `noblepathadmin` repository).
  */
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";

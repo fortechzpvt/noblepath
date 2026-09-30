@@ -1096,3 +1096,24 @@ and listed in the register.
   - decide whether to delete `admin/` from this repository afterwards, so there is one copy.
 - **Whoever changes `lib/content-schema.ts`, `lib/content-integrity.ts` or `lib/pg-config.ts`
   here:** re-sync and deploy the admin repository.
+
+**Update, same day: deployed; sign-in is password only.**
+- **Deployment:**
+  - Aiven is set up, with roles verified;
+  - the site builds from the database;
+  - the admin is live at `noblepathadmin.vercel.app`;
+  - the site has an `admin-publish` deploy hook.
+- **Two-step verification removed** at the owner's request (admin commit `e0d8e9c`; F-36-10,
+  High, accepted).
+- **Owner, required:**
+  - turn on Deployment Protection for the admin;
+  - reset the `avnadmin` password and rotate the role passwords and `ADMIN_ENCRYPTION_KEY`
+    (F-36-11).
+- **Owner, housekeeping:** the site repository's `admin/` folder is now an outdated copy
+  (it still has two-step verification). The live admin is the `noblepathadmin` repository.
+  Delete the folder here, or keep it only as reference.
+
+**Update:** the site repository's `admin/` folder was deleted at the owner's request. It was an
+outdated copy; the only admin source is now `fortechzpvt/noblepathadmin`. Earlier `admin/…`
+paths in these records refer to that repository. The Aiven CA certificate that sat in
+`admin/ca.pem` (git-ignored) is kept outside every repository.

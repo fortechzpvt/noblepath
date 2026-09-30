@@ -1632,9 +1632,39 @@ all three kinds of statistics, and real prices alongside bands.
   files. The admin repository must be re-synced and deployed after they change
   (`docs/deployment/admin.md` §6). This is a manual step, a known limitation.
 
+**Revision, 2026-09-30 (sign-in is password only):**
+- **Decision:** the owner asked to remove two-step verification ("i dont need 2f
+  authantication"). They were offered a 30-day "remember this device" option and chose
+  password only.
+- **What changed in the admin repository** (commit `e0d8e9c`):
+  - sign-in is email and password;
+  - the code page, the TOTP and secret-box modules, the QR enrolment in `admin:create` (now
+    `--reset-password` only) and the `otpauth` and `qrcode` dependencies are removed.
+- **Unchanged:**
+  - the per-account and per-client lockouts;
+  - 12-hour and 60-minute-idle sessions, with a fresh token on each sign-in;
+  - `__Host-` SameSite=Strict cookies and the audit log.
+- **Database:** the `totp_*` columns stay, unused, so two-step verification can come back
+  without a migration.
+- **Risk:** recorded as F-36-10 in the security review. Mitigation: Vercel Deployment
+  Protection on the admin project.
+- **Tested:** against a local database. A wrong password is refused; the right password goes
+  straight to the dashboard; `/login/verify` is gone (404 in production after deploy).
+
+**Revision, 2026-09-30 (single source for the admin):** the `admin/` folder was deleted from
+this repository at the owner's request. The admin now lives only in `fortechzpvt/noblepathadmin`.
+Paths such as `admin/db/roles.sql` elsewhere in this record now mean `db/roles.sql` in that
+repository.
+
+**Revision, 2026-09-30 (deployment):**
+- **Aiven:** migrated and seeded, with the three roles created and their permissions verified
+  on Aiven. TLS is verified against Aiven's CA, and refused without it.
+- **Site:** builds from the database on Vercel (`www.noblepathsrilanka.com`), and page views
+  reach Aiven.
+- **Admin:** live at `noblepathadmin.vercel.app`, with Framework Preset set to Next.js.
+
 **Known limitations:**
-- **Not tested against Aiven itself:** only against local Postgres, so its TLS and CA setup is
-  unverified.
+- **Aiven:** now verified in production (see the deployment revision above).
 - **No independent security review yet:** the Cybersecurity review here is a self-review by the
   implementing agent.
 - **Publish latency:** changes need a publish and take 1–3 minutes to appear.

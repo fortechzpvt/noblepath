@@ -45,7 +45,7 @@ deterministic function that runs in the browser. The only dynamic server work is
 single validated, rate-limited booking-enquiry endpoint.
 
 Since D-36:
-- content, prices, photos and enquiries are managed in a **separate admin app** (`admin/`),
+- content, prices, photos and enquiries are managed in a **separate admin app** (its own repository, `fortechzpvt/noblepathadmin`),
   backed by **Aiven PostgreSQL**;
 - each site build pulls the published content into a static snapshot, and "Publish" in the
   admin triggers that build;
@@ -68,7 +68,7 @@ project knowledge.
 | Design tokens, components, flows, a11y | `docs/design/` |
 | API reference | `docs/api/` |
 | Database schema, roles, retention | `docs/database/database-schema.md` |
-| Admin app: setup, daily use, recovery | `docs/deployment/admin.md`, `admin/README.md` |
+| Admin app: setup, daily use, recovery | `docs/deployment/admin.md`, and the `noblepathadmin` repository's README |
 | Security architecture, threat model, review | `docs/security/` |
 | Deploy, environments, rollback | `docs/deployment/` |
 | Testing strategy and recorded results | `docs/testing/` |
