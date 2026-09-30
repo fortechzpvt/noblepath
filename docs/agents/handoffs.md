@@ -877,3 +877,39 @@ use the current location for the pickup. Like Uber, but simpler and one trip onl
 1. Review the nine judgement calls in the register, especially Ayurveda.
 2. Look at the home experiences band and at a destination page's experience list.
 3. Commit, and push with the D-26 changes.
+
+---
+
+## Handoff: hero split entrance (D-32), 2026-09-30
+
+**From:** Orchestrator (UI/UX Designer plus Full-Stack Engineer)
+**To:** Human reviewer
+
+**Completed:**
+- On load, the hero's copy column (kicker, headline, lead, CTA, thumbnail rail) slides in
+  from the left.
+- The route line and trust bar slide in from the right.
+- CSS only; the hero is still a server component.
+
+**Files changed:**
+- `components/home/hero.tsx`
+- `app/globals.css`: `np-enter-x`, `.np-enter-left` / `.np-enter-right`, `--dur-enter`,
+  `--np-enter-distance`, and the reduced-motion override.
+- Docs: D-32, `design/components.md` §2.5–2.6, `design/design-system.md` §8,
+  `design/accessibility.md` §6, and this handoff.
+
+**Tests:**
+- `next build` passes.
+- Headless Chrome at 1440×900 and 390×844 with frozen frames: the direction, stagger and final
+  state are correct, and there is no horizontal overflow.
+- **Not done:** a person watching it live, and a reduced-motion check in an emulated browser
+  (the rule was confirmed in the compiled CSS only).
+
+**Known issues:** `npm run typecheck` reports errors only from duplicate
+`.next/types/* 2.ts` files (Finder copies). This is unrelated to the change. Delete `.next/`
+to clear them.
+
+**Required action (human):**
+1. Load `/` on desktop and mobile and judge the feel. `--np-enter-distance` and `--dur-enter`
+   are the two knobs.
+2. Commit and open a PR.

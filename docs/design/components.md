@@ -166,13 +166,13 @@ The headline breaks manually into two lines at ≥768 using `<br>` inside a `<sp
 | **Loading (rail data)** | 4 thumbnail-shaped `rgba(255,255,255,0.10)` blocks with a slow highlight sweep; heading and CTA already present |
 | **Error (hero image fails)** | Fall back to `--color-jungle-900` → `--color-ink-900` vertical gradient. All text stays at spec contrast (white on jungle-900 = 12.4:1). The hero must never be unreadable because of a failed asset |
 | **Empty (no rail items)** | Rail and its heading are omitted entirely; the trust bar moves up to fill. No empty placeholder |
-| **Reduced motion** | No Ken Burns, no parallax, no route draw-on. Text appears at full opacity with no stagger |
+| **Reduced motion** | No Ken Burns, no parallax, no route draw-on, no split entrance. Everything appears in place at full opacity with no stagger |
 
 ### 2.6 Motion
 
 | Effect | Spec |
 |---|---|
-| Text reveal | Kicker → headline line 1 → headline line 2 → lead → CTA, each `translateY(16px) + opacity 0→1`, `--dur-6`, `--ease-cinematic`, 80 ms stagger. Fires once, on load |
+| Split entrance (D-32, replaces the text reveal) | **Left column** (kicker → headline → lead → CTA → thumbnail rail) glides in from the left edge; **right column** (route line at +120 ms, trust bar at +360 ms) from the right. Each is `translateX(∓40vw) + opacity 0→1` over `--dur-enter` (1100 ms), `--ease-cinematic`, 80 ms stagger on the left. Fires once, on load. `.np-enter-left` / `.np-enter-right` in `globals.css`. The hero's `overflow: hidden` stops the off-screen start from causing a horizontal scroll |
 | Ken Burns | `scale(1) → scale(1.06)` with `object-position` drifting `50% 45% → 52% 42%` over `--dur-ken`, `--ease-linear`, `alternate infinite`. `will-change: transform` set only while running |
 | Parallax | Image translates at `0.25×` scroll rate, capped at 120 px total. Implemented with a scroll-linked animation or `transform` on rAF — never on a scroll event handler that writes layout |
 | Route line | `stroke-dashoffset` draw over `--dur-route` `--ease-cinematic`, fires at 25 % intersection, once. Pin fades + drops 8 px over `--dur-5` after the draw completes |

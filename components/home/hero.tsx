@@ -16,9 +16,10 @@ import type { Destination } from "@/lib/types";
  * full-width, so the vertical layer is strengthened instead), and a top scrim
  * that carries the transparent nav.
  *
- * This is a server component. The staggered text reveal and the route-line
- * draw-on are CSS animations and the video plays natively, so the hero ships
- * no JavaScript.
+ * This is a server component. The split entrance (D-32), where the copy
+ * column glides in from the left and the route line and trust bar from the
+ * right, and the route-line draw-on are CSS animations, and the video plays
+ * natively, so the hero ships no JavaScript.
  *
  * The video is decorative (`aria-hidden`): the <h1> directly beside it already
  * names the place and the page, so describing it again would be noise in a
@@ -65,28 +66,31 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
       <div className="absolute inset-0 z-[1] hidden md:block np-scrim-horizontal" aria-hidden />
       <div className="absolute inset-x-0 top-0 z-[1] h-40 np-scrim-top" aria-hidden />
 
-      {/* Decorative route line, desktop only. */}
+      {/* Decorative route line, desktop only. The entrance sits on an inner box
+          because the outer one's transform belongs to the scroll exit. */}
       <div
         className="np-hero-exit pointer-events-none absolute right-[16%] bottom-[16%] z-[10] hidden h-[400px] w-[420px] lg:block xl:right-[21%]"
         aria-hidden
       >
-        <RouteLine className="h-full w-full" />
-        <Image
-          src="/images/ui/route-pin.svg"
-          alt=""
-          width={36}
-          height={48}
-          aria-hidden
-          className="np-fade-up absolute top-[-32px] left-[12px] h-12 w-9 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
-          style={{ animationDelay: "2.7s" }}
-        />
+        <div className="np-enter-right relative h-full w-full" style={{ animationDelay: "120ms" }}>
+          <RouteLine className="h-full w-full" />
+          <Image
+            src="/images/ui/route-pin.svg"
+            alt=""
+            width={36}
+            height={48}
+            aria-hidden
+            className="np-fade-up absolute top-[-32px] left-[12px] h-12 w-9 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
+            style={{ animationDelay: "2.7s" }}
+          />
+        </div>
       </div>
 
       {/* Content. */}
       <div className="np-hero-exit np-container-wide relative z-[2] pt-28 pb-10 lg:pt-32 lg:pb-[clamp(2rem,5svh,3.5rem)]">
         <div className="max-w-[min(560px,70%)] max-xs:max-w-full lg:max-w-[min(620px,54%)] xl:max-w-[min(660px,46%)]">
           <p
-            className="np-fade-up np-on-image-secondary text-kicker"
+            className="np-enter-left np-on-image-secondary text-kicker"
             style={{ animationDelay: "0ms" }}
           >
             Sri Lanka is waiting ….
@@ -94,7 +98,7 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
 
           <h1
             id="hero-title"
-            className="np-fade-up np-on-image mt-4 font-display text-display md:mt-5"
+            className="np-enter-left np-on-image mt-4 font-display text-display md:mt-5"
             // Capped by window height so a short laptop window does not get a
             // headline that fills the whole screen. Never below 2.25rem.
             style={{ animationDelay: "80ms", fontSize: "min(var(--text-display), max(2.25rem, 9svh))" }}
@@ -106,14 +110,14 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
           </h1>
 
           <p
-            className="np-fade-up np-on-image-secondary mt-4 text-lead md:mt-5 lg:mt-6"
+            className="np-enter-left np-on-image-secondary mt-4 text-lead md:mt-5 lg:mt-6"
             style={{ animationDelay: "160ms" }}
           >
             Discover breathtaking destinations, unique experiences and unforgettable
             memories across Sri Lanka.
           </p>
 
-          <div className="np-fade-up mt-6 md:mt-7 lg:mt-8" style={{ animationDelay: "240ms" }}>
+          <div className="np-enter-left mt-6 md:mt-7 lg:mt-8" style={{ animationDelay: "240ms" }}>
             <LinkButton href="/plan" variant="primary" size="lg">
               Plan Your Trip
               <ArrowRight size={20} aria-hidden />
@@ -124,7 +128,7 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
         {/* Thumbnail rail + trust bar. */}
         <div className="mt-8 flex flex-col gap-6 md:mt-10 lg:mt-[clamp(1.5rem,5svh,3.5rem)] lg:flex-row lg:items-end lg:justify-between lg:gap-10">
           {thumbnails.length > 0 ? (
-            <div className="min-w-0">
+            <div className="np-enter-left min-w-0" style={{ animationDelay: "320ms" }}>
               <div className="flex items-baseline gap-4">
                 <h2 className="np-on-image text-h3 font-semibold">Popular Destinations</h2>
                 <Link
@@ -166,7 +170,7 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
             </div>
           ) : null}
 
-          <TrustBar className="lg:w-[min(520px,46%)] lg:shrink-0" />
+          <TrustBar className="np-enter-right [--np-enter-delay:360ms] lg:w-[min(520px,46%)] lg:shrink-0" />
         </div>
       </div>
 
