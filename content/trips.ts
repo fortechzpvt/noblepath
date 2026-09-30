@@ -1,5 +1,62 @@
 import type { TripPackage } from "@/lib/types";
-import { ownedPhotos } from "@/content/destinations";
+
+/**
+ * One Wikimedia Commons photograph per trip (D-35), picked for the route it
+ * sells: its signature sight, shot in good light, and never a photograph already
+ * used by a destination or experience. Self-hosted, 2400 px, EXIF stripped.
+ * Credits render on /credits; the register is docs/design/photography-credits.md.
+ */
+const tripPhotos = {
+  culturalTriangleExpress: {
+    src: "/images/trips/cultural-triangle-express.jpg",
+    alt: "Sigiriya rock rising sheer out of the forest canopy, seen from Pidurangala with the hills of the Matale range fading into haze behind it.",
+    credit: "Photo by Gayomiw / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Sigiriya_Rock_Fortress_View_from_Pidurangala_Rock.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  southernShortcut: {
+    src: "/images/trips/southern-shortcut.jpg",
+    alt: "The stone sea wall of Galle Fort curving out into the Indian Ocean under a pink and amber sunset, with houses and palms along the rampart.",
+    credit: "Photo by calflier001 / CC BY-SA 2.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:GALLE_FORT_AT_SUNSET_SRI_LANKA_JAN_2013_(8509060483).jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0",
+  },
+  classicSriLanka: {
+    src: "/images/trips/classic-sri-lanka.jpg",
+    alt: "A blue and red hill-country train crossing the stone Nine Arch Bridge at Demodara, seen from above through a dense forest of areca palms.",
+    credit: "Photo by V. Epiney / CC BY-SA 2.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Demodara_Nine_Arch_Bridge_(35564604554).jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0",
+  },
+  teaTrainsAndABeachFinish: {
+    src: "/images/trips/tea-trains-and-a-beach-finish.jpg",
+    alt: "An estate road winding in a tight curve through rows of bright green tea bushes near Watawala, with forested hills and cloud beyond.",
+    credit: "Photo by Lavanya Suriyakumar / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Beauty_of_tea_plantations_in_Sri_Lanka.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  wildlifeAndBeaches: {
+    src: "/images/trips/wildlife-and-beaches.jpg",
+    alt: "A family of wild elephants, two adults and a calf, wading into a waterhole in Yala National Park in the evening light, a water buffalo at the edge.",
+    credit: "Photo by C.J. Hatton / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Sri_Lankan_Elephants_in_Yala_National_Park.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  grandIslandLoop: {
+    src: "/images/trips/grand-island-loop.jpg",
+    alt: "Daybreak over the hill country at Ohiya, near Horton Plains: an orange sunrise behind distant peaks, a grassy ridge and bare trees in silhouette.",
+    credit: "Photo by CJay1995 / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Daybreak_in_Ohiya,_Sri_Lanka.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+  eastCoastAndTheNorth: {
+    src: "/images/trips/east-coast-and-the-north.jpg",
+    alt: "Fishing boats drawn up on a beach near Trincomalee at dawn, under a sky blazing pink and orange over the calm sea.",
+    credit: "Photo by THDBS / CC BY-SA 4.0, via Wikimedia Commons",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Beach_in_trincomalee_at_sun_rising.jpg",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+  },
+} as const;
 
 /**
  * Pre-planned packages (FR-3).
@@ -85,7 +142,7 @@ export const trips: readonly TripPackage[] = [
     ],
     priceBandPerPerson: "$",
     bestMonths: [1, 2, 3, 5, 6, 7, 8, 9],
-    image: ownedPhotos.sigiriyaSunrise,
+    image: tripPhotos.culturalTriangleExpress,
   },
   {
     slug: "southern-shortcut",
@@ -166,7 +223,7 @@ export const trips: readonly TripPackage[] = [
     ],
     priceBandPerPerson: "$$",
     bestMonths: [12, 1, 2, 3],
-    image: ownedPhotos.surfSouthCoast,
+    image: tripPhotos.southernShortcut,
   },
   {
     slug: "classic-sri-lanka",
@@ -299,7 +356,7 @@ export const trips: readonly TripPackage[] = [
     ],
     priceBandPerPerson: "$$",
     bestMonths: [12, 1, 2, 3, 4],
-    image: ownedPhotos.sigiriyaSunrise,
+    image: tripPhotos.classicSriLanka,
   },
   {
     slug: "tea-trains-and-a-beach-finish",
@@ -411,7 +468,7 @@ export const trips: readonly TripPackage[] = [
     ],
     priceBandPerPerson: "$$",
     bestMonths: [12, 1, 2, 3, 4],
-    image: ownedPhotos.ellaRoadSign,
+    image: tripPhotos.teaTrainsAndABeachFinish,
   },
   {
     slug: "wildlife-and-beaches",
@@ -543,7 +600,7 @@ export const trips: readonly TripPackage[] = [
     ],
     priceBandPerPerson: "$$$",
     bestMonths: [12, 1, 2, 3, 4],
-    image: ownedPhotos.jungleVilla,
+    image: tripPhotos.wildlifeAndBeaches,
   },
   {
     slug: "grand-island-loop",
@@ -737,7 +794,7 @@ export const trips: readonly TripPackage[] = [
     ],
     priceBandPerPerson: "$$$",
     bestMonths: [12, 1, 2, 3],
-    image: ownedPhotos.sigiriyaSunrise,
+    image: tripPhotos.grandIslandLoop,
   },
   {
     slug: "east-coast-and-the-north",
@@ -898,6 +955,6 @@ export const trips: readonly TripPackage[] = [
     ],
     priceBandPerPerson: "$$",
     bestMonths: [5, 6, 7, 8, 9],
-    image: ownedPhotos.tuktukRoadTrip,
+    image: tripPhotos.eastCoastAndTheNorth,
   },
 ];
