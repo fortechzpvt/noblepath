@@ -69,12 +69,12 @@ ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
 ARG REQUIRE_DATABASE_CONTENT=false
 ENV REQUIRE_DATABASE_CONTENT=${REQUIRE_DATABASE_CONTENT}
 
-# The build pulls published content from Aiven (scripts/pull-content.ts). The
-# np_site_build connection string and the Aiven CA are BuildKit secrets, never
+# The build pulls published content from Supabase (scripts/pull-content.ts). The
+# np_site_build connection string and the Supabase CA are BuildKit secrets, never
 # build args: build args are readable in the image history. They exist only
 # for this one RUN step and are not written to any layer.
 #   docker build --secret id=content_database_url,env=CONTENT_DATABASE_URL \
-#                --secret id=database_ca_cert,src=ca.pem \
+#                --secret id=database_ca_cert,src=prod-ca-2021.crt \
 #                --build-arg REQUIRE_DATABASE_CONTENT=true .
 RUN --mount=type=secret,id=content_database_url \
     --mount=type=secret,id=database_ca_cert \

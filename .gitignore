@@ -4,6 +4,7 @@ out/
 build/
 .DS_Store
 *.pem
+*.crt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

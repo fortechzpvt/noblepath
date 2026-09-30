@@ -1,10 +1,10 @@
 /**
- * One-off: load the content bundled in `content/*.ts` into a new Aiven
+ * One-off: load the content bundled in `content/*.ts` into a new Supabase
  * database, as published, so the admin app starts with everything the site
  * already shows (D-36).
  *
- *   ADMIN_DATABASE_URL=postgres://np_admin:…@…/defaultdb?sslmode=require \
- *   DATABASE_CA_CERT="$(cat ca.pem)" npm run db:seed
+ *   ADMIN_DATABASE_URL='postgresql://np_admin.<project-ref>:…@<pooler host>:5432/postgres' \
+ *   DATABASE_CA_CERT="$(cat prod-ca-2021.crt)" npm run db:seed
  *
  * Existing rows are left alone, so it is safe to re-run. `--dry-run` only
  * validates the bundled content against lib/content-schema.ts and connects to

@@ -1,20 +1,23 @@
-# Noble Path — Database Schema (Aiven PostgreSQL)
+# Noble Path — Database Schema (Supabase PostgreSQL)
 
-**Introduced by:** D-36 (2026-09-30) · **Source of truth:** `admin/db/migrations/*.sql`
+**Introduced by:** D-36 (2026-09-30) · **Source of truth:** `db/migrations/*.sql` (noblepathadmin repository)
 
-Before D-36 there was no database (ADR-003). Now:
-- Aiven PostgreSQL holds everything the admin app edits and reads.
+Before D-36 there was no database (ADR-003). D-36 used Aiven; **D-37 moved it to Supabase**
+(project `mgywzyxewtblqklfdigj`, region `ap-northeast-2`). The schema and roles are the same.
+Now:
+- Supabase PostgreSQL holds everything the admin app edits and reads.
 - The public site uses it in only two narrow ways:
   - its **build** reads published content;
   - its **runtime** writes enquiries and visit counts.
 
 ## 1. Roles (least privilege)
 
-Created by hand from `admin/db/roles.sql` after the first migration.
+Created by hand from `db/roles.sql` (noblepathadmin repository) after the first migration.
 
 | Role | Used by | Can | Cannot |
 |---|---|---|---|
-| `avnadmin` | `npm run db:migrate` only | Everything (Aiven owner) | — (never given to an app) |
+| `postgres` | `npm run db:migrate` only | Everything (Supabase owner; was `avnadmin` on Aiven) | — (never given to an app) |
+| `anon`, `authenticated` | Supabase Data API (PostgREST) | **Nothing** on our tables: `003_supabase_lockdown.sql` revokes all privileges and the default privileges | Read or write any table through the public API key |
 | `np_admin` | Admin app, `admin:create`, `db:seed` | Read/write all tables | Create schema objects |
 | `np_site_build` | Site build (`CONTENT_DATABASE_URL`) | `select` on the `published_content` view; `select (id, ext, bytes)` on `media` | See drafts, enquiries, users, sessions, statistics |
 | `np_site_runtime` | Site runtime (`DATABASE_URL`) | `insert` into `booking_requests`, `page_views_daily`, `visitors_daily`; update `page_views_daily.views`; manage `visitor_salts` | Read any enquiry, content, user or session |
@@ -34,9 +37,7 @@ These denials were checked against a real PostgreSQL:
 | `id` | uuid PK | `gen_random_uuid()` |
 | `email` | text unique | lower-case, ≤ 254 |
 | `password_hash` | text | `scrypt$17$8$1$salt$hash`, never the password |
-| `totp_secret_enc` | text | AES-256-GCM ciphertext (key `ADMIN_ENCRYPTION_KEY`) |
-| `totp_enabled` | boolean | set only by `admin:create` |
-| `totp_last_step` | bigint | last accepted TOTP step; a code is accepted once |
+| `totp_secret_enc`, `totp_enabled`, `totp_last_step` | text, boolean, bigint | **Unused since the D-36 revision** (sign-in is password only). Kept so two-step verification can be restored without a migration |
 | `failed_logins`, `locked_until` | int, timestamptz | 5 failures → locked 15 min |
 | `created_at`, `last_login_at`, `password_changed_at` | timestamptz | |
 
@@ -127,12 +128,25 @@ with one click (the action is audited). Retention is not yet automatic; see the 
 | `visitor_salts` | One random 32-byte salt per day, deleted after two days |
 | `visitors_daily` | `(day, sha256(salt ‖ IP ‖ user agent))`. Once the day's salt is deleted, no row can be linked to a person or to another day |
 
+### Connecting on Supabase (D-37)
+
+- **Use the pooler, not the direct host.** The direct host `db.<ref>.supabase.co` is IPv6-only
+  on the free plan, and Vercel builds and functions are IPv4.
+  - Host: `aws-0-ap-northeast-2.pooler.supabase.com`.
+  - **Session mode, port 5432:** the site build, `db:seed`, `db:migrate`.
+  - **Transaction mode, port 6543:** the site runtime and the admin (serverless functions).
+- **User names carry the project ref:** `np_site_build.mgywzyxewtblqklfdigj`, and so on.
+- **TLS:** verified against `prod-ca-2021.crt` ("Supabase Root 2021 CA") in
+  `DATABASE_CA_CERT`. Verified on both pooler ports on 2026-09-30.
+- **Applied migrations (2026-09-30):** `001_init.sql`, `002_supabase_auth.sql`,
+  `003_supabase_lockdown.sql`. 363 content items published; 0 grants to `anon`/`authenticated`.
+
 ## 3. Migrations
 
-- **What:** `admin/db/migrations/NNN_name.sql`, applied in name order by `npm run db:migrate`
-  (in `admin/`). Each file is applied once, in a transaction, and recorded in
+- **What:** `db/migrations/NNN_name.sql` in the noblepathadmin repository, applied in name order by `npm run db:migrate`
+  (in the noblepathadmin repository). Each file is applied once, in a transaction, and recorded in
   `schema_migrations`.
-- **How:** run with `MIGRATION_DATABASE_URL`, the `avnadmin` connection string. Every statement
+- **How:** run with `MIGRATION_DATABASE_URL`, the `postgres` (owner) connection string. Every statement
   in `001_init.sql` is idempotent (`if not exists`).
 - **Rollback of 001:** nothing depends on it outside the admin, so drop the tables in reverse
   order. The site keeps working: without `CONTENT_DATABASE_URL` it builds from the bundled

@@ -758,6 +758,35 @@ main"*, it was dispatched from a feature branch. Merge to `main` first.
 
 ---
 
+## 12a. Database: "self-signed certificate in certificate chain" (D-37)
+
+**Symptom:** the admin's sign-in (`POST /login`) returns 500 with "This page couldn't load", or
+a site build logs `Could not connect to the content database: self-signed certificate in
+certificate chain`.
+
+**Likely cause:** `DATABASE_CA_CERT` is not the Supabase root CA. It is still the old Aiven CA,
+or the value was mangled when pasted. The connection string can be perfectly correct:
+this error happens during the TLS handshake, before the password is checked.
+
+**Diagnosis:** Vercel → project → Logs, filtered to Error. The message names the certificate
+error. A wrong password shows `password authentication failed` instead.
+
+**Fix:**
+1. Set `DATABASE_CA_CERT` to the base64 of `prod-ca-2021.crt` (Supabase → Project Settings →
+   Database → SSL):
+   ```bash
+   base64 -i prod-ca-2021.crt | tr -d '\n'
+   ```
+   One line of base64 survives dashboard paste boxes; `lib/pg-config.ts` accepts it.
+2. Redeploy. A changed variable only takes effect on a new deployment.
+
+Never "fix" this with `rejectUnauthorized: false`.
+
+**Seen:** 2026-09-30, on the admin after the Aiven → Supabase switch. Fixed by replacing its
+CA and redeploying.
+
+---
+
 ## 13. Adding an entry to this runbook
 
 Add an entry whenever an incident reveals a failure mode not described here —
@@ -773,3 +802,4 @@ more than a post-incident summary written a week later.
 | Date | Change | By |
 | --- | --- | --- |
 | 2026-09-19 | Initial runbook: build failures, audit gate, Tailwind v4/PostCSS, `next/image` remote patterns, CSP, rate limiter, hydration, LCP, smoke check, Docker standalone, undelivered enquiries, approval gate. | DevOps Engineer |
+| 2026-09-30 | §12a: Supabase CA mismatch ("self-signed certificate in certificate chain"). | Orchestrator (DevOps role) |

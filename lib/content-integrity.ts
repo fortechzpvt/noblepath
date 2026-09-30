@@ -6,7 +6,7 @@
  * since been deleted or unpublished. The same rules run in three places (D-36):
  *   - `lib/content.ts` at module load, so broken content fails `next build`;
  *   - the admin app's Publish page, which refuses to publish while any fail
- *     (`admin/lib/content-integrity.ts` is a copy, see `npm run sync-schema`);
+ *     (the `noblepathadmin` repository keeps a copy, see its `npm run sync-schema`);
  *   - the admin's editor, after each save, as a warning.
  *
  * Pure and dependency-free, on purpose: it is compiled by both apps.

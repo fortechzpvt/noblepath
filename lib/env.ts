@@ -67,7 +67,7 @@ const serverEnvSchema = z
     BOOKING_RATE_LIMIT_MAX: positiveInt(DEFAULT_RATE_LIMIT_MAX),
     BOOKING_RATE_LIMIT_WINDOW_MS: positiveInt(DEFAULT_RATE_LIMIT_WINDOW_MS),
     /**
-     * Aiven connection string for the `np_site_runtime` role (D-36). With it,
+     * Supabase pooler connection string for the `np_site_runtime` role (D-36, D-37). With it,
      * booking and ride requests are also saved for the admin app, and page
      * views are counted. Optional: without it, requests are still emailed and
      * nothing is counted. Never the np_admin connection string.

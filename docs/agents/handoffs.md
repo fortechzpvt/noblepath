@@ -1096,3 +1096,81 @@ and listed in the register.
   - decide whether to delete `admin/` from this repository afterwards, so there is one copy.
 - **Whoever changes `lib/content-schema.ts`, `lib/content-integrity.ts` or `lib/pg-config.ts`
   here:** re-sync and deploy the admin repository.
+
+**Update, same day: deployed; sign-in is password only.**
+- **Deployment:**
+  - Aiven is set up, with roles verified;
+  - the site builds from the database;
+  - the admin is live at `noblepathadmin.vercel.app`;
+  - the site has an `admin-publish` deploy hook.
+- **Two-step verification removed** at the owner's request (admin commit `e0d8e9c`; F-36-10,
+  High, accepted).
+- **Owner, required:**
+  - turn on Deployment Protection for the admin;
+  - reset the `avnadmin` password and rotate the role passwords and `ADMIN_ENCRYPTION_KEY`
+    (F-36-11).
+- **Owner, housekeeping:** the site repository's `admin/` folder is now an outdated copy
+  (it still has two-step verification). The live admin is the `noblepathadmin` repository.
+  Delete the folder here, or keep it only as reference.
+
+**Update:** the site repository's `admin/` folder was deleted at the owner's request. It was an
+outdated copy; the only admin source is now `fortechzpvt/noblepathadmin`. Earlier `admin/…`
+paths in these records refer to that repository. The Aiven CA certificate that sat in
+`admin/ca.pem` (git-ignored) is kept outside every repository.
+
+---
+
+## Handoff: database moved from Aiven to Supabase (D-37), 2026-09-30
+
+**From:** Orchestrator (Full-Stack and DevOps roles) · **To:** the owner, then DevOps and Cybersecurity
+
+**Completed:**
+- **Supabase inspected (read-only)** in project `mgywzyxewtblqklfdigj` (`ap-northeast-2`):
+  - migrations `001`–`003` are applied;
+  - the three roles exist, with grants matching `db/roles.sql`;
+  - 363 published items and 1 admin user;
+  - 0 Data API grants.
+- **TLS:** the site's `pgConfig` verified with the Supabase CA on the pooler (5432 and 6543).
+- **Site repository:** Aiven wording replaced in code comments, `Dockerfile`, `.env.example` and
+  the docs. `*.crt` is ignored.
+- **Local `.env.local`:** `DATABASE_CA_CERT` is set. `CONTENT_DATABASE_URL` and `DATABASE_URL`
+  are added **commented out**, with `<PASSWORD>` placeholders.
+
+**Files changed:**
+- `lib/pg-config.ts`, `lib/env.ts` (comments only);
+- `scripts/pull-content.ts`, `scripts/seed-content.ts` (comments only);
+- `Dockerfile` (comments only);
+- `.env.example`, `.gitignore`, `.dockerignore`;
+- `CHANGELOG.md`, `README.md`;
+- `docs/decisions/architecture-decisions.md`, `docs/database/database-schema.md`,
+  `docs/deployment/admin.md`, `docs/deployment/environment.md`,
+  `docs/security/security-review.md`, `docs/testing/testing-strategy.md`,
+  `docs/architecture/system-architecture.md`, `docs/api/endpoints.md`.
+
+**Tests:** `npm run lint` passes, `npm run typecheck` passes, and `npm test` passes (7 of 7).
+**Not run:** a build or an enquiry save with the real role passwords.
+
+**Required actions (owner):**
+1. **Local:** put the `np_site_build` and `np_site_runtime` passwords into `.env.local` and
+   uncomment the two lines. If the passwords are unknown, set new ones in the Supabase SQL
+   Editor (`alter role … password …`) and update wherever else they are used. Then:
+   - run `npm run dev`; it should log content pulled from the database, not "Using the bundled
+     content";
+   - send one test enquiry and check that it appears in `booking_requests`.
+2. **Vercel (site): done by the owner and verified.** The production build pulls content,
+   and a live page view landed in Supabase (count 2 → 3, `np_site_runtime` connected).
+3. **Vercel (admin): variables replaced by the owner.** The first sign-in failed with "self-signed
+   certificate in certificate chain" because `DATABASE_CA_CERT` was not the Supabase CA. An agent
+   set it to the base64 Supabase CA and redeployed (Ready); see troubleshooting §12a. The sign-in page
+   serves. **Still to check:** sign in, and confirm that the dashboard shows today's page views
+   and that an edit saves. The in-progress Supabase Auth code, once committed,
+   also needs `SUPABASE_URL` and `SUPABASE_ANON_KEY`. Commit the admin's
+   in-progress Supabase Auth work separately; it was not touched here.
+4. **Aiven:** export anything needed (enquiries saved there), then delete the service (F-37-3).
+5. **Backups:** decide whether the free plan's backups are enough before launch (F-37-2).
+
+**Required actions (agents):**
+- **Cybersecurity:** F-37-1, the Data API exposure; consider turning the Data API off.
+- **Whoever works in `noblepathadmin`:** run `npm run sync-schema` to take the new
+  `lib/pg-config.ts` comments (no code change).
+

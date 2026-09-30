@@ -6,6 +6,28 @@ requires it.
 
 ---
 
+## D-37 — Database moved from Aiven to Supabase (2026-09-30)
+
+**Scope:** the connection path from the site (and admin) to Supabase, and the Supabase-specific
+exposure. It is a self-review by the implementing agent, not an independent review.
+
+| Area | Check | Result |
+|---|---|---|
+| TLS | `pg` with `rejectUnauthorized: true` and `prod-ca-2021.crt`, against the pooler on ports 5432 and 6543 | **Verified**: the handshake passes and the connection reaches authentication |
+| Data API | Grants to `anon` / `authenticated` on `public` tables and views | **0** (migration `003_supabase_lockdown.sql`) |
+| Roles | `np_admin`, `np_site_build`, `np_site_runtime` exist; the site roles' grants match `db/roles.sql` | Verified in the SQL Editor |
+| Secrets | No connection string or password is in either repository or this chat. `.env.local` has password placeholders only. `*.crt` is now ignored by git and Docker | Verified (`git status`) |
+
+**Findings**
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| F-37-1 | Medium | The Data API exposes `public` by default. Any future migration that creates a table relies on the default-privilege revoke in `003`. If a table is created by a role other than `postgres`, or in the dashboard's Table Editor with "Enable RLS" unticked, it could be readable with the anon key | Open: run the grant check in `admin.md` §1 after every migration. Consider turning off the Data API (Project Settings → API) if Supabase Auth does not need it for `public` |
+| F-37-2 | Low | The free plan has limited backups and no point-in-time recovery for stored enquiries (personal data) | Open: owner decision before launch |
+| F-37-3 | Info | The Aiven service still holds a copy of content, enquiries (personal data) and statistics | Open: once Vercel points at Supabase, export anything needed and delete the Aiven service. F-36-11 (the exposed `avnadmin` credentials) then closes with it |
+
+---
+
 ## D-36 — Admin app, Aiven PostgreSQL, stored enquiries and visitor statistics (2026-09-30)
 
 **Reviewer:** the implementing agent (Orchestrator acting in the Cybersecurity role). **This
@@ -39,6 +61,10 @@ production; it is listed as a required action in the D-36 handoff.
 
 ### Controls
 
+> **Revision (2026-09-30):** two-step verification was removed at the owner's request (F-36-10).
+> The **Authentication**, **TOTP** and **Enrolment** rows below describe the original design;
+> sign-in is now email and password, and the other controls are unchanged.
+
 | Area | Control | Where |
 |---|---|---|
 | Authentication | Email and password, then a 6-digit TOTP code. The password stage only creates a 10-minute `mfa` session that can do nothing but submit a code | `admin/app/login/actions.ts` |
@@ -71,7 +97,9 @@ production; it is listed as a required action in the D-36 handoff.
 | F-36-6 | Low | `/api/track` rate limit is in memory per instance, so the statistics can be inflated by a determined script. No confidentiality or integrity impact on anything else | Accepted |
 | F-36-7 | Low | Enquiry retention (24 months) is enforced by an admin button, not automatically | Open: add a scheduled purge, or accept the manual step in the privacy notice |
 | F-36-8 | Info | A privacy notice describing stored enquiries and cookie-free counting does not exist on the site | Open: **required before launch** (human / legal) |
-| F-36-9 | Info | The whole setup was tested against local PostgreSQL 18.4, not against Aiven (TLS with Aiven's CA is unverified) | Open |
+| F-36-9 | Info | The whole setup was tested against local PostgreSQL 18.4, not against Aiven (TLS with Aiven's CA is unverified) | **Closed**: verified on Aiven (TLS 1.3, CA-verified, refused without the CA; role denials checked) |
+| F-36-10 | **High** | **Admin sign-in is single-factor** (password only), on the open internet, guarding stored personal data. A phished or reused password gives full access. Removed two-step verification at the owner's explicit request, after they were offered a 30-day remembered-device option | **Accepted by owner.** Mitigations in place: lockouts, 14+ character passwords, audit log. **Strongly recommended:** Vercel Deployment Protection (makes F-36-3's fix mandatory in practice) |
+| F-36-11 | Medium | During setup, the `avnadmin` connection string was pasted into the AI chat, and the three role connection strings and `ADMIN_ENCRYPTION_KEY` were visible in plain text in screenshots taken while pasting them into Vercel | Open: reset `avnadmin` in Aiven; rotate the three role passwords and the key (runbook §9) |
 
 ### Security testing performed
 

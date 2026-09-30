@@ -6,8 +6,9 @@ import { z } from "zod";
  * The TypeScript interfaces in `lib/types.ts` describe content the compiler
  * can see. Content edited in the admin app arrives as JSON from Postgres, which
  * the compiler cannot see, so it is checked against these schemas twice:
- *   1. by the admin app before it saves (`admin/lib/content-schema.ts` is a
- *      copy of this file, refreshed by `npm run sync-schema` in `admin/`), and
+ *   1. by the admin app before it saves (the `noblepathadmin` repository keeps
+ *      a copy at `lib/content-schema.ts`, refreshed there with
+ *      `npm run sync-schema -- /path/to/NobalPath`), and
  *   2. by `scripts/pull-content.ts` when the public site is built, which fails
  *      the build rather than ship content that does not match.
  *
