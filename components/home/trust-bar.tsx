@@ -1,19 +1,16 @@
 import { cn } from "@/lib/cn";
+import { siteSettings } from "@/lib/content-source";
 
 /**
- * The four assurances in the glass bar, from the approved mockup.
+ * The four assurances in the glass bar, from the approved mockup. Editable in
+ * the admin's "Site text" (D-36); the defaults live in `lib/content-source.ts`.
  *
  * DEVIATION IMPL-01: the mockup's fourth item reads "Secure Payments". v1 takes no
  * card payments at all (ADR-004), so that claim would be untrue on the live site.
  * It ships as "Secure Booking", which is accurate today. Restore the original
  * wording when payment processing actually exists.
  */
-const ASSURANCES = [
-  "Best Price",
-  "24/7 Travel Support",
-  "Flexible Booking",
-  "Secure Booking",
-] as const;
+const ASSURANCES = siteSettings.trustBar;
 
 /**
  * Non-interactive reassurance strip (components.md §7).

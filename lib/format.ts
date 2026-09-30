@@ -1,4 +1,4 @@
-import { regions } from "@/content/regions";
+import { regions } from "@/lib/content-source";
 import type {
   Interest,
   Intensity,
@@ -118,6 +118,14 @@ const PRICE_BAND_NAMES: Readonly<Record<PriceBand, string>> = {
  */
 export function formatPriceBand(band: PriceBand): string {
   return PRICE_BAND_NAMES[band] ?? band;
+}
+
+/**
+ * A price set in the admin (D-36), as "$1,450". Whole US dollars; the site
+ * never shows cents because every price is a "from" price, not a quote.
+ */
+export function formatUsd(amount: number): string {
+  return `$${Math.round(amount).toLocaleString("en-US")}`;
 }
 
 /** Minutes as `"45m"`, `"4h"` or `"3h 40m"`. Used for every drive time on the site. */

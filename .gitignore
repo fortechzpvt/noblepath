@@ -15,3 +15,7 @@ next-env.d.ts
 /untitled folder/
 /data/*.json
 !/data/.gitkeep
+
+# D-36: written by scripts/pull-content.ts before every build
+/content/generated/
+/public/media/

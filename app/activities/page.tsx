@@ -4,7 +4,7 @@ import { ActivitiesExplorer } from "@/components/activities/activities-explorer"
 import { LinkButton } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Container, Section } from "@/components/ui/section";
-import { activities, activityCategories } from "@/content/activities";
+import { activities, activityCategories } from "@/lib/content-source";
 
 export const metadata: Metadata = {
   title: "Activities",

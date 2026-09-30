@@ -4,13 +4,7 @@ import { AlertCircle, Clock, MapPin } from "lucide-react";
 
 import { IntensityMeter } from "@/components/ui/intensity-meter";
 import { cn } from "@/lib/cn";
-import {
-  formatHours,
-  formatIntensity,
-  formatMonthRange,
-  formatPriceBand,
-  interestName,
-} from "@/lib/format";
+import { formatHours, formatIntensity, formatMonthRange, formatPriceBand, formatUsd, interestName } from "@/lib/format";
 import type { Experience, Month } from "@/lib/types";
 
 /**
@@ -103,9 +97,9 @@ export function ExperienceCard({
         ) : null}
 
         <p className="mt-auto pt-4 text-h5 text-ink-900">
-          {formatPriceBand(experience.priceBand)}
+          {experience.priceFromUsd ? `From ${formatUsd(experience.priceFromUsd)}` : formatPriceBand(experience.priceBand)}
           <span className="ml-1.5 text-small font-normal text-text-meta">
-            indicative
+            {experience.priceFromUsd ? "per person" : "indicative"}
           </span>
         </p>
       </div>

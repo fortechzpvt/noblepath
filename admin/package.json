@@ -1,0 +1,45 @@
+{
+  "name": "noble-path-admin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Noble Path admin panel (D-36): content, prices, media, enquiries and statistics. Deployed separately from the public site.",
+  "scripts": {
+    "dev": "next dev --port 3100",
+    "prebuild": "node scripts/check-schema-copy.mjs",
+    "build": "next build",
+    "start": "next start --port 3100",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "sync-schema": "node scripts/sync-schema.mjs",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "admin:create": "tsx scripts/create-admin.ts",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "lucide-react": "^1.49.0",
+    "next": "16.3.5",
+    "otpauth": "^9.5.2",
+    "pg": "^8.23.0",
+    "qrcode": "^1.5.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sharp": "^0.35.5",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "24.13.6",
+    "@types/pg": "^8.23.1",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.5",
+    "tailwindcss": "4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}

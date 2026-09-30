@@ -993,3 +993,106 @@ and listed in the register.
 1. Review the five judgement calls in the register.
 2. Look at the home carousel and at `/trips`.
 3. Commit.
+
+---
+
+## Handoff: admin app, Aiven PostgreSQL, prices and statistics (D-36), 2026-09-30
+
+**From:** Orchestrator (Full-Stack Engineer, with Cybersecurity, DevOps and UI/UX roles)
+**To:** Human owner, then the Cybersecurity Agent (independent review) and the DevOps Engineer
+(Aiven and hosting)
+
+**Completed:**
+- A separate **admin app** (`admin/`) with sign-in (password, then an authenticator code).
+- **Dashboard** statistics: enquiries, page views, visitors, pages, countries, devices,
+  referrers, requested trips and content counts.
+- **Enquiries:** list, detail, status and notes, and a 24-month purge.
+- **Content editors** for trips (including day by day), destinations, experiences, stays,
+  activities, categories, vehicles, regions and home-page text.
+- **Real prices**, the **media library**, **Publish**, the **activity log**, and the **account**
+  page (password change, sessions).
+- The **public site** now:
+  - builds from the published database content when configured;
+  - shows "From $X" prices;
+  - saves booking and ride requests;
+  - counts page views without cookies.
+- **Database:** schema, roles, migrations and seed.
+
+**Files changed:**
+- **New:**
+  - `admin/` (whole app);
+  - `lib/content-schema.ts`, `lib/content-integrity.ts`, `lib/content-source.ts`,
+    `lib/pg-config.ts`, `lib/db.ts`, `lib/enquiry-store.ts`, `lib/analytics.ts`;
+  - `app/api/track/route.ts`, `components/analytics-beacon.tsx`;
+  - `scripts/pull-content.ts`, `scripts/seed-content.ts`, `tests/*.test.ts`;
+  - `CHANGELOG.md`.
+- **Changed:**
+  - `lib/content.ts`, `lib/enquiry-endpoint.ts`, `lib/env.ts`, `lib/format.ts`,
+    `lib/transfers.ts`, `lib/types.ts`, `content/activities.ts`;
+  - `content/destinations.ts` (one http→https licence link);
+  - booking and ride routes; the credits and activities pages;
+  - hero, trust bar, trips preview, trip, experience and activity cards, the stay picker and
+    the vehicle grid;
+  - `app/layout.tsx`, `package.json`, `tsconfig.json`, `eslint.config.mjs`, `.gitignore`,
+    `.dockerignore`, `Dockerfile`, `.env.example`.
+- **Docs:**
+  - D-36 (and status notes on ADR-002 and ADR-003);
+  - `database/database-schema.md` (new), `deployment/admin.md` (new);
+  - `deployment/environment.md`, `api/endpoints.md`, `security/security-review.md`;
+  - `architecture/system-architecture.md` §11, `testing/testing-strategy.md` §8;
+  - `README.md`, `admin/README.md`.
+
+**Tests:**
+- 15 unit tests pass (7 site, 8 admin).
+- Lint, typecheck and build pass in both apps.
+- A full end-to-end run against a local PostgreSQL 18.4 with production builds of both apps
+  (details in `testing/testing-strategy.md` §8).
+- **Not done:** Aiven itself, the real hosting platforms, a real Resend send.
+
+**Security-sensitive areas:**
+- authentication, sessions and TOTP (`admin/lib/auth/`);
+- Server Actions (every `actions.ts`);
+- uploads (`admin/lib/media.ts`);
+- stored personal data (`booking_requests`);
+- `POST /api/track`;
+- database roles;
+- secrets in the Docker builds.
+
+**Known issues:** F-36-2 to F-36-9 in the security review, and the limitations in D-36.
+
+**Required actions (human):**
+1. **Privacy notice (before launch):** publish a page saying that booking and ride requests are
+   stored for 24 months, and that page views are counted without cookies or IP addresses. This
+   is legal wording, so it was not written by an agent.
+2. **Set up** Aiven, the roles, the seed, the admin account and both deployments, following
+   `docs/deployment/admin.md` in order. Keep every connection string, `ADMIN_ENCRYPTION_KEY` and
+   the deploy hook only in the platforms' secret settings.
+3. **Put the admin behind an access proxy** or IP allow-list (F-36-3).
+4. **Commit** (in two commits if preferred: site changes, then `admin/`) and open a PR.
+
+**Required actions (agents):**
+- **Cybersecurity Agent:** independent review of the D-36 scope. Priorities:
+  - the auth flow;
+  - Server Actions authorisation;
+  - upload handling;
+  - the role grants;
+  - F-36-2 (nonce-based CSP).
+- **DevOps Engineer:**
+  - verify Aiven TLS with its CA;
+  - confirm `x-forwarded-for` and the geo header on the host (F-36-5);
+  - wire `REQUIRE_DATABASE_CONTENT=true` and the BuildKit secrets into CI;
+  - consider a scheduled retention purge (F-36-7).
+
+**Update, same day: the admin moves to its own repository, on Vercel.**
+- **Prepared for Vercel:**
+  - browser-side photo resizing (4.5 MB request limit);
+  - its own `.gitignore`;
+  - Node 24 pinned;
+  - `sync-schema` takes a path.
+- **Tested:** a standalone copy builds, and a 23 MB photo uploaded.
+- **Owner:**
+  - push `admin/` to the new repository;
+  - create the Vercel project with the five environment variables and Deployment Protection;
+  - decide whether to delete `admin/` from this repository afterwards, so there is one copy.
+- **Whoever changes `lib/content-schema.ts`, `lib/content-integrity.ts` or `lib/pg-config.ts`
+  here:** re-sync and deploy the admin repository.

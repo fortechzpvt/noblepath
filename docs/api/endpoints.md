@@ -1,6 +1,6 @@
 # Noble Path — API Endpoints
 
-**Status:** Current as of D-25 (2026-09-25).
+**Status:** Current as of D-36 (2026-09-30).
 
 Two write endpoints exist: `POST /api/bookings` (a full trip) and
 `POST /api/rides` (a single trip, D-24/D-25). Two read-only lookup endpoints,
@@ -20,9 +20,25 @@ design choices below.
 
 ## `POST /api/bookings`
 
-Submits a booking request (FR-5). On success, the request is emailed to
-Noble Path staff via Resend; nothing is persisted to a database (v1 has
-none — the email **is** the record, see D-23's known limitations).
+Submits a booking request (FR-5). The request is emailed to Noble Path staff
+via Resend and, since D-36, also **saved** to Aiven PostgreSQL
+(`booking_requests`) for the admin app, when `DATABASE_URL` is set. The site
+connects as `np_site_runtime`, which can insert requests but never read them
+back.
+
+**Delivery and saving (D-36):**
+
+| Email | Save | Response |
+| --- | --- | --- |
+| Sent | Saved (`email_status = sent`) or no database | `200` |
+| Failed | Saved (`email_status = failed`, flagged "not emailed" in the admin) | `200`: the lead is safe, and a retry would only create a duplicate |
+| Failed | Not saved | `502 delivery_failed` (as before) |
+| Not configured (development only) | Saved (`not-configured`) | `200` |
+| Not configured (development only) | No database | `503 delivery_unavailable` (as before) |
+
+A database failure never blocks the email, and is logged with the reference
+only (no personal data). Stored requests are personal data, retained for 24
+months (`docs/database/database-schema.md`).
 
 ### Request
 
@@ -167,7 +183,8 @@ Submits a single point-to-point ride request with a driver (FR-5.6, D-24),
 for example Matara to Kandy, one way or return. Emailed to the same
 `BOOKINGS_NOTIFICATION_EMAIL` via Resend with the subject
 `Ride request <id> — <pickup> to <dropoff>, <date>` and `replyTo` set to the
-traveller's email. Nothing is persisted.
+traveller's email. Saved for the admin app exactly as `/api/bookings` is
+(D-36, same table with `kind = ride`, same delivery-and-saving table).
 
 ### Request
 
@@ -269,3 +286,39 @@ Successful lookups are cached in memory for 24 hours (up to 2,000 entries,
 per server instance), keyed on the normalised query or the coarsened point.
 Neither the query nor the point is logged by the app. The platform's access logs may still record request URLs, which is why the client sends reverse lookups at only 4 decimals (F-11). `Cache-Control: no-store` applies,
 as for every `/api/*` route.
+
+---
+
+## `POST /api/track`
+
+Counts one page view for the admin statistics (D-36). It is sent by
+`components/analytics-beacon.tsx` with `navigator.sendBeacon` on every client
+navigation. No beacon is sent when the browser has Do Not Track or Global
+Privacy Control on.
+
+**Request:** a JSON body of at most 1 KB, `{ "p": "<path>", "r": "<document.referrer>" }`.
+
+**Response:** always `204` with no body, whatever happened, so the endpoint tells a caller
+nothing. `GET` gives `405`.
+
+**Silently ignored, with no count:**
+- no `DATABASE_URL`;
+- a cross-site request (`Sec-Fetch-Site` not `same-origin`, or a foreign `Origin`);
+- a crawler or tool user agent;
+- more than 120 requests a minute from one client;
+- a body that is empty, too large or not JSON;
+- a path that is not a page on this site (e.g. `/api/…`, `//host`, over 200 characters).
+
+**What is stored (no personal data):**
+- **Daily totals:** 1 is added to the row for (Sri Lanka date, path, country, device class,
+  referring site). The path is lower-cased with the query string and fragment removed, since
+  campaign links can carry an email address. The country comes from `x-vercel-ip-country`
+  (or `cf-ipcountry`). The device is mobile, tablet or desktop. The referring site is the host
+  name only, and empty for direct visits and our own pages.
+- **Unique visitors:** a SHA-256 of (the day's random salt, IP, user agent) goes into
+  `visitors_daily`. The salt is deleted after two days, after which no hash can be linked to
+  anyone. The IP address itself is never stored.
+
+**Cookies and consent:** no cookies or browser storage are used, so no cookie banner is needed.
+Mention the counting in the privacy notice (see the D-36 handoff).
+

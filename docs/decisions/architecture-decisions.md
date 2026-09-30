@@ -64,7 +64,7 @@ actually satisfies NFR-9.
 
 ## ADR-002 — Editorial content as version-controlled TypeScript, not a CMS or database
 
-**Date:** 2026-09-19 · **Status:** Accepted · **Decided by:** Orchestrator
+**Date:** 2026-09-19 · **Status:** Superseded in part by D-36 (2026-09-30) · **Decided by:** Orchestrator
 
 **Decision**
 Destinations, experiences and trip packages live in `content/*.ts` as typed data compiled
@@ -102,7 +102,7 @@ a dangling slug. Content is reviewed like code.
 
 ## ADR-003 — No database in v1
 
-**Date:** 2026-09-19 · **Status:** Accepted · **Decided by:** Orchestrator
+**Date:** 2026-09-19 · **Status:** Superseded in part by D-36 (2026-09-30) · **Decided by:** Orchestrator
 
 **Decision**
 v1 ships without a database. Content is compiled (ADR-002) and booking enquiries are not
@@ -1485,6 +1485,163 @@ same Sigiriya sunrise, which the new 3D carousel (D-33) made obvious.
 - **Judgement calls:** five picks are listed in the register. The most notable is Watawala
   standing in for Nuwara Eliya's tea country.
 - **Every licence is CC BY-SA.** The attribution on `/credits` must stay.
+
+---
+
+## D-36 - Admin app, Aiven PostgreSQL, real prices and cookie-free statistics
+
+**Date:** 2026-09-30 · **Decided by:** Orchestrator (Full-Stack, Cybersecurity, DevOps and UI/UX roles), with the owner choosing the data store, the user model, the statistics and the pricing
+
+**Status:** Accepted. Supersedes ADR-002 (content in TypeScript) and ADR-003 (no database) in part.
+
+**Decision:**
+1. **A separate admin app** in `admin/` is deployed on its own, not on the public site's domain.
+   From it, the owner can:
+   - edit every destination, experience, trip (including the day-by-day plan), stay,
+     activity, activity category, vehicle, region, and the home-page text;
+   - upload photos;
+   - set real prices;
+   - read and follow up booking and ride requests;
+   - see statistics;
+   - publish the site.
+2. **Aiven PostgreSQL** holds the content, uploaded images, enquiries, visit counters, the admin
+   account, sessions and an audit log.
+3. **The public site stays static.** On every build, `scripts/pull-content.ts` pulls the
+   *published* content into `content/generated/snapshot.json` and copies the uploaded images
+   into `public/media/`. Every page reads content through `lib/content-source.ts`. "Publish"
+   in the admin calls the site's deploy hook; the live site updates about 1–3 minutes later.
+4. **One admin account**, signing in with email, password and a required authenticator-app
+   code. The account and its two-step verification are created only from the command line
+   (`npm run admin:create`), never on the web.
+5. **Real prices:** an optional `priceFromUsd` on trips, experiences, stays (per night),
+   activities and vehicles (per day). The site shows "From $X" when it is set and falls back to
+   the band when it is not. This resolves the gap recorded as IMPL-02.
+6. **Statistics:**
+   - enquiries are now also saved to the database, not only emailed;
+   - page views, unique visitors per day, top pages, countries, devices and referring sites are
+     counted without cookies and without storing IP addresses;
+   - content counts.
+
+**Reason:** Requested: "create the admin page able to change every single thing, able to add
+prices, to view all the statistics, to add cards, destinations, experiences, customised trips,
+hosted separately, with a login page for security". The owner chose Aiven, a single admin,
+all three kinds of statistics, and real prices alongside bands.
+
+**Alternatives considered:**
+- **Read content from the database on every request** (ISR or dynamic pages): rejected.
+  - The content accessors are synchronous and used in 25 files, including client components
+    (the planner runs in the browser) and the booking validation. Converting them all is a
+    large, risky rewrite.
+  - It also makes a database outage a site outage.
+
+  A static snapshot keeps every page fast and static, needs no change to the consumers, and a
+  failed build leaves the previous deployment live. The cost is a 1–3 minute delay after
+  Publish.
+- **Supabase (database, auth and storage in one):** offered as the recommendation. The owner
+  chose Aiven, so auth and image storage are built into the admin.
+- **Images in object storage (S3 or R2):** rejected for now. That is a third service and more
+  credentials. Uploads are resized to about 0.3–1.2 MB and kept in Postgres (`media.bytes`),
+  which is fine at this site's scale (hundreds of images). Revisit past about 1 GB.
+- **An auth library (Auth.js or similar):** rejected. With one user, email, password and
+  TOTP, the flow is small enough to own and review in full. Libraries centre on OAuth
+  providers this site does not use.
+- **Two-step verification set up on the web at first sign-in:** rejected. Anyone who learned
+  the password first could enrol their own authenticator. It is only ever set up from the
+  command line.
+- **Vercel Analytics or Plausible:** rejected. They add a third party and a CSP origin, and do
+  not put the numbers in the admin. First-party daily counters with a daily-rotating salt give
+  the same privacy properties.
+- **npm workspaces for the shared code:** rejected. That would change the root lockfile and the
+  site's Dockerfile. Instead, the three shared files (`lib/content-schema.ts`,
+  `lib/content-integrity.ts`, `lib/pg-config.ts`) are copied into `admin/lib/` by
+  `npm run sync-schema`, and the admin's build refuses a stale copy.
+
+**Chosen solution:**
+- **Database:** schema in `admin/db/migrations/001_init.sql`, documented in
+  `docs/database/database-schema.md`. There are three least-privilege roles
+  (`admin/db/roles.sql`):
+
+  | Role | Can do |
+  |---|---|
+  | `np_admin` | Everything; used by the admin app |
+  | `np_site_build` | Read published content and media only |
+  | `np_site_runtime` | Add enquiries and visit counts; cannot read anything back |
+
+- **Validation:** one zod schema per kind of content (`lib/content-schema.ts`), checked by the
+  admin before every save and again by the site build. The cross-reference rules
+  (`lib/content-integrity.ts`, moved out of `lib/content.ts`) run at build time, on the admin's
+  Publish page (which refuses to publish while any rule fails), and after each save as a
+  warning.
+- **Admin security:** detailed in `docs/security/security-review.md` (D-36):
+  - scrypt password hashes;
+  - AES-GCM-encrypted TOTP secrets, with each code accepted once;
+  - hashed `__Host-` session tokens with 12-hour absolute and 60-minute idle limits;
+  - per-client and per-account lockout;
+  - an audit log;
+  - a strict CSP, `noindex` and `no-store`.
+- **Enquiry flow:**
+  - after the email attempt, the request is saved;
+  - if the email fails but the save works, the traveller now sees success, because the lead is
+    safe in the admin (and flagged "not emailed");
+  - with neither, the traveller sees the old 502.
+
+**Impact:**
+- **New services:** Aiven PostgreSQL, and a second deployment (the admin) with its own domain.
+- **New environment variables:**
+  - site: `CONTENT_DATABASE_URL`, `DATABASE_URL`, `DATABASE_CA_CERT`,
+    `REQUIRE_DATABASE_CONTENT`;
+  - admin: `DATABASE_URL`, `DATABASE_CA_CERT`, `ADMIN_ENCRYPTION_KEY`, `PUBLIC_SITE_URL`,
+    `SITE_DEPLOY_HOOK_URL`.
+
+  See `docs/deployment/environment.md` and `docs/deployment/admin.md`.
+- **New public endpoint:** `POST /api/track` (`docs/api/endpoints.md`). There is no new CSP
+  origin on the public site.
+- **Personal data:** enquiries are now stored for 24 months. **A privacy notice is required
+  before launch** (see the handoff).
+- **Dependencies:**
+  - site: `pg`, and `tsx` for the build scripts;
+  - admin: `pg`, `otpauth`, `qrcode`, `sharp`.
+
+**Testing:** see `docs/testing/testing-strategy.md` §8. In short:
+- 15 unit tests (7 site, 8 admin);
+- an end-to-end run against a real PostgreSQL 18.4 (embedded, local) through production builds
+  of both apps, covering:
+  - migrations, roles and the permission denials;
+  - seeding the 363 existing items;
+  - sign-in with a live TOTP code, lockout and a forged cookie;
+  - editing, validation errors, image upload with metadata stripped, and the publish guard;
+  - calling the deploy hook;
+  - the site build from the database, with the price and uploaded image on live pages;
+  - saving enquiries, and the visit counters.
+
+**Revision, 2026-09-30 (the admin moves to its own repository, on Vercel):**
+- **Repository:** the owner is moving `admin/` into a separate Git repository, deployed as its
+  own Vercel project. The admin was already self-contained: its own `package.json` and
+  lockfile, and committed copies of the three shared files. The changes:
+  - **Uploads:** Vercel caps request bodies at 4.5 MB, below the original 10 MB upload limit.
+    The media page now shrinks photos in the browser (at most 2400 px, under 4 MB), and the
+    Server Action limit is 4.5 MB. Tested: a 23 MB, 6000×4000 photo uploaded and was stored at
+    2400×1600, 1.0 MB. The server still decodes and re-encodes every upload.
+  - **Repository hygiene:** its own `.gitignore` (it had relied on the site's), and `engines`
+    pinned to Node 24.x.
+  - **Schema sync:** `npm run sync-schema -- <site path>` takes the site repository's path. The
+    build check skips when the site is not alongside, and trusts the committed copies.
+  - **Tested:** a standalone copy outside this repository installs and builds, and `git add`
+    stages 69 files, with no `node_modules` or secrets.
+- **Keeping the repositories in step:** the site repository holds the originals of the shared
+  files. The admin repository must be re-synced and deployed after they change
+  (`docs/deployment/admin.md` §6). This is a manual step, a known limitation.
+
+**Known limitations:**
+- **Not tested against Aiven itself:** only against local Postgres, so its TLS and CA setup is
+  unverified.
+- **No independent security review yet:** the Cybersecurity review here is a self-review by the
+  implementing agent.
+- **Publish latency:** changes need a publish and take 1–3 minutes to appear.
+- **Fixed sets:** new regions or vehicle types still need a code change, because booking
+  validation depends on them.
+- **Things still in code:** photos in `ownedPhotos`, and page copy outside the home hero, trust
+  bar and trips heading.
 
 ---
 

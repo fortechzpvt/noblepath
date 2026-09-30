@@ -7,6 +7,7 @@ import { StayMap } from "@/components/accommodation/stay-map";
 import { Button } from "@/components/ui/button";
 import { getAccommodations, getAllAccommodations, getDestinationBySlug } from "@/lib/content";
 import { cn } from "@/lib/cn";
+import { formatUsd } from "@/lib/format";
 import type { AccommodationTier } from "@/lib/types";
 
 export interface StayDestination {
@@ -232,6 +233,11 @@ export function StayPicker({
                       </p>
                       <h3 className="mt-0.5 text-h4 text-ink-900">{stay.name}</h3>
                       <p className="mt-2 text-body-sm text-ink-700">{stay.summary}</p>
+                      {stay.priceFromUsd ? (
+                        <p className="mt-1 text-small font-semibold text-ink-900">
+                          From {formatUsd(stay.priceFromUsd)} a night
+                        </p>
+                      ) : null}
 
                       <div className="mt-4 flex flex-wrap items-center gap-3">
                         {chosen ? (

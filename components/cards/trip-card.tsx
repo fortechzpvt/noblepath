@@ -4,7 +4,7 @@ import { BedDouble, Car, CalendarRange, UserRound } from "lucide-react";
 
 import { LinkButton } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
-import { formatMonthRange, formatPriceBand, regionName } from "@/lib/format";
+import { formatMonthRange, formatPriceBand, formatUsd, regionName } from "@/lib/format";
 import type { Region, TripPackage } from "@/lib/types";
 
 /**
@@ -114,17 +114,34 @@ export function TripCard({
         </p>
 
         <div className={cn("border-t border-border", compact ? "mt-3 pt-3" : "mt-4 pt-4")}>
-          <p className={cn(compact ? "text-h4" : "text-h3", "text-ink-900")}>
-            <span className="np-sr-only">
-              Indicative price band: {formatPriceBand(trip.priceBandPerPerson)} per person.
-            </span>
-            <span aria-hidden className="font-display">
-              {formatPriceBand(trip.priceBandPerPerson)}
-            </span>
-          </p>
-          <p aria-hidden className="mt-1 text-small text-text-meta">
-            Indicative band · per person
-          </p>
+          {trip.priceFromUsd ? (
+            // A real price set in the admin (D-36) replaces the band (IMPL-02).
+            <>
+              <p className={cn(compact ? "text-h4" : "text-h3", "text-ink-900")}>
+                <span className="np-sr-only">From {formatUsd(trip.priceFromUsd)} per person.</span>
+                <span aria-hidden className="font-display">
+                  From {formatUsd(trip.priceFromUsd)}
+                </span>
+              </p>
+              <p aria-hidden className="mt-1 text-small text-text-meta">
+                Per person · {formatPriceBand(trip.priceBandPerPerson)}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className={cn(compact ? "text-h4" : "text-h3", "text-ink-900")}>
+                <span className="np-sr-only">
+                  Indicative price band: {formatPriceBand(trip.priceBandPerPerson)} per person.
+                </span>
+                <span aria-hidden className="font-display">
+                  {formatPriceBand(trip.priceBandPerPerson)}
+                </span>
+              </p>
+              <p aria-hidden className="mt-1 text-small text-text-meta">
+                Indicative band · per person
+              </p>
+            </>
+          )}
         </div>
 
         <div className={cn("flex flex-col gap-3 md:flex-row", compact ? "mt-3" : "mt-4")}>

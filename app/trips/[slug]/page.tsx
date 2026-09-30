@@ -9,7 +9,7 @@ import { TripItinerary } from "@/components/trips/trip-itinerary";
 import { LinkButton } from "@/components/ui/button";
 import { Container, Section } from "@/components/ui/section";
 import { getAllTrips, getDestinationBySlug, getTripBySlug } from "@/lib/content";
-import { formatDuration, formatMonthRange, formatPriceBand, regionName } from "@/lib/format";
+import { formatDuration, formatMonthRange, formatPriceBand, formatUsd, regionName } from "@/lib/format";
 import type { Region, TripPackage, TripTier } from "@/lib/types";
 
 const TIER_LABEL: Readonly<Record<TripTier, string>> = {
@@ -149,7 +149,9 @@ export default async function TripDetailPage({
     {
       icon: Wallet,
       label: "Indicative band",
-      value: `${formatPriceBand(trip.priceBandPerPerson)} per person`,
+      value: trip.priceFromUsd
+        ? `From ${formatUsd(trip.priceFromUsd)} per person`
+        : `${formatPriceBand(trip.priceBandPerPerson)} per person`,
     },
   ];
 

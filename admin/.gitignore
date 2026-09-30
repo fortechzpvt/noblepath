@@ -1,0 +1,20 @@
+# Noble Path admin (D-36). Its own repository: nothing here may rely on a parent .gitignore.
+
+# Dependencies and builds
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets: never commit connection strings, keys or certificates
+.env
+.env*.local
+.env.production
+*.pem
+*.key
+
+# Hosting and OS
+.vercel
+.DS_Store
+npm-debug.log*

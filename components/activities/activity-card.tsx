@@ -3,7 +3,7 @@ import { Check, Clock, MapPin, Plus, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { IntensityMeter } from "@/components/ui/intensity-meter";
 import type { Activity } from "@/content/activities";
-import { formatIntensity, formatPriceBand } from "@/lib/format";
+import { formatIntensity, formatPriceBand, formatUsd } from "@/lib/format";
 
 /**
  * Activity card: name, location, duration, difficulty and an indicative price
@@ -51,7 +51,7 @@ export function ActivityCard({
           <Wallet size={18} aria-hidden className="mt-0.5 shrink-0 text-jungle-600" />
           <div>
             <dt className="np-sr-only">Price</dt>
-            <dd>{formatPriceBand(activity.priceBand)}</dd>
+            <dd>{activity.priceFromUsd ? `From ${formatUsd(activity.priceFromUsd)} per person` : formatPriceBand(activity.priceBand)}</dd>
           </div>
         </div>
       </dl>

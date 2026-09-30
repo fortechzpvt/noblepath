@@ -77,7 +77,7 @@ const destinationPhotos = {
     alt: "Colombo's glittering night skyline seen from high above, lit apartment towers rising over a sea of city lights beneath a dark, cloud-heavy sky.",
     credit: "Photo by Thilina Alagiyawanna / CC0, via Wikimedia Commons",
     sourceUrl: "https://commons.wikimedia.org/wiki/File:Stunning_Night_View_of_Colombo_City_Skyline.jpg",
-    licenceUrl: "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    licenceUrl: "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
   },
   dambulla: {
     src: "/images/destinations/dambulla.jpg",

@@ -22,6 +22,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const enquiry = toRideEnquiry(validated);
       return { ...buildRideEmail(enquiry, id), replyTo: enquiry.contact.email };
     },
+    toRecord: (validated) => {
+      const enquiry = toRideEnquiry(validated);
+      return {
+        kind: "ride",
+        planChoice: null,
+        packageSlug: null,
+        travellerName: enquiry.contact.fullName,
+        email: enquiry.contact.email,
+        travelDate: enquiry.ride.date,
+        partySize: Number(enquiry.ride.passengers),
+        payload: enquiry,
+      };
+    },
   });
 }
 
