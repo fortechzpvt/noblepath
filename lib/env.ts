@@ -139,12 +139,8 @@ export const serverEnv: ServerEnv = loadServerEnv();
 export const isProduction = serverEnv.NODE_ENV === "production";
 
 /**
- * Non-production deployments must not be indexed by search engines.
- *
- * Keyed off the configured site URL rather than `NODE_ENV`, because a staging
- * deployment is a production *build*. A blanket `robots.txt` is deliberately
- * not used: it would ship to production too.
+ * Whether this deployment may be indexed now lives in `lib/seo.ts`
+ * (`isIndexable`, D-38), which robots.txt and the root metadata use. The
+ * constant is re-exported here for existing imports.
  */
-export const PRODUCTION_SITE_URL = "https://noblepath.lk";
-export const shouldDiscourageIndexing: boolean =
-  serverEnv.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "") !== PRODUCTION_SITE_URL;
+export { PRODUCTION_SITE_URL } from "@/lib/seo";

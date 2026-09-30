@@ -5,6 +5,7 @@ import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { SiteHeader } from "@/components/site-header";
 import { ScrollRevealFallback } from "@/components/scroll-reveal-fallback";
 import { SiteFooter } from "@/components/site-footer";
+import { ORGANIZATION_ID, PRODUCTION_SITE_URL, SITE_URL, WEBSITE_ID, isIndexable, jsonLdScript } from "@/lib/seo";
 
 import "./globals.css";
 
@@ -32,23 +33,17 @@ const poppins = Poppins({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-poppins",
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 
-// `||`, not `??`: a host that declares this variable but leaves it blank
-// (Vercel's project-creation prompt does exactly that when a value isn't
-// entered) sets it to an empty string, not undefined, which `??` would not
-// catch — and `new URL("")` throws, taking the whole production build down.
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Noble Path · Explore Sri Lanka with us",
-    template: "%s · Noble Path",
+    default: "Sri Lanka Trip Planner & Private Driver Tours | Noble Path",
+    template: "%s | Noble Path",
   },
   description:
-    "Plan your journey across Sri Lanka. Curated destinations, unforgettable experiences and ready-made trips, arranged into a route that actually fits the days you have.",
+    "Plan your Sri Lanka trip with a local team: ready-made itineraries, 20+ destinations, stays and activities, and a private driver for the whole route.",
   applicationName: "Noble Path",
   keywords: [
     "Sri Lanka travel",
@@ -59,14 +54,13 @@ export const metadata: Metadata = {
     "Galle",
     "Yala safari",
   ],
-  alternates: { canonical: "/" },
+  // No root canonical: a page that forgot its own must not canonicalise to home (D-38).
   openGraph: {
     type: "website",
     siteName: "Noble Path",
-    title: "Noble Path · Explore Sri Lanka with us",
+    title: "Sri Lanka Trip Planner & Private Driver Tours | Noble Path",
     description:
-      "Curated destinations, unforgettable experiences and ready-made trips across Sri Lanka.",
-    url: siteUrl,
+      "Ready-made Sri Lanka itineraries, destinations, stays and activities, with a private driver for the whole route.",
     images: [
       {
         url: "/images/hero/sigiriya-sunrise-2.jpg",
@@ -78,12 +72,42 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Noble Path · Explore Sri Lanka with us",
+    title: "Sri Lanka Trip Planner & Private Driver Tours | Noble Path",
     description:
-      "Curated destinations, unforgettable experiences and ready-made trips across Sri Lanka.",
+      "Ready-made Sri Lanka itineraries, destinations, stays and activities, with a private driver for the whole route.",
     images: ["/images/hero/sigiriya-sunrise-2.jpg"],
   },
-  robots: { index: true, follow: true },
+  // Previews and staging are noindex; only the live origin is indexed (lib/seo.ts).
+  robots: isIndexable ? { index: true, follow: true } : { index: false, follow: false },
+};
+
+/**
+ * Who publishes the site (D-38). Only facts the site can stand behind: no
+ * address, phone or social profiles are published yet, so none are claimed.
+ * Trip pages point at this node by `@id` as their provider.
+ */
+const siteJsonLd = {
+  "@graph": [
+    {
+      "@type": "TravelAgency",
+      "@id": ORGANIZATION_ID,
+      name: "Noble Path",
+      url: `${PRODUCTION_SITE_URL}/`,
+      image: `${PRODUCTION_SITE_URL}/images/hero/sigiriya-sunrise-2.jpg`,
+      description:
+        "A Sri Lanka travel planning service: ready-made and custom itineraries with a private driver, stays and activities.",
+      areaServed: { "@type": "Country", name: "Sri Lanka" },
+      knowsAbout: ["Sri Lanka itineraries", "Private driver tours in Sri Lanka", "Sri Lanka travel planning"],
+    },
+    {
+      "@type": "WebSite",
+      "@id": WEBSITE_ID,
+      name: "Noble Path",
+      url: `${PRODUCTION_SITE_URL}/`,
+      inLanguage: "en",
+      publisher: { "@id": ORGANIZATION_ID },
+    },
+  ],
 };
 
 export const viewport: Viewport = {
@@ -105,6 +129,8 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
+        {/* Escaped JSON (lib/seo.ts). Previews carry it too, but they are noindex. */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(siteJsonLd)} />
         <SiteHeader />
         <main id="main">{children}</main>
         <SiteFooter />

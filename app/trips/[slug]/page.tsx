@@ -10,6 +10,7 @@ import { LinkButton } from "@/components/ui/button";
 import { Container, Section } from "@/components/ui/section";
 import { getAllTrips, getDestinationBySlug, getTripBySlug } from "@/lib/content";
 import { formatDuration, formatMonthRange, formatPriceBand, formatUsd, regionName } from "@/lib/format";
+import { ORGANIZATION_ID, absoluteUrl, breadcrumbJsonLd, clip, jsonLdScript, pageMetadata } from "@/lib/seo";
 import type { Region, TripPackage, TripTier } from "@/lib/types";
 
 const TIER_LABEL: Readonly<Record<TripTier, string>> = {
@@ -37,66 +38,69 @@ export async function generateMetadata({
     };
   }
 
-  const title = trip.name;
-  const description = `${trip.durationDays} days across Sri Lanka. ${trip.summary}`.slice(0, 300);
+  const stops = trip.destinationSlugs
+    .map((destinationSlug) => getDestinationBySlug(destinationSlug)?.name)
+    .filter((name): name is string => Boolean(name));
+  const price = trip.priceFromUsd ? ` From ${formatUsd(trip.priceFromUsd)} per person.` : "";
 
-  return {
-    title,
-    description,
-    alternates: { canonical: `/trips/${trip.slug}` },
-    openGraph: {
-      type: "article",
-      title: `${title} · Noble Path`,
-      description,
-      url: `/trips/${trip.slug}`,
-      images: [
-        {
-          url: trip.image.src,
-          width: 1600,
-          height: 900,
-          alt: trip.image.alt,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${title} · Noble Path`,
-      description,
-      images: [trip.image.src],
-    },
-  };
+  return pageMetadata({
+    title: `${trip.name}: ${trip.durationDays}-Day Sri Lanka Itinerary`,
+    description: clip(`${trip.durationDays} days in Sri Lanka: ${stops.join(", ")}.${price} ${trip.summary}`),
+    path: `/trips/${trip.slug}`,
+    type: "article",
+    image: trip.image,
+  });
 }
 
 /**
- * Structured data for a package.
+ * Structured data for a package (D-38): a `TouristTrip` whose provider is the
+ * site-wide TravelAgency node, plus a breadcrumb.
  *
- * `TouristTrip` rather than `Product`: a `Product` is expected to carry an
- * `offers.price`, and Noble Path publishes indicative bands, not quotes
- * (requirements §7.4). Emitting a number here would put a price we cannot
- * honour into search results, so no `offers` node is emitted at all.
+ * An `offers` node is emitted only when the admin has set a real
+ * `priceFromUsd` (D-36), the same "From $X per person" the page shows.
+ * Trips with only an indicative band publish no price, so search results never
+ * show a number the page itself does not state (requirements §7.4).
  */
 function tripJsonLd(trip: TripPackage, destinationNames: readonly string[]) {
+  const url = absoluteUrl(`/trips/${trip.slug}`);
   return {
-    "@context": "https://schema.org",
-    "@type": "TouristTrip",
-    name: trip.name,
-    description: trip.summary,
-    url: `/trips/${trip.slug}`,
-    image: trip.image.src,
-    touristType: trip.interests,
-    itinerary: {
-      "@type": "ItemList",
-      numberOfItems: destinationNames.length,
-      itemListElement: destinationNames.map((name, index) => ({
-        "@type": "ListItem",
-        position: index + 1,
-        item: { "@type": "TouristDestination", name },
-      })),
-    },
-    provider: {
-      "@type": "TravelAgency",
-      name: "Noble Path",
-    },
+    "@graph": [
+      {
+        "@type": "TouristTrip",
+        name: trip.name,
+        description: trip.summary,
+        url,
+        image: absoluteUrl(trip.image.src),
+        touristType: trip.interests,
+        itinerary: {
+          "@type": "ItemList",
+          numberOfItems: destinationNames.length,
+          itemListElement: destinationNames.map((name, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            item: { "@type": "TouristDestination", name },
+          })),
+        },
+        provider: { "@id": ORGANIZATION_ID },
+        ...(trip.priceFromUsd
+          ? {
+              offers: {
+                "@type": "Offer",
+                price: trip.priceFromUsd,
+                priceCurrency: "USD",
+                url,
+                availability: "https://schema.org/InStock",
+                offeredBy: { "@id": ORGANIZATION_ID },
+              },
+            }
+          : {}),
+      },
+      breadcrumbJsonLd([
+        { name: "Home", path: "/" },
+        { name: "Sri Lanka itineraries", path: "/trips" },
+        { name: trip.name, path: `/trips/${trip.slug}` },
+      ]),
+    ],
   };
 }
 
@@ -161,17 +165,12 @@ export default async function TripDetailPage({
     <>
       <script
         type="application/ld+json"
-        // Escaping `<` is what stops any future content string from being able to
-        // close this script element. The payload is our own editorial data, but
-        // the escape is cheap and removes the class of bug entirely.
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
-            tripJsonLd(
-              trip,
-              destinations.map((destination) => destination.name),
-            ),
-          ).replace(/</g, "\\u003c"),
-        }}
+        dangerouslySetInnerHTML={jsonLdScript(
+          tripJsonLd(
+            trip,
+            destinations.map((destination) => destination.name),
+          ),
+        )}
       />
 
       <section

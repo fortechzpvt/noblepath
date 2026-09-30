@@ -63,11 +63,12 @@ Every variable in `.env.example`, plus the pipeline variables.
 | **Exposure** | **PUBLIC** — compiled into the client bundle. Must never hold a secret. |
 | **Required** | Yes, in every environment. |
 | **Default** | `http://localhost:3000` (from `.env.example`) |
-| **Format** | Absolute origin, scheme included, **no trailing slash**. `https://noblepath.lk` ✅ · `noblepath.lk` ❌ · `https://noblepath.lk/` ❌ |
+| **Format** | Absolute origin, scheme included, **no trailing slash**. `https://www.noblepathsrilanka.com` ✅ · `noblepathsrilanka.com` ❌ · `https://www.noblepathsrilanka.com/` ❌ (a trailing slash is tolerated by `lib/seo.ts` since D-38) |
 | **Local** | `http://localhost:3000` |
 | **Preview** | The preview deployment URL, or the staging URL as an approximation |
 | **Staging** | `https://staging.noblepath.lk` |
-| **Production** | `https://noblepath.lk` |
+| **Production** | `https://www.noblepathsrilanka.com` (D-38; `noblepath.lk` was the planned domain and is not in use). **Must match `PRODUCTION_SITE_URL` in `lib/seo.ts` exactly**, or production is served as noindex |
+| **Indexing (D-38)** | `lib/seo.ts` `indexableFor()`: a deployment is indexable only when this value equals `https://www.noblepathsrilanka.com` **and** `VERCEL_ENV` is `production` or unset. Anything else gets `noindex` and a disallow-all `robots.txt`, including a preview that copies the production value |
 | **Consequence if wrong** | Canonical tags and Open Graph URLs point at the wrong host. On production this means social shares 404 and search engines may consolidate ranking signals onto staging. It does not break rendering, so it fails silently — check it explicitly after a domain change. |
 | **Changing it** | Requires a **rebuild and redeploy**, not just a settings change (see §1). |
 

@@ -190,3 +190,34 @@ PostgreSQL 18.4 (embedded, from the scratchpad) and production builds of both ap
 - a real enquiry saved through `np_site_runtime`;
 - a signed-in admin session against Supabase. The redeploy is Ready and `/login` serves, but only the owner can sign in.
 
+## 10. D-38: SEO (2026-09-30)
+
+**Performed:**
+- **Unit tests:** `npm test` passes, 12 of 12. The 5 new tests in `tests/seo.test.ts` cover:
+  - the indexing rule, including a preview that copies the production URL;
+  - description clipping;
+  - per-page canonical and og:url;
+  - absolute breadcrumb URLs;
+  - JSON-LD script escaping.
+- **Static checks:** `npm run lint` and `npm run typecheck` pass.
+- **Production build** with `NEXT_PUBLIC_SITE_URL=https://www.noblepathsrilanka.com`, served locally
+  and inspected over HTTP:
+  - robots.txt allows everything except `/api/` and names the sitemap;
+  - the sitemap has 35 URLs;
+  - every page checked (/, /plan, /trips, a trip, a destination, /activities) has:
+    - its own title (48–64 characters);
+    - a description of 149–154 characters;
+    - a canonical equal to og:url;
+    - `index, follow`;
+    - the expected JSON-LD types.
+  - `/experiences` returns 308;
+  - `/images/*` has the one-week Cache-Control.
+- **Hero video:** re-encoded files checked at 1280×720 1.6 Mbps and 1920×1080 3.6 Mbps, 13.0 s long.
+  The poster frame was inspected visually.
+
+**Not performed:**
+- a visual browser check of the new `/plan` guide and the destination section (the browser could
+  not reach the local server);
+- PageSpeed / Core Web Vitals, because the API was rate-limited;
+- Google's Rich Results Test, which needs the deployed URL.
+

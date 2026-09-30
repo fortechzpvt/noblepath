@@ -1174,3 +1174,46 @@ paths in these records refer to that repository. The Aiven CA certificate that s
 - **Whoever works in `noblepathadmin`:** run `npm run sync-schema` to take the new
   `lib/pg-config.ts` comments (no code change).
 
+---
+
+## Handoff: search engine optimisation (D-38), 2026-09-30
+
+**From:** Orchestrator, using three specialist agents (content strategist, Full-Stack technical SEO audit, DevOps performance audit)
+**To:** the owner, then Full-Stack, UI/UX and DevOps
+
+**Completed:** see D-38 and `docs/seo/seo-strategy.md` §2. In summary:
+- robots and sitemap;
+- the indexing guard;
+- keyword metadata on every page;
+- JSON-LD;
+- the `/plan` guide and FAQ;
+- trip links on destination pages;
+- the `/experiences` 308;
+- the hero video cut from 26 MB to 2.7/5.8 MB;
+- image caching;
+- font trim.
+
+**Tests:** lint, typecheck and 12 of 12 unit tests pass. The production build was inspected (testing §10).
+
+**Required actions (owner):**
+1. **Deploy,** then submit `https://www.noblepathsrilanka.com/sitemap.xml` in Google Search Console
+   and Bing Webmaster Tools. Request indexing for `/`, `/plan` and `/trips`.
+2. **Keep the site URL exact:** `NEXT_PUBLIC_SITE_URL` in Vercel must stay exactly
+   `https://www.noblepathsrilanka.com`, or production becomes noindex.
+3. **Decide on `/plan`:** should it get the day-by-day itinerary builder back?
+4. **Add contact details:** phone, email, address, logo and social profiles, so they can go on the
+   site and into the schema.
+5. **Off-site plan:** Business Profile, Tripadvisor, reviews and backlinks (`seo-strategy.md` §5).
+
+**Required actions (agents):**
+- **UI/UX:**
+  - visually check the `/plan` guide and the "itineraries that visit" section;
+  - decide whether the header label "Experiences" should become "Things to do".
+- **Full-Stack:**
+  - stop shipping the content catalogue to the client on `/plan` and `/bookings`;
+  - load Leaflet only when the map scrolls into view;
+  - build the itinerary-length pages (`seo-strategy.md` §4).
+- **DevOps:**
+  - pre-resize source JPEGs over 600 KB;
+  - run PageSpeed Insights after deploy to set a baseline.
+

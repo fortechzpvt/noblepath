@@ -5,12 +5,13 @@ import { Container, Section } from "@/components/ui/section";
 import { ownedPhotos } from "@/content/destinations";
 import { destinations, experiences, trips } from "@/lib/content-source";
 import type { ImageAsset } from "@/lib/types";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Photo credits",
+export const metadata: Metadata = pageMetadata({
+  title: "Photo Credits",
   description: "The photographers and licences behind the photographs on Noble Path.",
-  alternates: { canonical: "/credits" },
-};
+  path: "/credits",
+});
 
 /**
  * Photo credits (ADR-006, design-system.md "Attribution").

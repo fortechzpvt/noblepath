@@ -5,13 +5,18 @@ import { LinkButton } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Container, Section } from "@/components/ui/section";
 import { activities, activityCategories } from "@/lib/content-source";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Activities",
+export const metadata: Metadata = pageMetadata({
+  title: "Things to Do in Sri Lanka: Activities & Experiences",
   description:
-    "Beaches, water sports, safaris, treks, trains, tea country, food, culture and more: browse things to do in Sri Lanka with location, duration, difficulty and price.",
-  alternates: { canonical: "/activities" },
-};
+    "Safaris, the Ella train, surfing, whale watching, treks, tea country, food and culture: things to do in Sri Lanka with location, duration and difficulty.",
+  path: "/activities",
+  image: {
+    src: "/images/experiences/surfing-south-coast.jpg",
+    alt: "Two surfers carrying boards along a palm-lined beach at dusk.",
+  },
+});
 
 export default function ActivitiesPage() {
   return (

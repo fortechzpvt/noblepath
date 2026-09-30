@@ -49,6 +49,16 @@ const securityHeaders = [
  */
 const apiHeaders = [{ key: "Cache-Control", value: "no-store" }];
 
+/**
+ * Photographs and the hero video under /images (D-38). Vercel serves public/
+ * files with `max-age=0`, so every visit revalidated a multi-megabyte video.
+ * The names are not content-hashed, so this is a week plus a day of
+ * stale-while-revalidate rather than `immutable`: a replaced file reaches
+ * visitors within about a week. Give a changed file a new name if it must
+ * show at once.
+ */
+const imageHeaders = [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" }];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -63,10 +73,19 @@ const nextConfig: NextConfig = {
     // (components/home/hero.tsx) — without this, every request for it 400s.
     qualities: [72, 75],
   },
+  /**
+   * /experiences was a temporary `redirect()` page (307) to /activities, the
+   * one catalogue of things to do. A permanent 308 tells search engines to
+   * move its signals to /activities (D-38).
+   */
+  async redirects() {
+    return [{ source: "/experiences", destination: "/activities", permanent: true }];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
       { source: "/api/:path*", headers: apiHeaders },
+      { source: "/images/:path*", headers: imageHeaders },
     ];
   },
 };

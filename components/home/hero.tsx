@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { preload } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ChevronDown } from "lucide-react";
@@ -8,6 +9,9 @@ import { RouteLine } from "@/components/home/route-line";
 import { TrustBar } from "@/components/home/trust-bar";
 import { siteSettings } from "@/lib/content-source";
 import type { Destination } from "@/lib/types";
+
+/** First frame of the hero video, 1280 px, about 200 KB (D-38). */
+const HERO_POSTER = "/images/hero/sigiriya-poster.jpg";
 
 /**
  * The home hero (components.md §2).
@@ -29,6 +33,9 @@ import type { Destination } from "@/lib/types";
  */
 export function Hero({ featured }: { readonly featured: readonly Destination[] }) {
   const thumbnails = featured.slice(0, 4);
+  // The poster is the first thing painted and the LCP candidate, so fetch it
+  // before anything else (D-38).
+  preload(HERO_POSTER, { as: "image", fetchPriority: "high" });
 
   return (
     <section
@@ -46,20 +53,28 @@ export function Hero({ featured }: { readonly featured: readonly Destination[] }
       />
 
       {/* The hero is video only (D-29). Muted, looping, inline: the only
-          combination every mobile browser will autoplay. Until it buffers — and
-          for visitors who prefer reduced motion, where it is hidden (WCAG 2.3.3)
-          — the jungle gradient above is what shows. */}
+          combination every mobile browser will autoplay. The poster (the
+          video's first frame) shows until it plays; for visitors who prefer
+          reduced motion the video is hidden (WCAG 2.3.3) and the jungle
+          gradient above shows.
+
+          D-38: the 26 MB 1440p original was replaced by a 2.7 MB 720p file
+          for phones and a 5.8 MB 1080p file from 1024 px up, and
+          `preload="metadata"` stops the browser buffering the whole file
+          before the page's own content. */}
       <video
         autoPlay
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
+        poster={HERO_POSTER}
         aria-hidden
         tabIndex={-1}
         className="np-hero-parallax absolute inset-0 z-0 h-full w-full object-cover object-[50%_45%] motion-reduce:hidden"
       >
-        <source src="/images/hero/sigiriya.mp4" type="video/mp4" />
+        <source media="(min-width: 1024px)" src="/images/hero/sigiriya-1080.mp4" type="video/mp4" />
+        <source src="/images/hero/sigiriya-720.mp4" type="video/mp4" />
       </video>
 
       {/* Scrim stack. Decorative throughout. */}

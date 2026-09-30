@@ -6,6 +6,23 @@ requires it.
 
 ---
 
+## D-38 — SEO changes (2026-09-30)
+
+**Scope:** a self-review of robots/sitemap, indexing control, JSON-LD and cache headers. It is not an
+independent review.
+
+| Area | Check | Result |
+|---|---|---|
+| JSON-LD injection | All JSON-LD goes through `jsonLdScript()`, which escapes `<`. A unit test checks that `</script>` cannot survive | OK |
+| Crawling of APIs | robots.txt disallows `/api/`. The API routes still send `no-store`. The sitemap lists only public pages, not `/bookings` or `/credits` | OK |
+| Preview exposure | Previews and staging are now noindex, with a disallow-all robots.txt (`indexableFor`). Before D-38 they were indexable | Improved |
+| Cache headers | The one-week cache applies only to `/images/*`: public, static, non-personal files. Uploaded media (`/media`) and API responses are unaffected | OK |
+| Structured data truthfulness | No contact details, prices or credentials are claimed that the site does not state. An `Offer` is emitted only for a real admin-set price | OK |
+
+No new findings.
+
+---
+
 ## D-37 — Database moved from Aiven to Supabase (2026-09-30)
 
 **Scope:** the connection path from the site (and admin) to Supabase, and the Supabase-specific
