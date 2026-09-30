@@ -522,7 +522,10 @@
     --np-ring-radius: calc(var(--np-ring-card) / 2 / tan(180deg / var(--np-ring-count)) * 1.12);
     display: grid;
     transform-style: preserve-3d;
-    transform: translateZ(calc(-1 * var(--np-ring-radius))) rotateY(var(--np-ring-turn));
+    /* Scale first, from the top edge: the fit-to-screen shrink (D-33) must not
+       move the ring down or change which card faces front. */
+    transform: scale(var(--np-ring-scale, 1)) translateZ(calc(-1 * var(--np-ring-radius))) rotateY(var(--np-ring-turn));
+    transform-origin: 50% 0;
     transition: transform var(--dur-ring) var(--ease-cinematic);
   }
   .np-ring-item {
@@ -654,6 +657,13 @@
       animation-timeline: scroll(root);
       animation-range: 0 100svh;
     }
+    /* The whole hero (video included) fades out as it scrolls away, so it
+       is gone by the time the next section arrives (D-34). */
+    .np-hero-fade {
+      animation: np-hero-fade linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 85svh;
+    }
     .np-hero-exit {
       animation: np-hero-exit linear both;
       animation-timeline: scroll(root);
@@ -700,6 +710,9 @@
 }
 @keyframes np-hero-parallax {
   to { transform: translate3d(0, 30%, 0) scale(1.12); }
+}
+@keyframes np-hero-fade {
+  to { opacity: 0; }
 }
 @keyframes np-hero-exit {
   to { opacity: 0; transform: translate3d(0, -14svh, 0) scale(0.96); filter: blur(10px); }

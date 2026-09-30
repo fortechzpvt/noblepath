@@ -23,12 +23,19 @@ export function TripCard({
   trip,
   regions,
   headingLevel = "h3",
+  compact = false,
   className,
 }: {
   readonly trip: TripPackage;
   /** Regions the trip crosses, in route order, deduplicated by the caller. */
   readonly regions: readonly Region[];
   readonly headingLevel?: "h2" | "h3" | "h4";
+  /**
+   * Shorter card for the home carousel (D-33): a 2:1 photo and no
+   * Stays/Transport/Guide row, which is the same on every trip. The full card
+   * stays on /trips.
+   */
+  readonly compact?: boolean;
   readonly className?: string;
 }) {
   const Heading = headingLevel;
@@ -44,7 +51,7 @@ export function TripCard({
         className,
       )}
     >
-      <div className="relative aspect-video overflow-clip bg-sand-100">
+      <div className={cn("relative overflow-clip bg-sand-100", compact ? "aspect-[2/1]" : "aspect-video")}>
         <Image
           src={trip.image.src}
           alt=""
@@ -86,26 +93,28 @@ export function TripCard({
           ) : null}
         </ul>
 
-        <ul className="mt-4 grid grid-cols-3 gap-2 text-center">
-          {[
-            { icon: BedDouble, label: "Stays" },
-            { icon: Car, label: "Transport" },
-            { icon: UserRound, label: "Guide" },
-          ].map(({ icon: Icon, label }) => (
-            <li key={label} className="flex flex-col items-center gap-1.5">
-              <Icon size={20} aria-hidden className="text-jungle-600" />
-              <span className="text-small text-ink-600">{label}</span>
-            </li>
-          ))}
-        </ul>
+        {compact ? null : (
+          <ul className="mt-4 grid grid-cols-3 gap-2 text-center">
+            {[
+              { icon: BedDouble, label: "Stays" },
+              { icon: Car, label: "Transport" },
+              { icon: UserRound, label: "Guide" },
+            ].map(({ icon: Icon, label }) => (
+              <li key={label} className="flex flex-col items-center gap-1.5">
+                <Icon size={20} aria-hidden className="text-jungle-600" />
+                <span className="text-small text-ink-600">{label}</span>
+              </li>
+            ))}
+          </ul>
+        )}
 
-        <p className="mt-4 flex items-center gap-1.5 text-small text-text-meta">
+        <p className={cn("flex items-center gap-1.5 text-small text-text-meta", compact ? "mt-3" : "mt-4")}>
           <CalendarRange size={16} aria-hidden />
           Best {formatMonthRange(trip.bestMonths)}
         </p>
 
-        <div className="mt-4 border-t border-border pt-4">
-          <p className="text-h3 text-ink-900">
+        <div className={cn("border-t border-border", compact ? "mt-3 pt-3" : "mt-4 pt-4")}>
+          <p className={cn(compact ? "text-h4" : "text-h3", "text-ink-900")}>
             <span className="np-sr-only">
               Indicative price band: {formatPriceBand(trip.priceBandPerPerson)} per person.
             </span>
@@ -118,7 +127,7 @@ export function TripCard({
           </p>
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 md:flex-row">
+        <div className={cn("flex flex-col gap-3 md:flex-row", compact ? "mt-3" : "mt-4")}>
           <LinkButton
             href={`/bookings?type=package&item=${trip.slug}`}
             variant="solid"

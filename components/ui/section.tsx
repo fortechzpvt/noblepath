@@ -53,6 +53,7 @@ export function SectionHeading({
   action,
   onDark = false,
   className,
+  leadClassName,
 }: {
   readonly overline?: string;
   readonly title: ReactNode;
@@ -60,6 +61,8 @@ export function SectionHeading({
   readonly action?: ReactNode;
   readonly onDark?: boolean;
   readonly className?: string;
+  /** Extra classes for the lead, e.g. to drop it on short screens. */
+  readonly leadClassName?: string;
 }) {
   return (
     <div
@@ -93,6 +96,7 @@ export function SectionHeading({
             className={cn(
               "mt-4 text-lead",
               onDark ? "np-on-image-secondary" : "text-ink-600",
+              leadClassName,
             )}
           >
             {lead}

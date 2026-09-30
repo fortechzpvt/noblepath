@@ -1,7 +1,14 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 
 import { cn } from "@/lib/cn";
 
@@ -15,6 +22,9 @@ export interface CarouselItem {
 
 /** Swipes shorter than this are treated as taps. */
 const SWIPE_THRESHOLD = 48;
+
+/** Below this the card text gets too small to read, so the section may run taller. */
+const MIN_FIT_SCALE = 0.62;
 
 /**
  * The home trips section as a 3D cylindrical carousel (D-33).
@@ -40,19 +50,67 @@ const SWIPE_THRESHOLD = 48;
  *
  * The cards are rendered on the server and passed in, so this component ships
  * only the rotation logic.
+ *
+ * Fit to the screen (≥1024 px): the whole section, heading to controls, must fit
+ * on a laptop screen under the fixed nav. The ring is scaled down just enough
+ * to do that (never below MIN_FIT_SCALE) and the stage's height is set to the
+ * scaled height, because a transform alone does not free up layout space.
+ * The controls sit beside the heading at this width for the same reason.
  */
 export function TripCarousel({
   items,
   label,
+  header,
+  aside,
 }: {
   readonly items: readonly CarouselItem[];
   readonly label: string;
+  /** The section heading. At ≥1024 px the controls sit to its right. */
+  readonly header?: ReactNode;
+  /** Shown next to the controls, e.g. a "See all" link. */
+  readonly aside?: ReactNode;
 }) {
   const count = items.length;
   const [step, setStep] = useState(0);
   const [announce, setAnnounce] = useState(false);
   const swipe = useRef<{ x: number; y: number } | null>(null);
   const suppressClick = useRef(false);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLUListElement>(null);
+  const [fit, setFit] = useState({ scale: 1, natural: 0 });
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    const ring = ringRef.current;
+    const section = stage?.closest("section");
+    if (!stage || !ring || !section) return;
+    const laptop = window.matchMedia("(min-width: 1024px)");
+
+    function measure() {
+      if (!stage || !ring || !section) return;
+      if (!laptop.matches) {
+        setFit({ scale: 1, natural: 0 });
+        return;
+      }
+      // Transforms do not change layout, so this is the unscaled card height.
+      const natural = ring.offsetHeight;
+      const nav = document.querySelector("header")?.getBoundingClientRect().height ?? 80;
+      const rest = section.offsetHeight - stage.offsetHeight;
+      const scale = Math.min(1, Math.max(MIN_FIT_SCALE, (window.innerHeight - nav - rest) / natural));
+      setFit({ scale, natural });
+    }
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(ring);
+    window.addEventListener("resize", measure);
+    laptop.addEventListener("change", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+      laptop.removeEventListener("change", measure);
+    };
+  }, []);
 
   const active = ((step % count) + count) % count;
 
@@ -86,10 +144,14 @@ export function TripCarousel({
       aria-roledescription="carousel"
       aria-label={label}
       onKeyDown={onKeyDown}
-      className="relative"
+      className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-x-10 lg:gap-y-[clamp(1.25rem,4svh,2.5rem)]"
     >
+      {header ? <div className="min-w-0">{header}</div> : null}
+
       <div
-        className="np-ring-stage"
+        ref={stageRef}
+        className="np-ring-stage order-2 lg:order-none lg:col-span-2 lg:row-start-2"
+        style={fit.scale < 1 ? { height: fit.natural * fit.scale } : undefined}
         onPointerDown={(event) => {
           swipe.current = { x: event.clientX, y: event.clientY };
         }}
@@ -116,10 +178,12 @@ export function TripCarousel({
         }}
       >
         <ul
+          ref={ringRef}
           className="np-ring"
           style={
             {
               "--np-ring-count": count,
+              "--np-ring-scale": fit.scale,
               "--np-ring-turn": `${-step * angle}deg`,
             } as CSSProperties
           }
@@ -158,46 +222,49 @@ export function TripCarousel({
         </ul>
       </div>
 
-      <div className="mt-8 flex items-center justify-center gap-4">
-        <button
-          type="button"
-          onClick={() => turnBy(-1)}
-          aria-label="Previous trip"
-          className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-surface text-ink-900 transition-colors duration-[var(--dur-2)] hover:border-jungle-600 hover:text-jungle-700"
-        >
-          <ChevronLeft size={20} aria-hidden />
-        </button>
+      <div className="order-3 flex flex-col items-center gap-6 lg:order-none lg:col-start-2 lg:row-start-1 lg:flex-row lg:gap-8">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => turnBy(-1)}
+            aria-label="Previous trip"
+            className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-surface text-ink-900 transition-colors duration-[var(--dur-2)] hover:border-jungle-600 hover:text-jungle-700"
+          >
+            <ChevronLeft size={20} aria-hidden />
+          </button>
 
-        <ul className="flex items-center gap-1" aria-label="Choose a trip">
-          {items.map((item, index) => (
-            <li key={item.key}>
-              <button
-                type="button"
-                onClick={() => goTo(index)}
-                aria-label={`Show ${item.name}`}
-                aria-current={index === active ? "true" : undefined}
-                className="group inline-flex size-6 items-center justify-center rounded-full"
-              >
-                <span
-                  aria-hidden
-                  className={cn(
-                    "block h-2 rounded-full transition-all duration-[var(--dur-3)] ease-[var(--ease-standard)]",
-                    index === active ? "w-6 bg-jungle-700" : "w-2 bg-ink-300 group-hover:bg-ink-500",
-                  )}
-                />
-              </button>
-            </li>
-          ))}
-        </ul>
+          <ul className="flex items-center gap-1" aria-label="Choose a trip">
+            {items.map((item, index) => (
+              <li key={item.key}>
+                <button
+                  type="button"
+                  onClick={() => goTo(index)}
+                  aria-label={`Show ${item.name}`}
+                  aria-current={index === active ? "true" : undefined}
+                  className="group inline-flex size-6 items-center justify-center rounded-full"
+                >
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "block h-2 rounded-full transition-all duration-[var(--dur-3)] ease-[var(--ease-standard)]",
+                      index === active ? "w-6 bg-jungle-700" : "w-2 bg-ink-300 group-hover:bg-ink-500",
+                    )}
+                  />
+                </button>
+              </li>
+            ))}
+          </ul>
 
-        <button
-          type="button"
-          onClick={() => turnBy(1)}
-          aria-label="Next trip"
-          className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-surface text-ink-900 transition-colors duration-[var(--dur-2)] hover:border-jungle-600 hover:text-jungle-700"
-        >
-          <ChevronRight size={20} aria-hidden />
-        </button>
+          <button
+            type="button"
+            onClick={() => turnBy(1)}
+            aria-label="Next trip"
+            className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-surface text-ink-900 transition-colors duration-[var(--dur-2)] hover:border-jungle-600 hover:text-jungle-700"
+          >
+            <ChevronRight size={20} aria-hidden />
+          </button>
+        </div>
+        {aside}
       </div>
 
       <p aria-live="polite" aria-atomic="true" className="np-sr-only">

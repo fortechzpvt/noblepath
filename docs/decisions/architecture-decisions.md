@@ -1049,7 +1049,7 @@ same image"). The 33 experiences shared five photographs.
 - Arugam Bay surfing is at Panama Beach.
 - Pigeon Island shows scuba rather than snorkelling.
 
-Trip packages still reuse the five owned photos. As with D-26, there has been no browser
+Trip packages still reuse the five owned photos (resolved by D-35). As with D-26, there has been no browser
 visual check.
 
 ---
@@ -1362,6 +1362,129 @@ protocol:
   cards further round face away and are hidden, to avoid mirror images.
 - **Not checked by hand:** swipe was not tested on a real touch device, and the feel was
   judged from screenshots, not live.
+
+---
+
+## D-34 - Hero fades out on scroll; trips section fits a laptop screen
+
+**Date:** 2026-09-30 · **Decided by:** Orchestrator (UI/UX Designer and Full-Stack Engineer), at the owner's request
+
+**Decision:**
+1. **Hero:** the whole hero, video included, fades out over the first 85 svh of scroll, so it
+   has disappeared by the time the next section arrives.
+2. **Trips section:** on laptops (1024 px and wider), the whole "Ready to go / Trips you can
+   book today" section, from heading to card, is fully visible under the fixed nav.
+
+**Reason:** Requested: "when i scroll down the hero section should be disappear and ... Trips
+you can book today section has to be fully visible for the laptops also". Before this change,
+the section was about 1,300 px tall. Laptop windows show about 650–800 px.
+
+**Chosen solution:**
+- **Hero:** `.np-hero-fade` on the hero `<section>` is a `scroll(root)` animation that
+  takes opacity from 1 to 0. It sits alongside the existing `np-hero-exit` and
+  `np-hero-parallax` in the same `@supports` / `no-preference` block, so it is off under
+  reduced motion and in Firefox.
+- **Trips section, in order of how much height each saves:**
+  1. **Controls beside the heading.** The arrows, dots and "See all trips" move from under
+     the ring to the right of the heading (`TripCarousel` now takes `header` and `aside`).
+  2. **Compact trip card** (`TripCard compact`). It has a 2:1 photo, no Stays/Transport/Guide
+     row (the same on every trip) and tighter spacing. `/trips` keeps the full card.
+  3. **Padding and lead.** The vertical padding is `clamp(1.5rem, 5svh, --section-y)`. The
+     heading lead is hidden when the window is under 860 px tall (new `leadClassName` prop on
+     `SectionHeading`).
+  4. **Fit scale.** `TripCarousel` measures the leftover height (window − nav − everything
+     except the ring) and scales the ring to fit. The floor is 0.62, below which text gets
+     too small. The scale is applied first in the ring's transform, from its top edge, and
+     the stage's height is set to match, because a transform does not free layout space. It
+     updates on resize.
+
+**Alternatives considered:**
+- **Heading in a left column with the ring beside it:** rejected. The side cards would sit
+  under the heading text.
+- **CSS `zoom`:** rejected. Its interaction with `offsetHeight` measurements and 3D transforms
+  differs between browsers.
+
+**Impact:**
+- `hero.tsx`, `trips-preview.tsx`, `trip-carousel.tsx`, `trip-card.tsx`
+  (`compact`), `section.tsx` (`leadClassName`) and `globals.css`.
+- No new dependency.
+
+**Testing:** `next build` passes. Headless Chrome, with the section scrolled to sit just below
+the nav:
+
+| Viewport | Fits? | Ring scale |
+|---|---|---|
+| 1280×680 | Yes | 0.80 |
+| 1366×657 | Yes | 0.76 |
+| 1440×790 | Yes | 0.97 |
+| 1536×730 | Yes | 0.87 |
+| 1920×950 | Yes | 1.00 (lead shown) |
+
+- No horizontal overflow at any size.
+- Hero opacity at 85 svh of scroll was 0.00–0.01 at every size.
+- At 390×844 (phone) the section is taller than the screen and scrolls, as before. The fit
+  applies only at laptop width and above.
+
+**Known limitations:**
+- **Window shorter than about 560 px:** the ring stops at 0.62 scale and the section scrolls.
+- **Dead space under the button:** every card is as tall as the tallest one (Grand Island
+  Loop has the most region chips), so shorter cards show a little space below the Book button.
+
+---
+
+## D-35 - Every trip gets its own cinematic photograph
+
+**Date:** 2026-09-30 · **Decided by:** Orchestrator (UI/UX curation and Full-Stack Engineer), at the owner's request
+
+**Decision:** each of the 7 trip packages has its own Wikimedia Commons photograph, at
+`public/images/trips/<slug>.jpg`. Each photo shows the route's signature sight:
+
+| Trip | Photograph |
+|---|---|
+| Cultural Triangle Express | Sigiriya from Pidurangala |
+| Southern Shortcut | Galle Fort's ramparts at sunset |
+| Classic Sri Lanka | A train on the Nine Arch Bridge |
+| Tea, Trains and a Beach Finish | A tea-estate road |
+| Wildlife and Beaches | A Yala elephant family at a waterhole |
+| The Grand Island Loop | Daybreak at Ohiya |
+| East Coast and the North | Dawn on a Trincomalee beach |
+
+**Reason:** Requested: change the card images of "Ready to go / Trips you can book today" "like
+we have done previously" (D-26, D-27). The 7 trips shared 5 owned photos. Three showed the
+same Sigiriya sunrise, which the new 3D carousel (D-33) made obvious.
+
+**Chosen solution:**
+- **Same pipeline and rules as D-26 and D-27:**
+  - the Commons API, filtered to landscape JPEGs 2000 px or wider under CC0, public domain,
+    CC BY or CC BY-SA;
+  - every candidate viewed on contact sheets and picked by eye;
+  - no watermarks, text or identifiable faces;
+  - no photograph already used by a destination or experience (50 files excluded).
+- **Processing:** resized to 2400 px wide, JPEG q82, progressive, with EXIF stripped (verified
+  empty).
+- **Content:** a `tripPhotos` map in `content/trips.ts`. Trips no longer import `ownedPhotos`.
+  `/credits` already reads trips, so the new credits appear there automatically.
+- **Register:** `docs/design/photography-credits.md`, "Trip photographs".
+- **Provenance:** the unsourced files that came with the initial commit were overwritten. The
+  originals are in git history.
+
+**Impact:**
+- About 4.7 MB of JPEG in the repo, replacing about 4.9 MB of unsourced files.
+- No new origin, CSP change or environment variable.
+
+**Testing:**
+- `next build` passes.
+- Against `next start`:
+  - `/credits` lists all 7 with credit, source and licence links;
+  - the home page references all 7 files;
+  - `/_next/image` returns 200 for each.
+- The 7 final files were viewed together.
+- **Not done:** a person reviewing the carousel and the trip pages in a browser.
+
+**Known limitations:**
+- **Judgement calls:** five picks are listed in the register. The most notable is Watawala
+  standing in for Nuwara Eliya's tea country.
+- **Every licence is CC BY-SA.** The attribution on `/credits` must stay.
 
 ---
 

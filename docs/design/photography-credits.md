@@ -112,6 +112,37 @@ The owned photographs are kept for the three experiences they already show: `tuk
 - **royal-botanic-gardens-peradeniya:** Commons names the institution as the author, and the
   credit reproduces that.
 
+## Trip photographs (D-35, sourced 2026-09-30)
+
+These use the same sourcing and processing as the destination and experience sets. Each
+photograph shows its route's signature sight, and none repeats a photograph used by a
+destination or an experience. The files replace the unsourced ones that came with the
+initial commit.
+
+| Slug | File | Commons source | Author | Licence | Original size |
+|---|---|---|---|---|---|
+| cultural-triangle-express | `public/images/trips/cultural-triangle-express.jpg` | [File:Sigiriya Rock Fortress View from Pidurangala Rock.jpg](https://commons.wikimedia.org/wiki/File:Sigiriya_Rock_Fortress_View_from_Pidurangala_Rock.jpg) | Gayomiw | CC BY-SA 4.0 | 6000×4000 |
+| southern-shortcut | `public/images/trips/southern-shortcut.jpg` | [File:GALLE FORT AT SUNSET SRI LANKA JAN 2013 (8509060483).jpg](https://commons.wikimedia.org/wiki/File:GALLE_FORT_AT_SUNSET_SRI_LANKA_JAN_2013_(8509060483).jpg) | calflier001 | CC BY-SA 2.0 | 5184×3456 |
+| classic-sri-lanka | `public/images/trips/classic-sri-lanka.jpg` | [File:Demodara Nine Arch Bridge (35564604554).jpg](https://commons.wikimedia.org/wiki/File:Demodara_Nine_Arch_Bridge_(35564604554).jpg) | V. Epiney | CC BY-SA 2.0 | 5184×3456 |
+| tea-trains-and-a-beach-finish | `public/images/trips/tea-trains-and-a-beach-finish.jpg` | [File:Beauty of tea plantations in Sri Lanka.jpg](https://commons.wikimedia.org/wiki/File:Beauty_of_tea_plantations_in_Sri_Lanka.jpg) | Lavanya Suriyakumar | CC BY-SA 4.0 | 4032×3024 |
+| wildlife-and-beaches | `public/images/trips/wildlife-and-beaches.jpg` | [File:Sri Lankan Elephants in Yala National Park.jpg](https://commons.wikimedia.org/wiki/File:Sri_Lankan_Elephants_in_Yala_National_Park.jpg) | C.J. Hatton | CC BY-SA 4.0 | 6976×4652 |
+| grand-island-loop | `public/images/trips/grand-island-loop.jpg` | [File:Daybreak in Ohiya, Sri Lanka.jpg](https://commons.wikimedia.org/wiki/File:Daybreak_in_Ohiya,_Sri_Lanka.jpg) | CJay1995 | CC BY-SA 4.0 | 4772×2688 |
+| east-coast-and-the-north | `public/images/trips/east-coast-and-the-north.jpg` | [File:Beach in trincomalee at sun rising.jpg](https://commons.wikimedia.org/wiki/File:Beach_in_trincomalee_at_sun_rising.jpg) | THDBS | CC BY-SA 4.0 | 4000×3000 |
+
+**Judgement calls:**
+- **cultural-triangle-express:** Sigiriya from Pidurangala. The home hero and the Pidurangala
+  experience also show Sigiriya, from different photographs. It is the route's signature, so
+  a second angle was preferred over a less recognisable site.
+- **tea-trains-and-a-beach-finish:** the estate road is near Watawala, on the hill-country
+  line. The route itself centres on Nuwara Eliya.
+- **grand-island-loop:** Ohiya is the gateway to Horton Plains, which is on the route. The
+  Commons description is only "Sunrise, morning, mountain top", so the location comes from the
+  file title.
+- **east-coast-and-the-north:** Commons describes this as a small fishing harbour near
+  Trincomalee at dawn. It is not a named tourist beach.
+- **wildlife-and-beaches:** a more dramatic tusker photo was passed over because it was taken at
+  Kalawewa, which is not on this route.
+
 ## Owned / site-wide photographs
 
 The `ownedPhotos` entries in `content/destinations.ts`: the Noble Path photo library, plus
@@ -119,7 +150,6 @@ the Sigiriya hero above. These are credited as "Noble Path photo library".
 
 ## Unreferenced files
 
-The old unsourced files in `public/images/experiences/` were all overwritten by the D-27 set;
-every file in that folder is now either owned or listed above. `public/images/trips/*` was
-committed with no recorded provenance and is **not used**. They must not be referenced until they are re-sourced
-with a row in this register.
+None. The old unsourced files in `public/images/experiences/` were overwritten by the D-27
+set, and those in `public/images/trips/` by the D-35 set. Every photograph in
+`public/images/` is now either owned or listed above.
