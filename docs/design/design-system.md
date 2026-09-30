@@ -350,6 +350,7 @@ Shadows are tinted with ink, never neutral black, so they sit correctly on warm 
 | `--dur-4` | `360ms` | Dropdown/popover, nav state change |
 | `--dur-5` | `560ms` | Drawer, modal, page section reveal |
 | `--dur-6` | `900ms` | Cinematic reveal (hero text stagger) |
+| `--dur-enter` | `1100ms` | Hero split entrance (D-32) |
 | `--dur-route` | `2400ms` | Route-line draw-on |
 | `--dur-ken` | `18000ms` | Ken Burns cycle |
 | `--ease-standard` | `cubic-bezier(0.2, 0, 0, 1)` | Default for UI |
@@ -361,7 +362,7 @@ Shadows are tinted with ink, never neutral black, so they sit correctly on warm 
 **Rules**
 - Animate `transform` and `opacity` only. `filter` and `backdrop-filter` are not animated. Never animate `width`, `height`, `top`, `left`.
 - No spring/bounce easing anywhere. Overshoot reads playful; the brand is composed.
-- Hero text reveal: stagger of `80ms` per line, `translateY(16px) → 0` + `opacity 0 → 1` over `--dur-6` with `--ease-cinematic`.
+- Hero entrance (D-32): a split entrance. The copy column slides from the left and the right column from the right, `translateX(∓var(--np-enter-distance)) → 0` (40vw) + `opacity 0 → 1` over `--dur-enter` (1100 ms) with `--ease-cinematic`, 80 ms stagger per line. This replaces the earlier `translateY(16px)` text reveal.
 - Every motion token must degrade under `prefers-reduced-motion: reduce` — see `accessibility.md` §6 for the exact per-effect behaviour. The blanket rule is:
   ```css
   @media (prefers-reduced-motion: reduce) {

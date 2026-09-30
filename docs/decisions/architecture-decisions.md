@@ -1239,6 +1239,61 @@ screenshots and computed styles at set scroll positions:
 
 ---
 
+## D-32 - Hero split entrance on page load
+
+**Date:** 2026-09-30 · **Decided by:** Orchestrator (UI/UX Designer and Full-Stack Engineer), at the owner's request
+
+**Decision:** On first load, the home hero's two columns enter from opposite sides.
+- **Left column** (kicker, headline, lead, "Plan Your Trip" CTA, destination thumbnail rail)
+  glides in from the left edge, staggered 0 / 80 / 160 / 240 / 320 ms.
+- **Right column** (route line with its pin, trust bar) glides in from the right edge, at
+  120 ms and 360 ms.
+
+This replaces the earlier `translateY(16px)` fade-up on the hero text.
+
+**Reason:** Requested: a split entrance that makes a polished first impression without
+costing load performance.
+
+**Alternatives considered:**
+- **Framer Motion / GSAP:** rejected. They would add a JS dependency and make the hero a
+  client component, which would hurt LCP.
+- **Slide whole column wrappers at once:** rejected. The content wrapper already carries the
+  scroll-exit transform (`np-hero-exit`, D-31). Two animations on one element would fight over
+  `transform`. Per-element staggering also reads better.
+
+**Chosen solution:**
+- `.np-enter-left` / `.np-enter-right` with one `np-enter-x` keyframe set in
+  `app/globals.css`. Only `transform: translate3d` and `opacity` animate, so the work stays on
+  the compositor. The new tokens are `--dur-enter` (1100 ms) and `--np-enter-distance` (40vw),
+  with `--ease-cinematic`.
+- The route line gets an inner wrapper so its entrance transform does not conflict with the
+  outer scroll-exit transform.
+- **Staggering:** use an inline `animation-delay` or the `--np-enter-delay` property. An
+  `[animation-delay:…]` utility does **not** work, because it sits in the same cascade layer
+  and loses to the `animation` shorthand. This was found and fixed during testing.
+- Everything is still a server component and the hero still ships no JavaScript. The hero's
+  `overflow: hidden` clips the off-screen start, so there is no horizontal scrollbar.
+- **Reduced motion:** there is no entrance at all. Both columns render in place at full
+  opacity.
+
+**Impact:** `components/home/hero.tsx` and `app/globals.css` only. No new dependency, CSP
+change or environment variable. Text starts at opacity 0 for up to about 1.4 s, as the
+previous fade-up also did.
+
+**Testing:** `next build` passes. In headless Chrome over the DevTools protocol, at 1440×900
+and 390×844, with the animations frozen at 150 / 450 / 3000 ms:
+- left items move in from negative x and right items from positive x;
+- the stagger order is correct, including the trust bar's 360 ms delay;
+- everything ends at `matrix(1,0,0,1,0,0)` and opacity 1;
+- `scrollWidth` equals the viewport width at every step.
+
+The reduced-motion override was confirmed in the compiled CSS, but not in an emulated browser.
+
+**Known limitations:** the timing was tuned by frozen-frame screenshots, not watched live by a
+person.
+
+---
+
 ## Pending decisions (not yet made)
 
 These are open and must be decided before the relevant work starts. Listed so they are visible rather than rediscovered mid-build.

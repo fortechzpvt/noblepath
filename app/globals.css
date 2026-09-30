@@ -267,6 +267,9 @@
   --dur-1: 120ms; --dur-2: 180ms; --dur-3: 240ms;
   --dur-4: 360ms; --dur-5: 560ms; --dur-6: 900ms;
   --dur-route: 2400ms; --dur-ken: 18000ms;
+  --dur-enter: 1100ms;
+  /* How far off-screen the hero split entrance starts (D-32). */
+  --np-enter-distance: 40vw;
 
   --z-base: 0; --z-media-scrim: 1; --z-media-content: 2; --z-raised: 10;
   --z-sticky: 20; --z-nav: 50; --z-dropdown: 60; --z-overlay: 70;
@@ -490,6 +493,19 @@
     animation: np-fade-up var(--dur-5) var(--ease-out) both;
   }
 
+  /* Hero split entrance (D-32): the copy column glides in from the left edge,
+     the route line and trust bar from the right. Transform and opacity only,
+     so it stays on the compositor. The hero section clips the overflow, so the
+     off-screen start never causes a horizontal scrollbar. Stagger with an
+     inline animation-delay or `--np-enter-delay`; an `[animation-delay:…]`
+     utility loses to the shorthand here. */
+  .np-enter-left,
+  .np-enter-right {
+    animation: np-enter-x var(--dur-enter) var(--ease-cinematic) var(--np-enter-delay, 0ms) both;
+  }
+  .np-enter-left  { --np-enter-from: calc(-1 * var(--np-enter-distance)); }
+  .np-enter-right { --np-enter-from: var(--np-enter-distance); }
+
   /* Single-trip map pins (D-25): A = pickup, B = drop-off. Leaflet divIcons,
      so no marker image assets or extra CSP origins are needed. White text on
      jungle-700 / clay-600 both clear 4.5:1. */
@@ -531,6 +547,11 @@
   to { stroke-dashoffset: 0; }
 }
 
+@keyframes np-enter-x {
+  from { opacity: 0; transform: translate3d(var(--np-enter-from), 0, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
 @keyframes np-fade-up {
   from { opacity: 0; transform: translate3d(0, 16px, 0); }
   to   { opacity: 1; transform: translate3d(0, 0, 0); }
@@ -543,6 +564,7 @@
   .np-route-draw { stroke-dasharray: none; stroke-dashoffset: 0; animation: none !important; }
   .np-ken-burns { animation: none !important; transform: none; }
   .np-fade-up { animation: none !important; opacity: 1; transform: none; }
+  .np-enter-left, .np-enter-right { animation: none !important; opacity: 1; transform: none; }
   .np-pop { animation: none !important; opacity: 1; transform: none; }
 }
 
