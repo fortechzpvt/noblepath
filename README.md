@@ -46,7 +46,7 @@ single validated, rate-limited booking-enquiry endpoint.
 
 Since D-36:
 - content, prices, photos and enquiries are managed in a **separate admin app** (its own repository, `fortechzpvt/noblepathadmin`),
-  backed by **Aiven PostgreSQL**;
+  backed by **Supabase PostgreSQL** (moved from Aiven in D-37);
 - each site build pulls the published content into a static snapshot, and "Publish" in the
   admin triggers that build;
 - without a database configured (local development), the site uses the bundled `content/*.ts`.

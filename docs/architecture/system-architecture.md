@@ -1,7 +1,7 @@
 # Noble Path — System Architecture
 
 **Status:** Approved for v1
-**Last updated:** 2026-09-30 (D-36: admin app and Aiven PostgreSQL; see §11)
+**Last updated:** 2026-09-30 (D-36: admin app and database, see §11; D-37: the database moved from Aiven to Supabase)
 
 ---
 
@@ -14,7 +14,7 @@ server work in v1 is a single validated, rate-limited `POST /api/bookings` enqui
 endpoint. There is no database, no user accounts and no payment processing in v1.
 
 > **Updated by D-36 (2026-09-30).**
-> - Content is now edited in a separate **admin app** and stored in **Aiven PostgreSQL**.
+> - Content is now edited in a separate **admin app** and stored in **Supabase PostgreSQL** (Aiven until D-37).
 > - The site is still static: each build pulls the published content into a snapshot, and
 >   "Publish" in the admin triggers that build.
 > - Enquiries are now also saved (for 24 months), and page views are counted without cookies.
@@ -142,7 +142,7 @@ Each of these is a deliberate v1 trade-off with a known exit, not an oversight.
 ## 11. Since D-36: admin app and database
 
 ```
-                 ┌───────────────────────────── Aiven PostgreSQL ─────────────────────────────┐
+                 ┌──────────────────────────── Supabase PostgreSQL ───────────────────────────┐
                  │ content_items · media · booking_requests · page_views_daily · visitors_daily │
                  │ admin_users · admin_sessions · login_attempts · audit_log · site_publishes   │
                  └────▲──────────────────▲───────────────────────▲──────────────────▲──────────┘

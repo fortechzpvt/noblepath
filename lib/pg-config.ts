@@ -1,12 +1,12 @@
 import type { PoolConfig } from "pg";
 
 /**
- * Connection settings for Aiven PostgreSQL (D-36).
+ * Connection settings for Supabase PostgreSQL (D-36, moved from Aiven in D-37).
  *
- * Aiven only accepts TLS connections and signs its server certificates with a
- * per-project CA, so the certificate is verified against that CA
- * (`DATABASE_CA_CERT`, the "CA certificate" from the Aiven console) rather
- * than switched off. `rejectUnauthorized: false` would let anyone on the
+ * Supabase signs its database and pooler certificates with its own root
+ * ("Supabase Root 2021 CA", `prod-ca-2021.crt` from Project Settings →
+ * Database → SSL), which is not in Node's trust store. So the certificate is
+ * verified against that CA (`DATABASE_CA_CERT`) rather than switched off. `rejectUnauthorized: false` would let anyone on the
  * network path impersonate the database, so it is never used.
  *
  * `DATABASE_CA_CERT` may hold the PEM text itself or its base64 encoding,

@@ -1,5 +1,5 @@
 /**
- * Build step: pull published content from Aiven into the site (D-36).
+ * Build step: pull published content from Supabase into the site (D-36).
  *
  * Runs before every `next dev`, `next build` and typecheck (`predev`,
  * `prebuild`, `pretypecheck` in package.json). It writes

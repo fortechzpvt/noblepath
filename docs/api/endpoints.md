@@ -21,7 +21,7 @@ design choices below.
 ## `POST /api/bookings`
 
 Submits a booking request (FR-5). The request is emailed to Noble Path staff
-via Resend and, since D-36, also **saved** to Aiven PostgreSQL
+via Resend and, since D-36, also **saved** to Supabase PostgreSQL (Aiven before D-37)
 (`booking_requests`) for the admin app, when `DATABASE_URL` is set. The site
 connects as `np_site_runtime`, which can insert requests but never read them
 back.

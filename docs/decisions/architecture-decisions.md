@@ -1675,6 +1675,72 @@ repository.
 
 ---
 
+## D-37 - The database moves from Aiven to Supabase
+
+**Date:** 2026-09-30 · **Decided by:** the owner; implemented by the Orchestrator (Full-Stack and DevOps roles)
+
+**Status:** Accepted. Revises D-36 point 2 (the data store). Everything else in D-36 stands.
+
+**Decision:** the Noble Path database (content, media, enquiries, statistics, admin data) runs on
+**Supabase PostgreSQL**. The project is `mgywzyxewtblqklfdigj` in the `noblepath` organisation,
+region `ap-northeast-2`, free plan. The schema, the three least-privilege roles and the site's
+static-snapshot model are unchanged.
+
+**Reason:** the owner chose to switch. Supabase was the original recommendation in D-36, and the
+admin repository is already moving its sign-in to Supabase Auth (uncommitted work in
+`noblepathadmin`: `002_supabase_auth.sql`, `lib/supabase.ts`). One provider for both is simpler.
+
+**Alternatives considered:**
+- **Stay on Aiven:** it was working in production. Rejected by the owner.
+- **Supabase Data API (PostgREST) or supabase-js from the site:** rejected. The site keeps
+  connecting with `pg` as its narrow roles. Exposing tables over HTTPS behind the public anon
+  key would add an attack surface for no gain. The Data API is locked out of our tables instead
+  (`003_supabase_lockdown.sql`).
+- **The direct connection (`db.<ref>.supabase.co`):** rejected, because it is IPv6-only without
+  the paid IPv4 add-on, and Vercel is IPv4.
+
+**Chosen solution:**
+- **Pooler (Supavisor)** at `aws-0-ap-northeast-2.pooler.supabase.com`; user names are
+  `<role>.mgywzyxewtblqklfdigj`:
+  - **session mode (5432)** for the build and the one-off scripts;
+  - **transaction mode (6543)** for serverless runtime code.
+
+  The site's queries are single unnamed statements, plus one explicit transaction in
+  `db:seed`, which runs in session mode. Nothing depends on session state, so transaction
+  mode is safe.
+- **TLS:** unchanged code. `lib/pg-config.ts` already verifies against the CA in
+  `DATABASE_CA_CERT`, which is now `prod-ca-2021.crt` ("Supabase Root 2021 CA"). Verified on
+  both pooler ports with `rejectUnauthorized: true`.
+- **Data API lockdown:** `anon` and `authenticated` hold no privileges on any `public` table or
+  view. Checked: 0 grants.
+- **The CA file** is not a secret, but `*.crt` is git- and docker-ignored, as `*.pem` already
+  was, so no certificate lands in the repository by accident.
+
+**Impact:**
+- **Code:** comments only (`lib/pg-config.ts`, `lib/env.ts`, the scripts, `Dockerfile`), plus
+  `.env.example`, `.gitignore` and `.dockerignore`. No behaviour change.
+  `lib/pg-config.ts` is a shared file, so re-sync it into the admin repository
+  (`npm run sync-schema`).
+- **Operations (verified 2026-09-30):** the Vercel site project's `CONTENT_DATABASE_URL`,
+  `DATABASE_URL` and `DATABASE_CA_CERT` were switched to Supabase by the owner. The latest
+  production build pulled content from the database. A visit to `www.noblepathsrilanka.com`
+  raised Supabase's `page_views_daily` count from 2 to 3, with `np_site_runtime` connected. The
+  owner then replaced the **admin** project's `DATABASE_URL` and `DATABASE_CA_CERT`, and the
+  redeploy is Ready with the sign-in page serving. A signed-in check by the owner is still
+  pending. Enquiries saved to Aiven before the switch are not copied. Export them first if any
+  matter.
+- **Backups:** the free plan has short daily backups and no point-in-time recovery.
+- **Documentation:** `database-schema.md`, `admin.md`, `environment.md`, the security review
+  (D-37), `testing-strategy.md` §9, `README.md`, `system-architecture.md`, `endpoints.md`.
+
+**Known limitations:**
+- A real site build and a real enquiry save through the pooler with the `np_site_*` passwords
+  have not been run by an agent, because the passwords were not available to it.
+- The `statement_timeout` startup parameter that `pgConfig` sends works through the pooler:
+  production page-view writes succeed.
+
+---
+
 ## Pending decisions (not yet made)
 
 These are open and must be decided before the relevant work starts. Listed so they are visible rather than rediscovered mid-build.

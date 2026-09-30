@@ -3,6 +3,23 @@
 Significant changes, newest first (Fortechz policy §16). Decisions behind each entry are in
 `docs/decisions/architecture-decisions.md`.
 
+## 2026-09-30 — D-37: database moved to Supabase
+
+### Changed
+- **Supabase PostgreSQL** replaces Aiven. The schema, roles and snapshot build are unchanged.
+  Connections go through the Supabase pooler, with TLS verified against `prod-ca-2021.crt`.
+- `.env.example` documents the pooler strings (session 5432 for the build, transaction 6543
+  for the runtime).
+
+### Security
+- The Data API lockdown was verified: `anon` and `authenticated` hold no grants on our tables.
+- `*.crt` is now ignored by git and Docker.
+
+### Documentation
+- New D-37 in the decisions record, the security review (F-37-1 to F-37-3) and testing §9.
+- Updated `database-schema.md`, `admin.md`, `environment.md`, `README.md`,
+  `system-architecture.md` and `endpoints.md`.
+
 ## 2026-09-30
 
 ### Added

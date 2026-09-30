@@ -6,6 +6,28 @@ requires it.
 
 ---
 
+## D-37 — Database moved from Aiven to Supabase (2026-09-30)
+
+**Scope:** the connection path from the site (and admin) to Supabase, and the Supabase-specific
+exposure. It is a self-review by the implementing agent, not an independent review.
+
+| Area | Check | Result |
+|---|---|---|
+| TLS | `pg` with `rejectUnauthorized: true` and `prod-ca-2021.crt`, against the pooler on ports 5432 and 6543 | **Verified**: the handshake passes and the connection reaches authentication |
+| Data API | Grants to `anon` / `authenticated` on `public` tables and views | **0** (migration `003_supabase_lockdown.sql`) |
+| Roles | `np_admin`, `np_site_build`, `np_site_runtime` exist; the site roles' grants match `db/roles.sql` | Verified in the SQL Editor |
+| Secrets | No connection string or password is in either repository or this chat. `.env.local` has password placeholders only. `*.crt` is now ignored by git and Docker | Verified (`git status`) |
+
+**Findings**
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| F-37-1 | Medium | The Data API exposes `public` by default. Any future migration that creates a table relies on the default-privilege revoke in `003`. If a table is created by a role other than `postgres`, or in the dashboard's Table Editor with "Enable RLS" unticked, it could be readable with the anon key | Open: run the grant check in `admin.md` §1 after every migration. Consider turning off the Data API (Project Settings → API) if Supabase Auth does not need it for `public` |
+| F-37-2 | Low | The free plan has limited backups and no point-in-time recovery for stored enquiries (personal data) | Open: owner decision before launch |
+| F-37-3 | Info | The Aiven service still holds a copy of content, enquiries (personal data) and statistics | Open: once Vercel points at Supabase, export anything needed and delete the Aiven service. F-36-11 (the exposed `avnadmin` credentials) then closes with it |
+
+---
+
 ## D-36 — Admin app, Aiven PostgreSQL, stored enquiries and visitor statistics (2026-09-30)
 
 **Reviewer:** the implementing agent (Orchestrator acting in the Cybersecurity role). **This

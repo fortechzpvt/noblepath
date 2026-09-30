@@ -14,6 +14,7 @@
 .env
 .env.*
 *.pem
+*.crt
 *.key
 *.p12
 *.pfx

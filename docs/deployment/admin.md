@@ -4,21 +4,31 @@
 
 The admin app is a separate Next.js app in **its own repository** (originally this project's
 `admin/` folder), deployed as its own Vercel project.
-It needs Aiven PostgreSQL and the public site's deploy hook. Follow the steps in order.
+It needs Supabase PostgreSQL and the public site's deploy hook. Follow the steps in order.
 
-## 1. Aiven PostgreSQL
+## 1. Supabase PostgreSQL (D-37; Aiven before)
 
-1. Create an **Aiven for PostgreSQL** service. The smallest paid plan is enough; pick a cloud
-   region near the hosting region.
-2. From the service overview, copy:
-   - the **Service URI** (it contains the `avnadmin` password);
-   - the **CA certificate**, saved as `ca.pem`.
-
-   Keep both out of the repository.
-3. **Networking:** restrict *Allowed IP addresses* if the hosting platforms publish fixed egress
-   IPs. Otherwise rely on TLS, strong passwords and the narrow roles below.
-4. Enable Aiven's automatic backups (on by default) and note the retention period in this
-   document.
+1. The project is **`fortechzpvt's Project`** in the `noblepath` organisation
+   (ref `mgywzyxewtblqklfdigj`, region `ap-northeast-2`, free plan).
+2. Collect, and keep out of every repository:
+   - the **database password** of the `postgres` owner (Project Settings → Database; *Reset
+     database password* if unknown);
+   - the **CA certificate** `prod-ca-2021.crt` (Project Settings → Database → SSL
+     Configuration → *Download certificate*).
+3. **Connection strings** come from *Connect* → *Direct* → *Session pooler* or *Transaction
+   pooler*. Always use the pooler host `aws-0-ap-northeast-2.pooler.supabase.com`: the direct
+   host is IPv6-only and Vercel is IPv4. The user name is `<role>.mgywzyxewtblqklfdigj`.
+   - Port **5432** (session): the site build, `db:migrate`, `db:seed`, `admin:create`.
+   - Port **6543** (transaction): the site runtime and the admin on Vercel.
+4. **Data API:** Supabase serves the `public` schema over HTTPS with the public anon key.
+   Migration `003_supabase_lockdown.sql` removes every privilege `anon` and `authenticated`
+   have on our tables. Check after every migration:
+   ```sql
+   select count(*) from information_schema.role_table_grants
+   where table_schema = 'public' and grantee in ('anon', 'authenticated');  -- must be 0
+   ```
+5. **Backups:** the free plan keeps daily backups for a short period only and offers no
+   point-in-time recovery. Upgrade before launch if losing a day of enquiries is not acceptable.
 
 ## 2. Create the schema and roles
 
@@ -28,21 +38,25 @@ From a trusted computer, in the **admin repository**:
 npm ci
 
 # Schema (as the owner account)
-MIGRATION_DATABASE_URL='postgres://avnadmin:…@….aivencloud.com:12345/defaultdb?sslmode=require' \
-DATABASE_CA_CERT="$(cat ca.pem)" npm run db:migrate
+MIGRATION_DATABASE_URL='postgresql://postgres.mgywzyxewtblqklfdigj:…@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres' \
+DATABASE_CA_CERT="$(cat prod-ca-2021.crt)" npm run db:migrate
 ```
 
-Then run `db/roles.sql` (admin repository) as `avnadmin` (Aiven console → *Query editor*, or `psql`).
+Then run `db/roles.sql` (admin repository) as `postgres` (Supabase → *SQL Editor*).
 Replace each `CHANGE_ME` with a different random password from `openssl rand -base64 32`, and
-store each one only in the hosting platform's secret settings.
+store each one only in the hosting platform's secret settings. To set a new password later:
+`alter role np_site_build password '…';` in the SQL Editor.
+
+**Status (2026-09-30):** steps 1–2 are done. All three migrations are applied, the three roles
+exist, and 363 content items are seeded.
 
 ## 3. Load the current content
 
 In **this (site) repository**, which holds the content to load:
 
 ```bash
-ADMIN_DATABASE_URL='postgres://np_admin:…@…/defaultdb?sslmode=require' \
-DATABASE_CA_CERT="$(cat ca.pem)" npm run db:seed
+ADMIN_DATABASE_URL='postgresql://np_admin.mgywzyxewtblqklfdigj:…@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres' \
+DATABASE_CA_CERT="$(cat prod-ca-2021.crt)" npm run db:seed
 ```
 
 ## 4. Create the admin account
@@ -50,7 +64,7 @@ DATABASE_CA_CERT="$(cat ca.pem)" npm run db:seed
 In the **admin repository**:
 
 ```bash
-DATABASE_URL='postgres://np_admin:…' DATABASE_CA_CERT="$(cat ca.pem)" npm run admin:create
+DATABASE_URL='postgresql://np_admin.mgywzyxewtblqklfdigj:…@…pooler.supabase.com:5432/postgres' DATABASE_CA_CERT="$(cat prod-ca-2021.crt)" npm run admin:create
 ```
 
 - The script asks for the email and a password (at least 14 characters) at prompts, never as
@@ -69,9 +83,9 @@ Set these on the site project (Vercel → Settings → Environment Variables, Pr
 
 | Variable | Value |
 |---|---|
-| `CONTENT_DATABASE_URL` | `np_site_build` connection string. **Build time.** |
-| `DATABASE_URL` | `np_site_runtime` connection string. **Runtime.** |
-| `DATABASE_CA_CERT` | Contents of `ca.pem` (PEM text, or base64 of it) |
+| `CONTENT_DATABASE_URL` | `np_site_build` session-pooler string (port 5432). **Build time.** |
+| `DATABASE_URL` | `np_site_runtime` transaction-pooler string (port 6543). **Runtime.** |
+| `DATABASE_CA_CERT` | Contents of `prod-ca-2021.crt` (PEM text, or base64 of it) |
 | `REQUIRE_DATABASE_CONTENT` | `true` in production, so a build without the database fails instead of publishing old bundled content |
 
 Then create a **Deploy Hook** for the production branch (Vercel → Settings → Git → Deploy
@@ -88,7 +102,7 @@ path under the public site.
 - **Root directory:** the repository root.
 - **Build command:** `npm run build`.
 - **Node:** 24.x (pinned by `engines` in `package.json`).
-- **Region:** the one closest to the Aiven service.
+- **Region:** the one closest to the database (Seoul, `icn1`, for `ap-northeast-2`).
 
 **Environment variables** (Production, and Preview only if previews should reach the
 database):
@@ -96,7 +110,7 @@ database):
 | Variable | Value |
 |---|---|
 | `DATABASE_URL` | `np_admin` connection string |
-| `DATABASE_CA_CERT` | Contents of `ca.pem` |
+| `DATABASE_CA_CERT` | Contents of `prod-ca-2021.crt` |
 | `ADMIN_ENCRYPTION_KEY` | 32 random bytes, base64 (step 4). Keys the sign-in rate limit's IP hashing; changing it only resets the per-client failure counts |
 | `PUBLIC_SITE_URL` | `https://noblepath.lk`. Also read at **build** time for the image CSP, so redeploy after changing it |
 | `SITE_DEPLOY_HOOK_URL` | From step 5 |
@@ -106,8 +120,8 @@ database):
   most 2400 px in the browser before sending, so this is invisible in normal use. A file the
   browser cannot decode (HEIC outside Safari) must be under 4 MB.
 - **HTTPS:** Vercel serves HTTPS, which the `__Host-` Secure session cookie requires.
-- **Aiven allow-list:** Vercel functions have no fixed outbound IPs (unless on Secure Compute),
-  so Aiven's allow-list must stay open to them. Protection then rests on TLS, the per-role
+- **Network restrictions:** Vercel functions have no fixed outbound IPs (unless on Secure
+  Compute), so Supabase's network restrictions must stay open to them. Protection then rests on TLS, the per-role
   passwords and least privilege.
 - **Access control:** turn on **Vercel Deployment Protection**, or put Cloudflare Access in
   front, so only you can reach the admin at all (finding F-36-3).
@@ -154,7 +168,7 @@ in the admin repository, then run with the variables above on port 3100.
 
 ## 9. Rotating secrets
 
-- **Database passwords:** `alter role np_… password '…'` as `avnadmin`, then update the platform
+- **Database passwords:** `alter role np_… password '…'` as `postgres` (SQL Editor), then update the platform
   variable and redeploy.
 - **`ADMIN_ENCRYPTION_KEY`:** set a new value and redeploy the admin. Nothing else depends on it.
 - **Deploy hook:** delete it in Vercel, create a new one, and update `SITE_DEPLOY_HOOK_URL`.

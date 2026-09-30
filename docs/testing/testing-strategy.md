@@ -156,9 +156,37 @@ PostgreSQL 18.4 (embedded, from the scratchpad) and production builds of both ap
    tooltip; legend) and the phone width (no horizontal scroll; the menu collapses).
 
 **Not tested:**
-- against Aiven (TLS with Aiven's CA);
+- ~~against Aiven (TLS with Aiven's CA)~~ superseded by D-37: the database is now Supabase (see §9);
 - on the real hosting platforms (deploy hook, `x-forwarded-for`, geo header);
 - a real Resend send;
 - real touch devices or screen readers for the admin;
 - load.
+
+## 9. D-37: Supabase connection (2026-09-30)
+
+**Performed:**
+- **TLS probe:** `lib/pg-config.ts` against `aws-0-ap-northeast-2.pooler.supabase.com`, ports 5432
+  and 6543, with `DATABASE_CA_CERT` set to `prod-ca-2021.crt`. The handshake verified and the
+  connection reached authentication (a deliberately unknown user was refused with
+  `user not found`, which happens after TLS).
+- **SQL Editor, read-only:**
+  - migrations `001`–`003` applied;
+  - roles present;
+  - 363 of 363 content items published;
+  - 1 admin user;
+  - 0 `anon`/`authenticated` grants.
+- **Site:** `npm run lint`, `npm run typecheck` and `npm test` after the comment and config
+  changes: all pass (7/7 unit tests).
+
+- **Production (Vercel):**
+  - the latest build logged `[pull-content] 21 destinations, 33 experiences, 7 trips, 167
+    stays, 92 activities`;
+  - a real browser visit raised `page_views_daily` in Supabase from 2 to 3 while
+    `np_site_runtime` held a connection. So the runtime pooler path works, including the
+    `statement_timeout` startup parameter.
+
+**Not yet performed:**
+- a local `npm run dev` against Supabase (needs the role passwords in `.env.local`);
+- a real enquiry saved through `np_site_runtime`;
+- a signed-in admin session against Supabase. The redeploy is Ready and `/login` serves, but only the owner can sign in.
 
