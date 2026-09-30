@@ -50,7 +50,7 @@ export function ExperiencesBand({
             </p>
           </div>
           <LinkButton
-            href="/experiences"
+            href="/activities"
             variant="glass"
             size="md"
             className="shrink-0 border border-white/30"

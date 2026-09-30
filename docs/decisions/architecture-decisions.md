@@ -1726,8 +1726,8 @@ admin repository is already moving its sign-in to Supabase Auth (uncommitted wor
   production build pulled content from the database. A visit to `www.noblepathsrilanka.com`
   raised Supabase's `page_views_daily` count from 2 to 3, with `np_site_runtime` connected. The
   owner then replaced the **admin** project's `DATABASE_URL` and `DATABASE_CA_CERT`, and the
-  redeploy is Ready with the sign-in page serving. A signed-in check by the owner is still
-  pending. Enquiries saved to Aiven before the switch are not copied. Export them first if any
+  redeploy is Ready with the sign-in page serving. The owner then signed in successfully
+  (2026-09-30), after `np_admin` was given a URL-safe hex password. Enquiries saved to Aiven before the switch are not copied. Export them first if any
   matter.
 - **Backups:** the free plan has short daily backups and no point-in-time recovery.
 - **Documentation:** `database-schema.md`, `admin.md`, `environment.md`, the security review
@@ -1738,6 +1738,83 @@ admin repository is already moving its sign-in to Supabase Auth (uncommitted wor
   have not been run by an agent, because the passwords were not available to it.
 - The `statement_timeout` startup parameter that `pgConfig` sends works through the pooler:
   production page-view writes succeed.
+
+---
+
+## D-38 - Search engine optimisation: indexable, keyword-led, faster
+
+**Date:** 2026-09-30 · **Decided by:** Orchestrator, with research, technical-SEO and performance audits by three specialist agents (content strategist, Full-Stack, DevOps); requested by the owner
+
+**Status:** Accepted. Revises D-29 (hero video delivery), D-18 (`/plan` page copy) and the `/experiences` redirect.
+
+**Decision:** make the site indexable and competitive for Sri Lanka trip-planning searches.
+The full strategy, keyword map and off-site plan are in `docs/seo/seo-strategy.md`.
+
+**Reason:** the owner asked for "#1 when someone searches travel trip planner".
+- **Starting point:** the site was not indexed at all. `robots.txt` and `sitemap.xml` returned 404.
+- **Broken guard:** the staging noindex guard compared against the unused `noblepath.lk`, and nothing imported it.
+- **Weak on-page signals:**
+  - titles carried no keywords ("Trips · Noble Path");
+  - five pages inherited the home page's og:title and og:url;
+  - `/plan` had 161 words;
+  - JSON-LD used relative URLs.
+- **Slow home page:** the hero video was 26 MB with `preload="auto"` and was never cached.
+
+**Alternatives considered:**
+- **Chase "travel trip planner" directly:** rejected as unachievable. That query is owned by global
+  planning apps. It is documented honestly, and the Sri Lanka queries are targeted instead.
+- **A blanket robots.txt per environment through hosting config:** rejected in favour of one
+  in-code rule (`indexableFor`) that robots.txt and the page robots meta both use.
+- **`Product` schema for trips:** rejected. `TouristTrip` fits better, and an `Offer` is added only
+  when the owner has set a real "from" price (D-36), so search results never show a number the page
+  does not.
+- **ffmpeg or a hosted video service for the hero:** ffmpeg is not installed, and a third-party
+  host would add a CSP origin. The re-encode used macOS AVFoundation with a small Swift encoder:
+  H.264 High, 1.6 and 3.5 Mbps, fast start.
+- **Removing the hero entrance animation, which delays text LCP:** deferred, because it is an
+  approved design (D-32). The preloaded poster is now the LCP element.
+
+**Chosen solution:** see `docs/seo/seo-strategy.md` §2. In summary:
+- **Crawling:**
+  - `app/robots.ts` and `app/sitemap.ts`;
+  - `lib/seo.ts` (`indexableFor`, `pageMetadata`, `clip`, breadcrumb, FAQ and escaped JSON-LD helpers).
+- **Metadata:**
+  - keyword titles and descriptions on every page;
+  - site-wide `TravelAgency` and `WebSite` JSON-LD;
+  - absolute-URL trip and destination JSON-LD with breadcrumbs.
+- **Content:**
+  - a crawlable guide and FAQ on `/plan`;
+  - an "itineraries that visit {place}" section on destination pages;
+  - `/experiences` changed to a permanent 308.
+- **Performance:**
+  - 720p and 1080p hero sources, a poster, and `preload="metadata"`;
+  - `/images/*` cached for 7 days plus 1 day stale-while-revalidate;
+  - Poppins 300 dropped.
+
+**Impact:**
+- **Production:** indexable only while `NEXT_PUBLIC_SITE_URL` is exactly
+  `https://www.noblepathsrilanka.com`.
+- **Previews:** now noindex, with a disallow-all robots.txt.
+- **Deploy size:** 26 MB smaller.
+- **Header naming:** the header still says "Experiences" but links to `/activities`. The label is
+  unchanged pending UI/UX.
+
+**Known limitations:**
+- **No CWV numbers:** PageSpeed was rate-limited. Run pagespeed.web.dev after deploy to get a baseline.
+- **Not checked in a browser:** the new `/plan` guide and destination section. They were checked by
+  a production build and HTML inspection only.
+- **Performance fixes still open from the audit:**
+  - the whole content catalogue ships to the client on `/plan` and `/bookings`;
+  - Leaflet loads on mount instead of when scrolled into view;
+  - 30+ source JPEGs over 600 KB, including the 3.1 MB Sigiriya image;
+  - the hero h1 animation starts at opacity 0.
+- **No business facts in the schema:** there are no contact details, logo, favicon or social
+  profiles, so the `TravelAgency` schema has none.
+- **Off-site work is the owner's:** Search Console, Business Profile, reviews and backlinks
+  (`seo-strategy.md` §5). No ranking moves without it.
+
+**Open question for the owner:** should `/plan` get the day-by-day itinerary builder back? It
+was removed in D-18. It is the strongest asset for "Sri Lanka trip planner".
 
 ---
 

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 const ROUTES_OUT = [
   { href: "/destinations", label: "Destinations" },
-  { href: "/experiences", label: "Experiences" },
+  { href: "/activities", label: "Experiences" },
   { href: "/trips", label: "Trips" },
   { href: "/plan", label: "Build a plan" },
   { href: "/about", label: "About Noble Path" },

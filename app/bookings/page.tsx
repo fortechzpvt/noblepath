@@ -4,13 +4,14 @@ import { BookingOptions } from "@/components/booking/booking-options";
 import { PageHeader } from "@/components/ui/page-header";
 import { Container, Section } from "@/components/ui/section";
 import { getAllDestinations, getAllExperiences, getAllTrips } from "@/lib/content";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Plan your trip",
+export const metadata: Metadata = pageMetadata({
+  title: "Enquire & Book a Sri Lanka Tour",
   description:
-    "Send a booking request: choose a pre-planned trip or build your own, or book a single trip with a driver, and get a quotation.",
-  alternates: { canonical: "/bookings" },
-};
+    "Send a booking request: take a ready-made Sri Lanka itinerary or build your own with stays, activities and a private driver, and get a quotation.",
+  path: "/bookings",
+});
 
 export default async function BookingsPage({
   searchParams,

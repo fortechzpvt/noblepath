@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CalendarRange, Compass, Map as MapIcon, Moon } from "lucide-react";
 
 import { DestinationCard } from "@/components/cards/destination-card";
+import { TripCard } from "@/components/cards/trip-card";
 import { ExperienceCard } from "@/components/cards/experience-card";
 import { DestinationHero } from "@/components/destinations/destination-hero";
 import { DestinationMap } from "@/components/destinations/destination-map";
@@ -12,12 +13,14 @@ import { LinkButton } from "@/components/ui/button";
 import { Container, Section } from "@/components/ui/section";
 import {
   getAllDestinations,
+  getAllTrips,
   getDestinationBySlug,
   getExperiencesForDestination,
   getRelatedDestinations,
 } from "@/lib/content";
 import { formatMonthRange, regionName } from "@/lib/format";
-import type { Destination } from "@/lib/types";
+import { absoluteUrl, breadcrumbJsonLd, clip, jsonLdScript, pageMetadata } from "@/lib/seo";
+import type { Destination, Region } from "@/lib/types";
 
 export function generateStaticParams(): Array<{ slug: string }> {
   return getAllDestinations().map((destination) => ({ slug: destination.slug }));
@@ -38,54 +41,43 @@ export async function generateMetadata({
     };
   }
 
-  const title = destination.name;
-  const description = destination.summary.slice(0, 300);
-
-  return {
-    title,
-    description,
-    alternates: { canonical: `/destinations/${destination.slug}` },
-    openGraph: {
-      type: "article",
-      title: `${title} · Noble Path`,
-      description,
-      url: `/destinations/${destination.slug}`,
-      images: [
-        {
-          url: destination.image.src,
-          width: 1600,
-          height: 900,
-          alt: destination.image.alt,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${title} · Noble Path`,
-      description,
-      images: [destination.image.src],
-    },
-  };
+  return pageMetadata({
+    title: `Things to Do in ${destination.name}, Sri Lanka`,
+    description: clip(
+      `${destination.name}, ${regionName(destination.region)}: ${destination.summary} Stay ${destination.suggestedNights} ${destination.suggestedNights === 1 ? "night" : "nights"}; best ${formatMonthRange(destination.bestMonths)}.`,
+    ),
+    path: `/destinations/${destination.slug}`,
+    type: "article",
+    image: destination.image,
+  });
 }
 
 /**
- * Structured data for a place. Coordinates are the one field here that is not
- * traveller-facing prose, and the only reason this page emits JSON-LD at all —
- * everything else already has an `article`-flavoured `openGraph` block above.
+ * Structured data for a place (D-38): a `TouristDestination` with absolute
+ * URLs and coordinates, plus a breadcrumb matching Home › Destinations › place.
  */
 function destinationJsonLd(destination: Destination) {
   return {
-    "@context": "https://schema.org",
-    "@type": "TouristDestination",
-    name: destination.name,
-    description: destination.summary,
-    url: `/destinations/${destination.slug}`,
-    image: destination.image.src,
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: destination.coordinates.lat,
-      longitude: destination.coordinates.lng,
-    },
+    "@graph": [
+      {
+        "@type": "TouristDestination",
+        name: destination.name,
+        description: destination.summary,
+        url: absoluteUrl(`/destinations/${destination.slug}`),
+        image: absoluteUrl(destination.image.src),
+        containedInPlace: { "@type": "Country", name: "Sri Lanka" },
+        geo: {
+          "@type": "GeoCoordinates",
+          latitude: destination.coordinates.lat,
+          longitude: destination.coordinates.lng,
+        },
+      },
+      breadcrumbJsonLd([
+        { name: "Home", path: "/" },
+        { name: "Sri Lanka destinations", path: "/destinations" },
+        { name: destination.name, path: `/destinations/${destination.slug}` },
+      ]),
+    ],
   };
 }
 
@@ -116,6 +108,18 @@ export default async function DestinationDetailPage({
   const experiences = getExperiencesForDestination(destination.slug);
   const nearby = getRelatedDestinations(destination.slug, 3);
 
+  // Itineraries that stop here (D-38): links each place to the trips that sell it.
+  const tripsHere = getAllTrips()
+    .filter((trip) => trip.destinationSlugs.includes(destination.slug))
+    .map((trip) => {
+      const regions: Region[] = [];
+      for (const stop of trip.destinationSlugs) {
+        const region = getDestinationBySlug(stop)?.region;
+        if (region && !regions.includes(region)) regions.push(region);
+      }
+      return { trip, regions };
+    });
+
   const facts: ReadonlyArray<{
     readonly icon: typeof MapIcon;
     readonly label: string;
@@ -132,15 +136,7 @@ export default async function DestinationDetailPage({
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        // Escaping `<` is what stops any future content string from being able to
-        // close this script element. The payload is our own editorial data, but
-        // the escape is cheap and removes the class of bug entirely.
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(destinationJsonLd(destination)).replace(/</g, "\\u003c"),
-        }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(destinationJsonLd(destination))} />
 
       <DestinationHero destination={destination} />
 
@@ -236,7 +232,7 @@ export default async function DestinationDetailPage({
             <p className="mt-6 text-body text-ink-600">
               We haven&rsquo;t added experiences here yet.{" "}
               <Link
-                href="/experiences"
+                href="/activities"
                 className="rounded-xs text-jungle-600 underline underline-offset-4"
               >
                 Browse every experience
@@ -247,8 +243,25 @@ export default async function DestinationDetailPage({
         </Container>
       </Section>
 
-      {nearby.length > 0 ? (
+      {tripsHere.length > 0 ? (
         <Section className="bg-surface">
+          <Container>
+            <h2 className="font-display text-h2 text-ink-900">
+              Sri Lanka itineraries that visit {destination.name}
+            </h2>
+            <ul className="mt-8 grid gap-[var(--grid-gap)] md:grid-cols-2 lg:grid-cols-3">
+              {tripsHere.map(({ trip, regions }) => (
+                <li key={trip.slug} className="flex">
+                  <TripCard trip={trip} regions={regions} headingLevel="h3" className="w-full" />
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </Section>
+      ) : null}
+
+      {nearby.length > 0 ? (
+        <Section className={tripsHere.length > 0 ? "bg-sand-50" : "bg-surface"}>
           <Container>
             <h2 className="font-display text-h2 text-ink-900">Nearby destinations</h2>
             <ul className="mt-8 grid gap-[var(--grid-gap)] md:grid-cols-2 lg:grid-cols-3">

@@ -3,6 +3,38 @@
 Significant changes, newest first (Fortechz policy §16). Decisions behind each entry are in
 `docs/decisions/architecture-decisions.md`.
 
+## 2026-09-30 — Security: Next.js 16.3.8
+
+### Security
+- `next` and `eslint-config-next` upgraded from 16.3.5 to 16.3.8 (critical GHSA-vcvr-r3jv-pc5j, `next/og` RCE; not used here, so not exploitable). The admin repository has the same upgrade.
+
+## 2026-09-30 — D-38: search engine optimisation
+
+### Added
+- `robots.txt` and `sitemap.xml` (35 URLs), which previously returned 404.
+- `lib/seo.ts`, with one indexing rule for production and previews.
+- JSON-LD:
+  - site-wide `TravelAgency` and `WebSite`;
+  - `BreadcrumbList` on trips and destinations;
+  - `FAQPage` on `/plan`.
+- A crawlable planning guide and FAQ on `/plan`, which grew from 161 to 683 words.
+- "Itineraries that visit {place}" on destination pages.
+- 5 unit tests (`tests/seo.test.ts`).
+
+### Changed
+- Keyword-led titles and descriptions on every page; each page now has its own Open Graph data.
+- `/experiences` is a permanent 308 to `/activities`.
+- Hero video: 26 MB changed to 2.7 MB (phones) or 5.8 MB (desktop), with a poster and `preload="metadata"`.
+- `/images/*` is cached for a week.
+
+### Fixed
+- The noindex guard for previews compared against the unused `noblepath.lk` and was never applied.
+
+### Documentation
+- New `docs/seo/seo-strategy.md`.
+- New ADR D-38.
+- Updated `environment.md`, the security review and testing §10.
+
 ## 2026-09-30 — D-37: database moved to Supabase
 
 ### Changed

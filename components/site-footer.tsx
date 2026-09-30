@@ -5,7 +5,7 @@ const COLUMNS = [
     heading: "Explore",
     links: [
       { href: "/destinations", label: "Destinations" },
-      { href: "/experiences", label: "Experiences" },
+      { href: "/activities", label: "Experiences" },
       { href: "/trips", label: "Trips" },
     ],
   },

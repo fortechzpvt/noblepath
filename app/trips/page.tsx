@@ -6,28 +6,18 @@ import { LinkButton } from "@/components/ui/button";
 import { Container, Section } from "@/components/ui/section";
 import { getAllTrips, getDestinationBySlug } from "@/lib/content";
 import type { Region, TripTier } from "@/lib/types";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Trips",
+export const metadata: Metadata = pageMetadata({
+  title: "Sri Lanka Itineraries & Private Tour Packages",
   description:
-    "Ready-made Sri Lanka itineraries grouped by length: short trips of three to five days, classic weeks, and grand tours of the whole island. Every day, inclusion and drive time is listed.",
-  alternates: { canonical: "/trips" },
-  openGraph: {
-    type: "website",
-    title: "Trips · Noble Path",
-    description:
-      "Ready-made Sri Lanka itineraries, grouped by how many days you have.",
-    url: "/trips",
-    images: [
-      {
-        url: "/images/experiences/jungle-villa-yala.jpg",
-        width: 1600,
-        height: 1067,
-        alt: "A timber villa deck facing dense jungle at Yala, lit by low evening sun",
-      },
-    ],
+    "Ready-made Sri Lanka itineraries from 4 to 15 days, with every day, drive time and inclusion listed. Book one as it is or use it as a starting point.",
+  path: "/trips",
+  image: {
+    src: "/images/experiences/jungle-villa-yala.jpg",
+    alt: "A timber villa deck facing dense jungle at Yala, lit by low evening sun",
   },
-};
+});
 
 const TIERS: ReadonlyArray<{
   readonly tier: TripTier;

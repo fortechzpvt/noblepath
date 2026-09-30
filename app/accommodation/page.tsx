@@ -4,13 +4,18 @@ import { StaysExplorer } from "@/components/accommodation/stays-explorer";
 import { PageHeader } from "@/components/ui/page-header";
 import { Container, Section } from "@/components/ui/section";
 import { getAllDestinations, hasAccommodations } from "@/lib/content";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Accommodation",
+export const metadata: Metadata = pageMetadata({
+  title: "Where to Stay in Sri Lanka: Hotels by Budget",
   description:
-    "Choose a budget, then browse places to stay across Sri Lanka on a map: budget, mid-range and luxury.",
-  alternates: { canonical: "/accommodation" },
-};
+    "Hand-picked places to stay across Sri Lanka, from budget to luxury, on a map. Choose a budget, pick a town and add the stay to your trip.",
+  path: "/accommodation",
+  image: {
+    src: "/images/experiences/jungle-villa-yala.jpg",
+    alt: "A timber villa deck facing dense jungle at Yala, lit by low evening sun",
+  },
+});
 
 export default function AccommodationPage() {
   const destinations = getAllDestinations()

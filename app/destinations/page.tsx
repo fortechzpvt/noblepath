@@ -12,28 +12,20 @@ import { Container, SectionHeading } from "@/components/ui/section";
 import { getAllDestinations, getAllRegions } from "@/lib/content";
 import { interestName } from "@/lib/format";
 import type { Destination, Interest } from "@/lib/types";
+import { pageMetadata } from "@/lib/seo";
 
 const HEADER_IMAGE = "/images/hero/sigiriya-sunrise-2.jpg";
 
-export const metadata: Metadata = {
-  title: "Destinations",
+export const metadata: Metadata = pageMetadata({
+  title: "Best Places to Visit in Sri Lanka",
   description:
-    "Every place Noble Path covers in Sri Lanka, from the Cultural Triangle to the east coast. Filter by region and by what you are travelling for.",
-  alternates: { canonical: "/destinations" },
-  openGraph: {
-    type: "website",
-    title: "Destinations · Noble Path",
-    description:
-      "Every place Noble Path covers in Sri Lanka. Filter by region and by what you are travelling for.",
-    url: "/destinations",
-    images: [
-      {
-        url: HEADER_IMAGE,
-        alt: "Sigiriya rock fortress rising from jungle at sunrise, birds circling overhead",
-      },
-    ],
+    "Sri Lanka's best places to visit by region, from Sigiriya and Kandy to Ella, Yala and the south and east coasts: what to see and how they fit a route.",
+  path: "/destinations",
+  image: {
+    src: HEADER_IMAGE,
+    alt: "Sigiriya rock fortress rising from jungle at sunrise, birds circling overhead",
   },
-};
+});
 
 /**
  * Reads one filter dimension out of the query string.
@@ -163,7 +155,7 @@ export default async function DestinationsPage({
                   <LinkButton href="/destinations" variant="solid">
                     Clear all filters
                   </LinkButton>
-                  <LinkButton href="/experiences" variant="outline">
+                  <LinkButton href="/activities" variant="outline">
                     Browse experiences
                   </LinkButton>
                 </>

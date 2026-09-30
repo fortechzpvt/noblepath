@@ -63,11 +63,12 @@ Every variable in `.env.example`, plus the pipeline variables.
 | **Exposure** | **PUBLIC** — compiled into the client bundle. Must never hold a secret. |
 | **Required** | Yes, in every environment. |
 | **Default** | `http://localhost:3000` (from `.env.example`) |
-| **Format** | Absolute origin, scheme included, **no trailing slash**. `https://noblepath.lk` ✅ · `noblepath.lk` ❌ · `https://noblepath.lk/` ❌ |
+| **Format** | Absolute origin, scheme included, **no trailing slash**. `https://www.noblepathsrilanka.com` ✅ · `noblepathsrilanka.com` ❌ · `https://www.noblepathsrilanka.com/` ❌ (a trailing slash is tolerated by `lib/seo.ts` since D-38) |
 | **Local** | `http://localhost:3000` |
 | **Preview** | The preview deployment URL, or the staging URL as an approximation |
 | **Staging** | `https://staging.noblepath.lk` |
-| **Production** | `https://noblepath.lk` |
+| **Production** | `https://www.noblepathsrilanka.com` (D-38; `noblepath.lk` was the planned domain and is not in use). **Must match `PRODUCTION_SITE_URL` in `lib/seo.ts` exactly**, or production is served as noindex |
+| **Indexing (D-38)** | `lib/seo.ts` `indexableFor()`: a deployment is indexable only when this value equals `https://www.noblepathsrilanka.com` **and** `VERCEL_ENV` is `production` or unset. Anything else gets `noindex` and a disallow-all `robots.txt`, including a preview that copies the production value |
 | **Consequence if wrong** | Canonical tags and Open Graph URLs point at the wrong host. On production this means social shares 404 and search engines may consolidate ranking signals onto staging. It does not break rendering, so it fails silently — check it explicitly after a domain change. |
 | **Changing it** | Requires a **rebuild and redeploy**, not just a settings change (see §1). |
 
@@ -303,7 +304,7 @@ deploy → verify canonical tags and Open Graph URLs → update this document.
 | 2 | No automated check that a server-only variable has not leaked into the client bundle. | Medium — NFR-6 is enforced by convention only | Full-Stack / DevOps: add a post-build grep step (see §1) to `ci.yml` once the variable list is stable. |
 | 3 | The rate-limit variables have no effect across instances (in-memory limiter). | Medium — NFR-8 is weaker in practice than the configured value implies | Documented limitation for v1; revisit when a datastore exists. |
 | 4 | Vercel token expiry is a calendar reminder, not an automated alert. | Low — an expired token breaks deploys, not the site | DevOps: revisit if deploy frequency increases. |
-| 5 | D-37: the site's production build and runtime are verified on Supabase. The admin project's variables were replaced and it redeployed; a signed-in check is pending. | Low | Owner: sign in and confirm the dashboard reads Supabase. |
+| 5 | D-37: the site's production build and runtime are verified on Supabase. The admin's variables were replaced, and the owner signed in successfully (2026-09-30). | Closed | — |
 
 ---
 

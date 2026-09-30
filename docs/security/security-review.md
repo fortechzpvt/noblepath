@@ -6,6 +6,40 @@ requires it.
 
 ---
 
+## Dependency: Next.js GHSA-vcvr-r3jv-pc5j (2026-09-30)
+
+- **Found by:** the CI `npm audit --audit-level=high` job, on the D-38 push.
+- **Advisory:** [GHSA-vcvr-r3jv-pc5j](https://github.com/advisories/GHSA-vcvr-r3jv-pc5j), **Critical**.
+  Remote code execution in `next/og` `ImageResponse`, affecting `next` 16.2.0–16.3.5.
+- **Exposure:** none in practice. Neither the site nor the admin imports `next/og` or `ImageResponse`
+  (searched both repositories). Both pinned the affected `16.3.5`.
+- **Remediation:** `next` and `eslint-config-next` upgraded to **16.3.8** (exact pins) in both the
+  site and `noblepathadmin`.
+  - `npm audit`: 0 vulnerabilities in both.
+  - Lint, typecheck, tests (12 site, 5 admin) and production builds pass in both.
+- **Status:** Fixed in code. Closed once both are deployed.
+- **Note:** a future `app/opengraph-image.tsx` (suggested in D-38) would use `ImageResponse`. Add it
+  only on a patched `next`.
+
+---
+
+## D-38 — SEO changes (2026-09-30)
+
+**Scope:** a self-review of robots/sitemap, indexing control, JSON-LD and cache headers. It is not an
+independent review.
+
+| Area | Check | Result |
+|---|---|---|
+| JSON-LD injection | All JSON-LD goes through `jsonLdScript()`, which escapes `<`. A unit test checks that `</script>` cannot survive | OK |
+| Crawling of APIs | robots.txt disallows `/api/`. The API routes still send `no-store`. The sitemap lists only public pages, not `/bookings` or `/credits` | OK |
+| Preview exposure | Previews and staging are now noindex, with a disallow-all robots.txt (`indexableFor`). Before D-38 they were indexable | Improved |
+| Cache headers | The one-week cache applies only to `/images/*`: public, static, non-personal files. Uploaded media (`/media`) and API responses are unaffected | OK |
+| Structured data truthfulness | No contact details, prices or credentials are claimed that the site does not state. An `Offer` is emitted only for a real admin-set price | OK |
+
+No new findings.
+
+---
+
 ## D-37 — Database moved from Aiven to Supabase (2026-09-30)
 
 **Scope:** the connection path from the site (and admin) to Supabase, and the Supabase-specific

@@ -43,7 +43,8 @@ DATABASE_CA_CERT="$(cat prod-ca-2021.crt)" npm run db:migrate
 ```
 
 Then run `db/roles.sql` (admin repository) as `postgres` (Supabase → *SQL Editor*).
-Replace each `CHANGE_ME` with a different random password from `openssl rand -base64 32`, and
+Replace each `CHANGE_ME` with a different random password from `openssl rand -hex 24`
+(hex, not base64: `+`, `/` and `=` break connection URLs unless percent-encoded), and
 store each one only in the hosting platform's secret settings. To set a new password later:
 `alter role np_site_build password '…';` in the SQL Editor.
 

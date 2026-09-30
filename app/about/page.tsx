@@ -4,28 +4,19 @@ import { CalendarRange, Compass, Route, ShieldCheck } from "lucide-react";
 
 import { LinkButton } from "@/components/ui/button";
 import { Container, Section } from "@/components/ui/section";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "About Noble Path",
+export const metadata: Metadata = pageMetadata({
+  title: "About Noble Path: Local Sri Lanka Trip Planners",
   description:
-    "Who Noble Path is, how we build Sri Lankan itineraries, and what we will and won't promise you. A small, new planning service run from Sri Lanka.",
-  alternates: { canonical: "/about" },
-  openGraph: {
-    type: "article",
-    title: "About Noble Path",
-    description:
-      "How we build Sri Lankan itineraries: seasons first, geography second, and a human reading every enquiry.",
-    url: "/about",
-    images: [
-      {
-        url: "/images/destinations/ella.jpg",
-        width: 1600,
-        height: 1067,
-        alt: "The Nine Arch Bridge near Ella, a stone viaduct curving through dense tea country",
-      },
-    ],
+    "Who Noble Path is, how we build Sri Lanka itineraries with a private driver, and what we will and won't promise you. A small planning team in Sri Lanka.",
+  path: "/about",
+  type: "article",
+  image: {
+    src: "/images/destinations/ella.jpg",
+    alt: "The Nine Arch Bridge near Ella, a stone viaduct curving through dense tea country",
   },
-};
+});
 
 const PRINCIPLES = [
   {

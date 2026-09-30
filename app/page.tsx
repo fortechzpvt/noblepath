@@ -19,12 +19,21 @@ import {
   getRegionBySlug,
 } from "@/lib/content";
 import type { Region } from "@/lib/types";
+import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Noble Path · Explore Sri Lanka with us",
-  description:
-    "Discover breathtaking destinations, unique experiences and unforgettable memories across Sri Lanka. Build an itinerary that fits the days you actually have.",
-  alternates: { canonical: "/" },
+  // Absolute: the home title carries its own brand suffix instead of the template's.
+  ...pageMetadata({
+    title: "Sri Lanka Trip Planner & Private Driver Tours",
+    description:
+      "Plan your Sri Lanka trip with a local team: ready-made itineraries, 20+ destinations, stays and activities, and a private driver for the whole route.",
+    path: "/",
+    image: {
+      src: "/images/hero/sigiriya-sunrise-2.jpg",
+      alt: "Sigiriya rock fortress rising from jungle at sunrise, birds circling overhead",
+    },
+  }),
+  title: { absolute: "Sri Lanka Trip Planner & Private Driver Tours | Noble Path" },
 };
 
 /**

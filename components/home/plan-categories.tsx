@@ -7,7 +7,7 @@ import { ownedPhotos } from "@/content/destinations";
 const CATEGORIES = [
   { label: "Accommodation", href: "/accommodation", image: ownedPhotos.jungleVilla },
   { label: "Itinerary", href: "/plan", image: ownedPhotos.ellaRoadSign },
-  { label: "Activities", href: "/experiences", image: ownedPhotos.surfSouthCoast },
+  { label: "Activities", href: "/activities", image: ownedPhotos.surfSouthCoast },
   { label: "Trip Plans", href: "/trips", image: ownedPhotos.tuktukRoadTrip },
 ] as const;
 
