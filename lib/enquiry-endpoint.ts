@@ -9,6 +9,17 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import type { ApiErrorBody, ApiErrorCode, BookingResponse } from "@/lib/types";
 import { toFieldErrors } from "@/lib/validation";
 
+const RESEND_TIMEOUT_MS = 10_000;
+
+/** Rejects with an Error if `promise` has not settled within `ms`. */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`timed out after ${ms} ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 /**
  * The shared request pipeline behind every public enquiry endpoint
  * (`POST /api/bookings`, D-23, and `POST /api/rides`, D-24).
@@ -205,13 +216,19 @@ export async function handleEnquiryPost<Schema extends z.ZodType<{ website: stri
   let delivered = false;
   try {
     const resend = new Resend(serverEnv.RESEND_API_KEY);
-    const { error } = await resend.emails.send({
-      from: serverEnv.RESEND_FROM_EMAIL,
-      to: serverEnv.BOOKINGS_NOTIFICATION_EMAIL,
-      replyTo,
-      subject,
-      text,
-    });
+    // A stalled provider must not hold the traveller's request open until the
+    // platform kills it (D-39, F-39-15): after 10 s this counts as a failed
+    // send, and the request is still saved for the admin below.
+    const { error } = await withTimeout(
+      resend.emails.send({
+        from: serverEnv.RESEND_FROM_EMAIL,
+        to: serverEnv.BOOKINGS_NOTIFICATION_EMAIL,
+        replyTo,
+        subject,
+        text,
+      }),
+      RESEND_TIMEOUT_MS,
+    );
     if (error) {
       console.error(
         `${tag} Resend rejected request ${id} (correlation ${correlationId}): ${error.name} — ${error.message}`,

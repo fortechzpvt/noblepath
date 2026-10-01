@@ -57,3 +57,8 @@ export function countryOf(headerValue: string | null): string {
   const value = (headerValue ?? "").trim().toUpperCase();
   return /^[A-Z]{2}$/.test(value) && value !== "XX" ? value : "??";
 }
+
+/** Today's date in Sri Lanka as YYYY-MM-DD: the day the statistics are counted in (D-39). */
+export function colomboDay(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Colombo" }).format(now);
+}

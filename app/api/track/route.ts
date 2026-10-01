@@ -2,7 +2,8 @@ import { createHash, randomBytes } from "node:crypto";
 
 import { NextResponse, type NextRequest } from "next/server";
 
-import { countryOf, deviceOf, isBot, normalizePath, referrerHost } from "@/lib/analytics";
+import { countryOf, deviceOf, isBot, normalizePath, referrerHost, colomboDay } from "@/lib/analytics";
+import { isKnownDestinationSlug, isKnownTripSlug } from "@/lib/content";
 import { getDb } from "@/lib/db";
 import { clientKey } from "@/lib/enquiry-endpoint";
 import { createRateLimiter } from "@/lib/rate-limit";
@@ -55,46 +56,69 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return noContent();
   }
   const path = normalizePath(body.p);
-  if (!path) return noContent();
+  if (!path || !isSitePage(path)) return noContent();
 
-  const country = countryOf(request.headers.get("x-vercel-ip-country") ?? request.headers.get("cf-ipcountry"));
+  // Vercel's header only: `cf-ipcountry` is not set by this host, so a client
+  // could send it to pick its own country (D-39, F-39-18).
+  const country = countryOf(request.headers.get("x-vercel-ip-country"));
   const device = deviceOf(userAgent);
   const referrer = referrerHost(body.r, request.nextUrl.hostname);
 
   try {
     // Days are counted in Sri Lanka time, which is how the business reads them.
+    // Worked out once, here: before D-39 each statement evaluated now() on its
+    // own pooled connection, so around midnight the salt was created for one
+    // day and looked up for the next, and the visit was lost (F-39-19).
+    const day = colomboDay();
     await db.query(
       `insert into page_views_daily (day, path, country, device, referrer_host, views)
-       values ((now() at time zone 'Asia/Colombo')::date, $1, $2, $3, $4, 1)
+       values ($1, $2, $3, $4, $5, 1)
        on conflict (day, path, country, device, referrer_host)
        do update set views = page_views_daily.views + 1`,
-      [path, country, device, referrer],
+      [day, path, country, device, referrer],
     );
 
-    const salt = await todaysSalt(db);
+    const salt = await saltFor(db, day);
+    if (!salt) return noContent();
     const visitor = createHash("sha256").update(salt).update(ip).update(userAgent).digest();
-    await db.query(
-      `insert into visitors_daily (day, visitor_hash)
-       values ((now() at time zone 'Asia/Colombo')::date, $1) on conflict do nothing`,
-      [visitor],
-    );
+    await db.query(`insert into visitors_daily (day, visitor_hash) values ($1, $2) on conflict do nothing`, [
+      day,
+      visitor,
+    ]);
   } catch (error) {
     console.error(`[track] Could not record a view: ${(error as Error).message}`);
   }
   return noContent();
 }
 
-/** The day's random salt, created on first use. Salts older than yesterday are deleted. */
-async function todaysSalt(db: NonNullable<ReturnType<typeof getDb>>): Promise<Buffer> {
-  const today = "(now() at time zone 'Asia/Colombo')::date";
-  await db.query(`insert into visitor_salts (day, salt) values (${today}, $1) on conflict do nothing`, [
-    randomBytes(32),
-  ]);
-  await db.query(`delete from visitor_salts where day < ${today} - 1`);
-  const { rows } = await db.query<{ salt: Buffer }>(`select salt from visitor_salts where day = ${today}`);
-  return rows[0]!.salt;
+/**
+ * The day's random salt, created on first use. Salts older than yesterday are
+ * deleted, on about one visit in fifty rather than on every one.
+ */
+async function saltFor(db: NonNullable<ReturnType<typeof getDb>>, day: string): Promise<Buffer | null> {
+  await db.query(`insert into visitor_salts (day, salt) values ($1, $2) on conflict do nothing`, [day, randomBytes(32)]);
+  if (Math.random() < 0.02) await db.query(`delete from visitor_salts where day < $1::date - 1`, [day]);
+  const { rows } = await db.query<{ salt: Buffer }>(`select salt from visitor_salts where day = $1`, [day]);
+  return rows[0]?.salt ?? null;
 }
 
 export async function GET(): Promise<NextResponse> {
   return new NextResponse(null, { status: 405, headers: { Allow: "POST" } });
 }
+
+/**
+ * Only real pages are counted (D-39, F-39-27). Any lower-case path used to be
+ * stored, so a script could add unlimited rows (`/x1`, `/x2`, …) to the
+ * statistics tables.
+ */
+const STATIC_PAGES = new Set(["/", "/plan", "/trips", "/destinations", "/activities", "/accommodation", "/about", "/bookings", "/credits"]);
+
+function isSitePage(path: string): boolean {
+  if (STATIC_PAGES.has(path)) return true;
+  const [, section, slug, extra] = path.split("/");
+  if (!slug || extra !== undefined) return false;
+  if (section === "trips") return isKnownTripSlug(slug);
+  if (section === "destinations") return isKnownDestinationSlug(slug);
+  return false;
+}
+

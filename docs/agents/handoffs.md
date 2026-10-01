@@ -1218,3 +1218,45 @@ paths in these records refer to that repository. The Aiven CA certificate that s
   - pre-resize source JPEGs over 600 KB;
   - run PageSpeed Insights after deploy to set a baseline.
 
+---
+
+## Handoff: bug hunt (D-39), 2026-10-01
+
+**From:** Orchestrator, using five read-only specialist agents
+**To:** the owner, then Cybersecurity, Full-Stack and DevOps
+
+**Completed:**
+- **Admin security audit:** 12 findings, with 2 High. Fixed: F-39-1, 2, 5, 6, 7, 8, 9 and 12
+  (security review D-39).
+- **Live crawl:** 51 pages and 319 assets, with 0 broken. The empty-body 404 is fixed.
+- **Re-run and completed:** the site-API, site-frontend and data-consistency audits. Two High
+  findings (F-39-21, F-39-22) and the Medium findings are fixed (security review D-39).
+
+**Tests (admin):** lint, typecheck, 8 of 8 unit tests and the production build all pass. The
+guard test was mutation-checked: it fails when a page loses its check.
+
+**Required actions (owner):**
+1. **Supabase → Authentication:**
+   - turn **off** "Allow new users to sign up";
+   - keep "Confirm email" on;
+   - set Site URL to `https://noblepathadmin.vercel.app`;
+   - add `https://noblepathadmin.vercel.app/auth/callback` to Redirect URLs (F-39-3, F-39-4).
+2. **Commit and deploy** both repositories (the admin F-39-1 and F-39-2 fixes are High).
+3. **Move the projects out of iCloud.** `~/Documents` is synced with "Optimise Mac Storage", and
+   macOS had evicted 16,590 `node_modules` files plus some source files, which made builds hang
+   (`ECANCELED` on read). Either:
+   - move `Fortechz/` to a non-synced folder such as `~/Developer`, or
+   - turn off "Optimise Mac Storage" for iCloud Drive.
+
+**Required actions (agents):**
+- **Verified:** site fixes on a clean copy (lint, typecheck, 19 of 19 tests, build, HTTP checks).
+  The project's own `node_modules` is still iCloud-evicted. Run `npm ci` before local work.
+- **Cybersecurity:**
+  - F-39-3 hardening (match on the Supabase user id);
+  - F-39-11 audit gaps;
+  - F-36-2 nonce CSP.
+- **Full-Stack:**
+  - smaller og:images;
+  - redirect uppercase paths.
+- **DevOps:** bare-domain HSTS, and the two-hop redirect from `http://` on the bare domain.
+

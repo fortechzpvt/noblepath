@@ -22,6 +22,15 @@ import { formatMonthRange, regionName } from "@/lib/format";
 import { absoluteUrl, breadcrumbJsonLd, clip, jsonLdScript, pageMetadata } from "@/lib/seo";
 import type { Destination, Region } from "@/lib/types";
 
+/**
+ * Every destination is known at build time (content is pulled from the database on
+ * each build and Publish triggers a rebuild), so an unknown slug is refused
+ * outright and served the prerendered 404 page. Before D-39 it was rendered on
+ * demand and the 404 arrived with an empty HTML body, readable only with
+ * JavaScript (live crawl finding).
+ */
+export const dynamicParams = false;
+
 export function generateStaticParams(): Array<{ slug: string }> {
   return getAllDestinations().map((destination) => ({ slug: destination.slug }));
 }

@@ -13,7 +13,10 @@ import { createRateLimiter } from "@/lib/rate-limit";
  * store** (F-9), so searching can never use up, sweep or evict the requests a
  * traveller needs to submit their booking.
  */
-const placesLimiter = createRateLimiter({ max: 60, windowMs: 60_000 });
+// 30 a minute per client (D-39; was 60): plenty for a person typing with a
+// 300 ms debounce, and a few scripted clients can no longer fill the shared
+// 5-a-second Photon allowance for everyone else.
+const placesLimiter = createRateLimiter({ max: 30, windowMs: 60_000 });
 
 /**
  * These endpoints exist only for our own pages. A browser sends

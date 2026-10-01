@@ -58,3 +58,25 @@ export const honeypotSchema = z
 
 /** Digits only, so `"0x5"` or `"1e1"` never pass as a count and get emailed as sent (F-8). */
 export const DIGITS_ONLY = /^\d{1,3}$/;
+
+/**
+ * Postgres refuses two things JavaScript strings can hold: NUL (`\u0000`,
+ * in text and in jsonb) and lone UTF-16 surrogates (in jsonb). Validation
+ * lets both through in free-text fields, so a single stray character used to
+ * make the insert fail and the enquiry silently vanish from the admin
+ * (D-39, F-39-13). Strings are cleaned here, at the one place that writes
+ * them: NUL is dropped and a lone surrogate becomes U+FFFD.
+ */
+export function storableText(value: string): string {
+  return value.replace(/\u0000/g, "").toWellFormed();
+}
+
+/** `storableText` applied to every string inside a JSON-like value. */
+export function storable(value: unknown): unknown {
+  if (typeof value === "string") return storableText(value);
+  if (Array.isArray(value)) return value.map(storable);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [storableText(key), storable(inner)]));
+  }
+  return value;
+}

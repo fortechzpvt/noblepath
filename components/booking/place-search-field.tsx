@@ -111,6 +111,9 @@ export function PlaceSearchField({
   }
 
   function choose(suggestion: Suggestion): void {
+    // A debounced search still pending would run after the pick (D-39).
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    timerRef.current = null;
     abortRef.current?.abort();
     onSelect(placeLabel(suggestion), { lat: suggestion.lat, lng: suggestion.lng });
     setOpen(false);

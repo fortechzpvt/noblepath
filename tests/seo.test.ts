@@ -43,3 +43,9 @@ test("JSON-LD cannot close its own script element", () => {
   assert.ok(!html.includes("</script>"));
   assert.ok(html.includes("\\u003c/script>"));
 });
+
+test("share images are served resized, remote images untouched (D-39)", async () => {
+  const { shareImage } = await import("../lib/seo");
+  assert.equal(shareImage("/images/hero/a b.jpg"), "/_next/image?url=%2Fimages%2Fhero%2Fa%20b.jpg&w=1200&q=75");
+  assert.equal(shareImage("https://images.unsplash.com/x"), "https://images.unsplash.com/x");
+});

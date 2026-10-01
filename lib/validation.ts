@@ -9,6 +9,8 @@ import {
   ROOM_TYPES,
   STAY_KINDS,
   TIERS,
+  entryDatesOutsideTrip,
+  MAX_TRIP_DAYS,
   type StayKind,
 } from "@/lib/booking-request";
 import {
@@ -59,6 +61,18 @@ const PHONE_PATTERN = /^[+()\d][\d\s()+.\-]{5,23}$/;
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 /** Client-minted entry ids (`makeEntryId`, e.g. `"stay1"`) — bookkeeping only, never shown to staff. */
 const ENTRY_ID_PATTERN = /^[a-z]+[0-9]+$/;
+
+/**
+ * A whole number typed into a text field, or NaN. `Number()` alone accepted
+ * "0x5", "1e1", "5.0", "+3" and "Infinity", which then appeared verbatim in
+ * the staff email (D-39, F-39-16; completes security review F-8).
+ */
+function digitsOnly(value: string): number {
+  return DIGITS_ONLY.test(value) ? Number(value) : Number.NaN;
+}
+
+/** A phone number must contain at least 7 digits, whatever its punctuation (D-39). */
+const hasSevenDigits = (value: string): boolean => (value.match(/\d/g)?.length ?? 0) >= 7;
 
 /** ISO `YYYY-MM-DD` at UTC midnight, or `null` if the string is not a real date. */
 function parseIsoDateUtc(value: string): number | null {
@@ -164,7 +178,8 @@ const travellerSchema = z.strictObject({
     .max(24, { message: "That phone number is too long." })
     .regex(PHONE_PATTERN, {
       message: "Enter a WhatsApp or phone number, including the country code.",
-    }),
+    })
+    .refine(hasSevenDigits, { message: "Enter a WhatsApp or phone number, including the country code." }),
   adults: wholeNumberField(1, MAX_TRAVELLERS, "There must be at least 1 adult."),
   children: wholeNumberField(0, MAX_TRAVELLERS, "Enter the number of children, or 0."),
   infants: wholeNumberField(0, MAX_TRAVELLERS, "Enter the number of infants, or 0."),
@@ -196,7 +211,9 @@ const datesSchema = z
     if (arrival === null || departure === null) return; // already flagged above
     const now = new Date();
     const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-    const earliest = todayUtc - 24 * 60 * 60 * 1000; // a day of slack for UTC+13 travellers
+    // A day of slack for travellers behind UTC (the Americas): their "today"
+    // can still be yesterday in UTC.
+    const earliest = todayUtc - 24 * 60 * 60 * 1000;
     const latest = Date.UTC(
       now.getUTCFullYear() + MAX_ARRIVAL_YEARS_AHEAD,
       now.getUTCMonth(),
@@ -209,6 +226,14 @@ const datesSchema = z
         code: "custom",
         path: ["arrivalDate"],
         message: `We plan up to ${MAX_ARRIVAL_YEARS_AHEAD} years ahead. Please choose an earlier date.`,
+      });
+    }
+    if (departure - arrival > MAX_TRIP_DAYS * 24 * 60 * 60 * 1000) {
+      // Departure had no upper bound: "9999-12-31" was accepted (D-39).
+      ctx.addIssue({
+        code: "custom",
+        path: ["departureDate"],
+        message: `We plan trips of up to ${MAX_TRIP_DAYS} days. For longer stays, please contact us.`,
       });
     }
     if (departure - arrival < 24 * 60 * 60 * 1000) {
@@ -243,11 +268,11 @@ const airportLegSchema = z
     if (leg.vehicle === null) {
       ctx.addIssue({ code: "custom", path: ["vehicle"], message: "Choose a vehicle for this leg." });
     }
-    const passengers = Number(leg.passengers);
+    const passengers = digitsOnly(leg.passengers);
     if (!(Number.isInteger(passengers) && passengers >= 1 && passengers <= MAX_TRAVELLERS)) {
       ctx.addIssue({ code: "custom", path: ["passengers"], message: "Enter how many passengers." });
     }
-    const luggage = Number(leg.luggage);
+    const luggage = digitsOnly(leg.luggage);
     if (!(Number.isInteger(luggage) && luggage >= 0 && luggage <= 50)) {
       ctx.addIssue({ code: "custom", path: ["luggage"], message: "Enter the pieces of luggage, or 0." });
     }
@@ -285,7 +310,7 @@ const stayEntrySchema = z
         ctx.addIssue({ code: "custom", path: ["checkOut"], message: "Check-out must be after check-in." });
       }
     }
-    const guests = Number(stay.guests);
+    const guests = digitsOnly(stay.guests);
     if (!(Number.isInteger(guests) && guests >= 1 && guests <= MAX_TRAVELLERS)) {
       ctx.addIssue({ code: "custom", path: ["guests"], message: "Enter the number of guests." });
     }
@@ -311,7 +336,15 @@ const activityEntrySchema = z
     activity: z.string().trim().max(100).default(""),
     otherName: z.preprocess(
       emptyToUndefined,
-      z.string().trim().max(100).optional().default(""),
+      // Single line: a newline here printed as forged lines (e.g. a fake
+      // "Email:") in the staff email (D-39, F-39-17).
+      z
+        .string()
+        .trim()
+        .max(100)
+        .refine(isSingleLineText, { message: "Please use letters, numbers and ordinary punctuation only." })
+        .optional()
+        .default(""),
     ),
     date: z.string().trim().max(10).default(""),
     participants: z.string().trim().max(10).default(""),
@@ -331,7 +364,7 @@ const activityEntrySchema = z
     if (parseIsoDateUtc(activity.date) === null) {
       ctx.addIssue({ code: "custom", path: ["date"], message: "Choose a date." });
     }
-    const participants = Number(activity.participants);
+    const participants = digitsOnly(activity.participants);
     if (!(Number.isInteger(participants) && participants >= 1 && participants <= MAX_TRAVELLERS)) {
       ctx.addIssue({ code: "custom", path: ["participants"], message: "Enter the number of participants." });
     }
@@ -476,6 +509,9 @@ export const bookingDraftRequestSchema = z
           message: "Add at least one stay, activity or transport, or send your preferences instead.",
         });
       }
+      for (const problem of entryDatesOutsideTrip(draft)) {
+        ctx.addIssue({ code: "custom", path: problem.path, message: problem.message });
+      }
       return;
     }
 
@@ -487,7 +523,7 @@ export const bookingDraftRequestSchema = z
         message: "Choose at least one destination you would like to visit.",
       });
     }
-    const days = Number(draft.preferences.days);
+    const days = digitsOnly(draft.preferences.days);
     if (!(Number.isInteger(days) && days >= 2 && days <= 60)) {
       ctx.addIssue({
         code: "custom",
@@ -495,7 +531,7 @@ export const bookingDraftRequestSchema = z
         message: "Enter how many days you would like, between 2 and 60.",
       });
     }
-    if (draft.preferences.budget !== "" && !(Number(draft.preferences.budget) > 0)) {
+    if (draft.preferences.budget !== "" && !(/^\d{1,7}$/.test(draft.preferences.budget) && Number(draft.preferences.budget) > 0)) {
       ctx.addIssue({
         code: "custom",
         path: ["preferences", "budget"],

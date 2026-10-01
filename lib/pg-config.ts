@@ -30,6 +30,11 @@ export function pgConfig(connectionString: string, max = 3): PoolConfig {
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 8_000,
     statement_timeout: 15_000,
+    // Client-side cap as well (D-39, F-39-15): on Supabase's transaction
+    // pooler a startup parameter like statement_timeout is not reliably
+    // applied to the shared server connection, so a stalled query could hold
+    // a request open until the platform's own limit.
+    query_timeout: 15_000,
     application_name: "noble-path",
   };
 }

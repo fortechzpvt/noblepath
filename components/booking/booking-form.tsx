@@ -16,7 +16,6 @@ import { Card } from "@/components/booking/ui";
 import { Button } from "@/components/ui/button";
 import { ErrorSummary } from "@/components/ui/field";
 import { getAccommodationBySlug, getActivityBySlug } from "@/lib/content";
-import { generateItinerary } from "@/lib/itinerary";
 import {
   BookingSubmissionError,
   MAX_ACTIVITIES,
@@ -25,6 +24,7 @@ import {
   ids,
   makeEntryId,
   submitBookingRequest,
+  toBookingFieldId,
   totalTravellers,
   validateDraft,
   validateTerms,
@@ -33,8 +33,8 @@ import {
   type StayEntry,
   type ActivityEntry,
 } from "@/lib/booking-request";
-import { readStoredPlan } from "@/lib/plan-storage";
 import { readTripSelections } from "@/lib/trip-selections";
+import { TRANSFERS_STORAGE_KEY, parseTransfers, type TransferSelection } from "@/lib/transfers";
 
 type Step = "form" | "review" | "done";
 
@@ -54,12 +54,18 @@ export function BookingForm({
   trips,
   destinations,
   experiences,
+  initialPackageSlug = null,
 }: {
   readonly trips: readonly TripOption[];
   readonly destinations: readonly NamedOption[];
   readonly experiences: readonly NamedOption[];
+  readonly initialPackageSlug?: string | null;
 }) {
-  const [draft, setDraft] = useState<BookingDraft>(createEmptyDraft);
+  const [draft, setDraft] = useState<BookingDraft>(() =>
+    initialPackageSlug
+      ? { ...createEmptyDraft(), planChoice: "package", packageSlug: initialPackageSlug }
+      : createEmptyDraft(),
+  );
   const [step, setStep] = useState<Step>("form");
   const [errors, setErrors] = useState<readonly FormError[]>([]);
   const [accepted, setAccepted] = useState(false);
@@ -81,15 +87,37 @@ export function BookingForm({
   useEffect(() => {
     const seedFromElsewhere = () => {
       const selections = readTripSelections();
-      const storedPlan = readStoredPlan();
+      // Airport transfers and vehicle picked on /plan (D-39). Before this they
+      // were saved there and never read here, so travellers entered them twice.
+      let transfers: TransferSelection | null = null;
+      try {
+        const raw = window.localStorage.getItem(TRANSFERS_STORAGE_KEY);
+        transfers = raw ? parseTransfers(raw) : null;
+      } catch {
+        transfers = null;
+      }
 
       setDraft((current) => {
         const party = String(Math.max(totalTravellers(current.traveller), 1));
         let stays = current.stays;
         let activities = current.activities;
-        let plannedItinerary = current.plannedItinerary;
+        let pickup = current.pickup;
+        let drop = current.drop;
         let seededEntries = false;
         let changed = false;
+
+        // Only legs the traveller has not touched yet.
+        const untouched = (leg: typeof current.pickup) => !leg.required && leg.vehicle === null;
+        if (transfers && (transfers.airportPickup || transfers.airportDrop)) {
+          if (transfers.airportPickup && untouched(current.pickup)) {
+            pickup = { ...current.pickup, required: true, vehicle: transfers.vehicle, passengers: party };
+            changed = true;
+          }
+          if (transfers.airportDrop && untouched(current.drop)) {
+            drop = { ...current.drop, required: true, vehicle: transfers.vehicle, passengers: party };
+            changed = true;
+          }
+        }
 
         if (current.stays.length === 0) {
           const seeded: StayEntry[] = [];
@@ -123,7 +151,10 @@ export function BookingForm({
         if (current.activities.length === 0) {
           const seeded: ActivityEntry[] = [];
           // Capped at MAX_ACTIVITIES for the same reason as stays above.
-          for (const slug of selections.activitySlugs.slice(0, MAX_ACTIVITIES)) {
+          // Drop deleted and repeated slugs before applying the cap, so they
+          // cannot use up the slots (D-39).
+          const known = [...new Set(selections.activitySlugs)].filter((slug) => getActivityBySlug(slug));
+          for (const slug of known.slice(0, MAX_ACTIVITIES)) {
             const activity = getActivityBySlug(slug);
             if (!activity) continue;
             seeded.push({
@@ -142,15 +173,9 @@ export function BookingForm({
           }
         }
 
-        if (current.plannedItinerary === null && storedPlan) {
-          const itinerary = generateItinerary(storedPlan.input);
-          plannedItinerary = {
-            days: itinerary.input.days,
-            destinationSlugs: itinerary.destinationSlugs,
-            interests: itinerary.input.interests,
-          };
-          changed = true;
-        }
+        // A saved /plan itinerary is no longer attached (D-39): the day-by-day
+        // builder was removed from /plan (D-18), so an old saved plan could be
+        // neither viewed nor cleared, yet went with every request.
 
         if (!changed) return current;
 
@@ -158,7 +183,8 @@ export function BookingForm({
           ...current,
           stays,
           activities,
-          plannedItinerary,
+          pickup,
+          drop,
           planChoice: seededEntries && current.planChoice === null ? "custom" : current.planChoice,
           customMode: seededEntries ? "choose" : current.customMode,
         };
@@ -207,7 +233,10 @@ export function BookingForm({
             ? error.message
             : "Something went wrong sending your request. Please try again.",
       };
-      const fieldErrors = error instanceof BookingSubmissionError ? (error.fieldErrors ?? []) : [];
+      // Point server errors at the real fields, not at `server:…` ids that do not exist (D-39).
+      const fieldErrors = (error instanceof BookingSubmissionError ? (error.fieldErrors ?? []) : []).map(
+        (fieldError) => ({ ...fieldError, fieldId: toBookingFieldId(fieldError.fieldId) }),
+      );
       setErrors([submitError, ...fieldErrors]);
       window.requestAnimationFrame(() => summaryRef.current?.focus());
     } finally {

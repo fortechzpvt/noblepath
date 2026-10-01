@@ -30,9 +30,25 @@ test("a package day over the 300-minute drive limit is reported", () => {
 test("credit links must be https: no javascript: or data: URLs", async () => {
   const { imageSchema } = await import("../lib/content-schema");
   const base = { src: "/images/x.jpg", alt: "A photo" };
-  assert.equal(imageSchema.safeParse({ ...base, sourceUrl: "https://commons.wikimedia.org/wiki/File:X.jpg" }).success, true);
+  assert.equal(
+    imageSchema.safeParse({ ...base, credit: "A. Photographer", sourceUrl: "https://commons.wikimedia.org/wiki/File:X.jpg" })
+      .success,
+    true,
+  );
   assert.equal(imageSchema.safeParse({ ...base, sourceUrl: "javascript:alert(1)" }).success, false);
   assert.equal(imageSchema.safeParse({ ...base, licenceUrl: "data:text/html,hi" }).success, false);
   assert.equal(imageSchema.safeParse({ ...base, sourceUrl: "http://example.com" }).success, false);
   assert.equal(imageSchema.safeParse({ ...base, src: "javascript:alert(1)" }).success, false);
+});
+
+test("a photo with a source or licence link must carry a credit (F-39-24)", async () => {
+  const { imageSchema } = await import("../lib/content-schema");
+  const base = { src: "/images/x.jpg", alt: "A photo" };
+  assert.equal(imageSchema.safeParse(base).success, true);
+  assert.equal(imageSchema.safeParse({ ...base, licenceUrl: "https://creativecommons.org/licenses/by/4.0/" }).success, false);
+  assert.equal(imageSchema.safeParse({ ...base, sourceUrl: "https://example.com/x", credit: "  " }).success, false);
+  assert.equal(
+    imageSchema.safeParse({ ...base, credit: "Jane Doe", licenceUrl: "https://creativecommons.org/licenses/by/4.0/" }).success,
+    true,
+  );
 });

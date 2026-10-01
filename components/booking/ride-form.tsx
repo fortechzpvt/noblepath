@@ -10,7 +10,7 @@ import { Card, Chip } from "@/components/booking/ui";
 import { VehicleGrid } from "@/components/transfers/vehicle-grid";
 import { Button } from "@/components/ui/button";
 import { ErrorSummary, FieldGroup, TextField, TextareaField } from "@/components/ui/field";
-import { BookingSubmissionError, MAX_TRAVELLERS, todayIso, type FormError } from "@/lib/booking-request";
+import { BookingSubmissionError, MAX_TRAVELLERS, type FormError } from "@/lib/booking-request";
 import {
   estimateRoadTrip,
   formatDuration,
@@ -34,6 +34,7 @@ import {
   type RideDetails,
   type RideDraft,
 } from "@/lib/ride-request";
+import { useToday } from "@/components/booking/use-today";
 
 type Step = "form" | "review" | "done";
 
@@ -72,6 +73,7 @@ const TERMS: readonly string[] = [
  * full-trip draft. Same three steps as the trip form: fill in, review, done.
  */
 export function RideForm() {
+  const today = useToday();
   const [draft, setDraft] = useState<RideDraft>(createEmptyRide);
   const [step, setStep] = useState<Step>("form");
   const [errors, setErrors] = useState<readonly FormError[]>([]);
@@ -447,7 +449,7 @@ export function RideForm() {
                 id={rideIds.date}
                 label="Pickup date"
                 type="date"
-                min={todayIso()}
+                min={today || undefined}
                 value={r.date}
                 onChange={(event) => setRide({ date: event.target.value })}
                 error={errorFor(rideIds.date)}
@@ -467,7 +469,7 @@ export function RideForm() {
                     label="Return date"
                     description="The driver brings you back to your pickup location."
                     type="date"
-                    min={r.date || todayIso()}
+                    min={r.date || today || undefined}
                     value={r.returnDate}
                     onChange={(event) => setRide({ returnDate: event.target.value })}
                     error={errorFor(rideIds.returnDate)}

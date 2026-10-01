@@ -343,6 +343,74 @@ export const ids = {
   transport: (index: number, field: string) => `bk-transport-${index}-${field}`,
 } as const;
 
+/**
+ * Maps a server field error (`server:stays.0.checkOut`) to the on-page field id
+ * (`bk-stay-0-checkOut`) so the error summary link and the inline message land
+ * on the field (D-39). Unknown paths point at the submit button. The ride form
+ * has its own mapper (`ride-form.tsx`).
+ */
+export function toBookingFieldId(serverFieldId: string): string {
+  const path = serverFieldId.replace(/^server:/, "").split(".");
+  const [head, second, third] = path;
+  const simple: Record<string, string> = {
+    planChoice: ids.planChoice,
+    packageSlug: ids.package,
+    "preferences.days": ids.prefDays,
+    "preferences.budget": ids.prefBudget,
+    "preferences.destinations": ids.prefDestinations,
+  };
+  if (head === "traveller" || head === "dates") {
+    const id = (ids as unknown as Record<string, unknown>)[second ?? ""];
+    return typeof id === "string" ? id : ids.submit;
+  }
+  if ((head === "pickup" || head === "drop") && second) return ids.leg(head, second);
+  const index = Number(second);
+  if (Number.isInteger(index) && third) {
+    if (head === "stays") return ids.stay(index, third);
+    if (head === "activities") return ids.activity(index, third);
+    if (head === "transport") return ids.transport(index, third);
+  }
+  return simple[`${head}${second ? `.${second}` : ""}`] ?? simple[head ?? ""] ?? ids.submit;
+}
+
+/** The longest trip the form accepts, arrival to departure (D-39). */
+export const MAX_TRIP_DAYS = 120;
+
+/**
+ * Stay, activity and transport dates that fall outside the trip (D-39).
+ * Shared by `validateDraft` (browser) and `lib/validation.ts` (server) so the
+ * two can never disagree. Dates are compared as ISO strings, which sort
+ * correctly; entries with no date yet are left to the "choose a date" checks.
+ */
+export function entryDatesOutsideTrip(
+  draft: Pick<BookingDraft, "dates" | "stays" | "activities" | "transport">,
+): { readonly path: (string | number)[]; readonly fieldId: string; readonly message: string }[] {
+  const { arrivalDate: from, departureDate: to } = draft.dates;
+  if (parseIsoDate(from) === null || parseIsoDate(to) === null) return [];
+  const outside = (date: string) => parseIsoDate(date) !== null && (date < from || date > to);
+  const problems: { path: (string | number)[]; fieldId: string; message: string }[] = [];
+  const range = `between ${from} and ${to}`;
+  draft.stays.forEach((stay, index) => {
+    if (outside(stay.checkIn)) {
+      problems.push({ path: ["stays", index, "checkIn"], fieldId: ids.stay(index, "checkIn"), message: `Stay ${index + 1}: check in ${range}.` });
+    }
+    if (outside(stay.checkOut)) {
+      problems.push({ path: ["stays", index, "checkOut"], fieldId: ids.stay(index, "checkOut"), message: `Stay ${index + 1}: check out ${range}.` });
+    }
+  });
+  draft.activities.forEach((activity, index) => {
+    if (outside(activity.date)) {
+      problems.push({ path: ["activities", index, "date"], fieldId: ids.activity(index, "date"), message: `Activity ${index + 1}: choose a date ${range}.` });
+    }
+  });
+  draft.transport.forEach((entry, index) => {
+    if (outside(entry.date)) {
+      problems.push({ path: ["transport", index, "date"], fieldId: ids.transport(index, "date"), message: `Transport ${index + 1}: choose a date ${range}.` });
+    }
+  });
+  return problems;
+}
+
 export function todayIso(now: Date = new Date()): string {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
@@ -355,8 +423,11 @@ function wholeNumber(
   max: number,
 ): "ok" | "empty" | "invalid" {
   if (value.trim() === "") return "empty";
+  // Digits only, exactly as the server checks (D-39): "1e1" or "5.0" fail here
+  // too, so the traveller sees the error next to the field.
+  if (!/^\d{1,3}$/.test(value.trim())) return "invalid";
   const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed >= min && parsed <= max ? "ok" : "invalid";
+  return parsed >= min && parsed <= max ? "ok" : "invalid";
 }
 
 /**
@@ -372,7 +443,7 @@ export function validateDraft(draft: BookingDraft, today: string = todayIso()): 
   if (t.fullName.trim().length < 2) add(ids.fullName, "Enter your full name.");
   if (t.nationality.trim().length < 2) add(ids.nationality, "Enter your nationality.");
   if (!EMAIL_PATTERN.test(t.email.trim())) add(ids.email, "Enter a valid email address.");
-  if (!PHONE_PATTERN.test(t.phone.trim())) {
+  if (!PHONE_PATTERN.test(t.phone.trim()) || (t.phone.match(/\d/g)?.length ?? 0) < 7) {
     add(ids.phone, "Enter a WhatsApp or phone number, including the country code.");
   }
 
@@ -397,6 +468,9 @@ export function validateDraft(draft: BookingDraft, today: string = todayIso()): 
   if (departure === null) add(ids.departureDate, "Choose your departure date.");
   else if (arrival !== null && tripLength(d.arrivalDate, d.departureDate) === null) {
     add(ids.departureDate, "Departure must be at least one night after arrival.");
+  } else if ((tripLength(d.arrivalDate, d.departureDate)?.nights ?? 0) > MAX_TRIP_DAYS) {
+    // Same limit as the server (D-39).
+    add(ids.departureDate, `We plan trips of up to ${MAX_TRIP_DAYS} days. For longer stays, please contact us.`);
   }
   if (!TIME_PATTERN.test(d.departureTime)) add(ids.departureTime, "Choose your departure time.");
 
@@ -452,11 +526,12 @@ export function validateDraft(draft: BookingDraft, today: string = todayIso()): 
       if (entry.dropoff.trim().length < 2) add(ids.transport(index, "dropoff"), `Transport ${index + 1}: enter a drop-off location.`);
       if (parseIsoDate(entry.date) === null) add(ids.transport(index, "date"), `Transport ${index + 1}: choose a date.`);
     });
+    for (const problem of entryDatesOutsideTrip(draft)) add(problem.fieldId, problem.message);
   } else {
     const p = draft.preferences;
     if (p.destinations.length === 0) add(ids.prefDestinations, "Choose at least one destination you would like to visit.");
     if (wholeNumber(p.days, 2, 60) !== "ok") add(ids.prefDays, "Enter how many days you would like, between 2 and 60.");
-    if (p.budget.trim() !== "" && !(Number(p.budget) > 0)) {
+    if (p.budget.trim() !== "" && !(/^\d{1,7}$/.test(p.budget.trim()) && Number(p.budget) > 0)) {
       add(ids.prefBudget, "Enter your budget as a number, or leave it empty.");
     }
   }
@@ -487,7 +562,10 @@ export function generateBookingRequestId(now: Date = new Date()): string {
   const bytes = new Uint8Array(6);
   crypto.getRandomValues(bytes);
   const suffix = Array.from(bytes, (byte) => ID_ALPHABET[byte % ID_ALPHABET.length]).join("");
-  const date = todayIso(now).replaceAll("-", "");
+  // The Sri Lanka date, the one staff and the admin's statistics use. The
+  // server's own date is UTC, so a 03:00 Colombo booking used to carry
+  // yesterday's date (D-39, F-39-20).
+  const date = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Colombo" }).format(now).replaceAll("-", "");
   return `NP-${date}-${suffix}`;
 }
 
@@ -518,10 +596,35 @@ const GENERIC_SUBMIT_ERROR =
  * same form, see `lib/validation.ts`), so it is sent as-is rather than
  * remapped into a second shape.
  */
+/**
+ * The draft as it should be sent: only the part of the plan the traveller is
+ * actually using (D-39, F-39-21).
+ *
+ * Stays and activities picked on other pages are seeded into the "build my
+ * own" lists. If the traveller then chose a pre-planned trip (or "just send
+ * my preferences"), those hidden entries still went to the server, which
+ * validated them, rejected the request on fields the traveller could not see,
+ * and left no way to fix it. Entries the traveller cannot see are not part of
+ * their request, so they are cleared here; the server is unchanged.
+ */
+export function draftForSubmission(draft: BookingDraft): BookingDraft {
+  const empty = createEmptyDraft();
+  const choosing = draft.planChoice === "custom" && draft.customMode === "choose";
+  const preferring = draft.planChoice === "custom" && draft.customMode === "preferences";
+  return {
+    ...draft,
+    packageSlug: draft.planChoice === "package" ? draft.packageSlug : "",
+    stays: choosing ? draft.stays : [],
+    activities: choosing ? draft.activities : [],
+    transport: choosing ? draft.transport : [],
+    preferences: preferring ? draft.preferences : empty.preferences,
+  };
+}
+
 export async function submitBookingRequest(
   draft: BookingDraft,
 ): Promise<{ readonly id: string }> {
-  return postEnquiry("/api/bookings", draft);
+  return postEnquiry("/api/bookings", draftForSubmission(draft));
 }
 
 /**

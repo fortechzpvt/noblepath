@@ -200,7 +200,8 @@ export function validateRide(draft: RideDraft, today: string = todayIso()): Form
 
   if (c.fullName.trim().length < 2) add(rideIds.fullName, "Enter your full name.");
   if (!EMAIL_PATTERN.test(c.email.trim())) add(rideIds.email, "Enter a valid email address.");
-  if (!PHONE_PATTERN.test(c.phone.trim())) {
+  // At least 7 digits, as the server requires (D-39).
+  if (!PHONE_PATTERN.test(c.phone.trim()) || (c.phone.match(/\d/g)?.length ?? 0) < 7) {
     add(rideIds.phone, "Enter a WhatsApp or phone number, including the country code.");
   }
 

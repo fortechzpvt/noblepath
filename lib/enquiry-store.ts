@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getDb } from "@/lib/db";
+import { storable, storableText } from "@/lib/safe-text";
 
 /** The summary columns the admin lists and filters by; the whole request goes in `payload`. */
 export interface EnquiryRecord {
@@ -37,12 +38,13 @@ export async function saveEnquiry(id: string, record: EnquiryRecord, emailStatus
         id,
         record.kind,
         record.planChoice,
-        record.packageSlug,
-        record.travellerName,
-        record.email,
+        // Only a package plan names a package; anything else sent here is noise (F-39-14).
+        record.planChoice === "package" && record.packageSlug ? storableText(record.packageSlug) : null,
+        storableText(record.travellerName),
+        storableText(record.email),
         record.travelDate && /^\d{4}-\d{2}-\d{2}$/.test(record.travelDate) ? record.travelDate : null,
         record.partySize,
-        JSON.stringify(record.payload),
+        JSON.stringify(storable(record.payload)),
         emailStatus,
       ],
     );

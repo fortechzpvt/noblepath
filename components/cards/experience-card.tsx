@@ -63,7 +63,7 @@ export function ExperienceCard({
 
         <Heading className="mt-2.5 font-display text-h4 text-ink-900 transition-colors duration-[var(--dur-3)] group-hover:text-jungle-700">
           <Link
-            href={`/activities#${experience.slug}`}
+            href="/activities"
             className="rounded-sm after:absolute after:inset-0 after:content-['']"
           >
             {experience.name}

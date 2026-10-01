@@ -1818,6 +1818,53 @@ was removed in D-18. It is the strongest asset for "Sri Lanka trip planner".
 
 ---
 
+## D-39 - Bug hunt: admin access control, recovery mode and 404s
+
+**Date:** 2026-10-01 · **Decided by:** Orchestrator, with five read-only specialist agents (site APIs, site frontend, admin security, live crawl, data consistency); requested by the owner ("massive bug test")
+
+**Status:** Accepted. All five audits ran; three were re-run after an API session limit. The fixed and open findings are listed in the security review (D-39). Both apps are verified. The site was checked on a clean copy outside iCloud (the project's own `node_modules` is evicted): lint, typecheck, 19 of 19 tests, the production build, and HTTP checks of the 404 pages, `/bookings?type=package&item=` preselection and `/experiences` 308.
+
+**Decision:**
+1. **Every admin page checks for itself.** Each page and each `generateMetadata` under
+   `app/(panel)` calls `requireAdmin()` first. The layout's call is not enough, because Next.js does
+   not re-run a shared layout on a client-side navigation.
+   - Supporting change: `currentAdmin` is wrapped in React `cache`, so each request makes one lookup.
+   - Guard: a source-level test (`tests/panel-guard.test.ts`) enforces the rule.
+2. **Recovery mode comes from the signed token.** The "change password without the current one"
+   mode is now read from the session token's `amr` claim (a `recovery`/`otp` proof under 15
+   minutes old, read through `getClaims()`), never from a cookie.
+3. **Unknown trip and destination slugs get the static 404.** These routes set
+   `dynamicParams = false`.
+
+**Reason:** the audits found two High access-control flaws in the admin (security review D-39,
+F-39-1 and F-39-2), and a 404 with an empty body on the public site.
+
+**Alternatives considered:**
+- **Check the allowlist only in `proxy.ts`:** rejected as the sole control. The proxy would need a
+  database lookup on every request, and the project rule is that each entry point checks itself.
+  The proxy keeps its session filter.
+- **A signed or HMAC recovery cookie:** rejected. The token Supabase already signs carries the
+  same fact, so a second secret adds nothing.
+
+**Impact:**
+- **Admin:**
+  - roughly one extra cached `requireAdmin()` call per page;
+  - sign-out is now local to this device, and is logged;
+  - HEIC from non-Safari browsers is refused with a message instead of a 500;
+  - the editor keeps typed values after a validation error;
+  - saving a deleted item reports it instead of claiming "Saved."
+- **Site:** unknown slugs serve the full 404 page.
+
+**Known limitations:**
+- **Not re-run yet:** the site-API, frontend and data-consistency audits.
+- **Owner checks:**
+  - Supabase sign-ups must be off (F-39-3);
+  - the Site URL and Redirect URLs must be set (F-39-4).
+- **Not browser-tested:** the editor fix.
+- **Local environment:** the project lives in iCloud-synced `Documents`, and evicted files made local builds hang. See the handoff.
+
+---
+
 ## Pending decisions (not yet made)
 
 These are open and must be decided before the relevant work starts. Listed so they are visible rather than rediscovered mid-build.

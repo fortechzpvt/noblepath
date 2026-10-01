@@ -21,7 +21,7 @@ export const PLAN_FAQS: readonly { question: string; answer: string }[] = [
   {
     question: "How many days do I need in Sri Lanka?",
     answer:
-      "Our ready-made itineraries run from 4 to 15 days. Four or five days covers one region, such as the Cultural Triangle or the south coast. Eight to ten days is enough for a classic loop of the ancient cities, the hill country and a beach. Two weeks or more lets you add the east coast or wildlife parks without rushing. We plan fewer stops and longer stays: two nights for Sigiriya, three or more for the hill country.",
+      "Our ready-made itineraries run from {MIN} to {MAX} days. Four or five days covers one region, such as the Cultural Triangle or the south coast. Eight to ten days is enough for a classic loop of the ancient cities, the hill country and a beach. Two weeks or more lets you add the east coast or wildlife parks without rushing. We plan fewer stops and longer stays: two nights for Sigiriya, three or more for the hill country.",
   },
   {
     question: "When is the best time to visit Sri Lanka?",
@@ -45,13 +45,25 @@ export const PLAN_FAQS: readonly { question: string; answer: string }[] = [
   },
 ];
 
+/** The FAQs with the itinerary range filled in from the trips actually published. */
+export function planFaqs(): readonly { question: string; answer: string }[] {
+  const lengths = getAllTrips().map((trip) => trip.durationDays);
+  const min = lengths.length > 0 ? Math.min(...lengths) : 4;
+  const max = lengths.length > 0 ? Math.max(...lengths) : 15;
+  return PLAN_FAQS.map((faq) => ({
+    ...faq,
+    answer: faq.answer.replace("{MIN}", String(min)).replace("{MAX}", String(max)),
+  }));
+}
+
 export function PlanGuide() {
+  const faqs = planFaqs();
   const trips = [...getAllTrips()].sort((a, b) => a.durationDays - b.durationDays);
   const destinations = getFeaturedDestinations(8);
 
   return (
     <Section className="bg-surface">
-      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(faqJsonLd(PLAN_FAQS))} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(faqJsonLd(faqs))} />
       <Container>
         <div className="mx-auto max-w-[var(--container-prose)]">
           <h2 className="font-display text-h2 text-ink-900">How to plan a trip to Sri Lanka with us</h2>
@@ -105,7 +117,7 @@ export function PlanGuide() {
 
           <h2 className="mt-14 font-display text-h2 text-ink-900">Sri Lanka trip planning questions</h2>
           <dl className="mt-5 flex flex-col gap-6">
-            {PLAN_FAQS.map((faq) => (
+            {faqs.map((faq) => (
               <div key={faq.question}>
                 <dt className="font-semibold text-ink-900">{faq.question}</dt>
                 <dd className="mt-2 text-body text-ink-700">{faq.answer}</dd>
