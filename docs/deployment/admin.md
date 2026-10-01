@@ -51,6 +51,11 @@ store each one only in the hosting platform's secret settings. To set a new pass
 **Status (2026-09-30):** steps 1–2 are done. All three migrations are applied, the three roles
 exist, and 363 content items are seeded.
 
+**Migration 004 (D-41):** after pulling the admin repository, run `npm run db:migrate` again with
+the `postgres` connection string. It applies `004_function_lockdown.sql`, which revokes function
+EXECUTE from PUBLIC and extends the default-privilege revokes. It is idempotent. Any "Skipped …"
+notice is expected where Supabase does not allow a change.
+
 ## 3. Load the current content
 
 In **this (site) repository**, which holds the content to load:

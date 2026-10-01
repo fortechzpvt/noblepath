@@ -1236,11 +1236,8 @@ paths in these records refer to that repository. The Aiven CA certificate that s
 guard test was mutation-checked: it fails when a page loses its check.
 
 **Required actions (owner):**
-1. **Supabase → Authentication:**
-   - turn **off** "Allow new users to sign up";
-   - keep "Confirm email" on;
-   - set Site URL to `https://noblepathadmin.vercel.app`;
-   - add `https://noblepathadmin.vercel.app/auth/callback` to Redirect URLs (F-39-3, F-39-4).
+1. **Supabase → Authentication:** done (owner-confirmed, 2026-10-01). Sign-ups are off, and the
+   Site URL and Redirect URL are set (F-39-3, F-39-4).
 2. **Commit and deploy** both repositories (the admin F-39-1 and F-39-2 fixes are High).
 3. **Move the projects out of iCloud.** `~/Documents` is synced with "Optimise Mac Storage", and
    macOS had evicted 16,590 `node_modules` files plus some source files, which made builds hang

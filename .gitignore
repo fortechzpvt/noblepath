@@ -10,6 +10,10 @@ yarn-debug.log*
 yarn-error.log*
 .env
 .env*.local
+# Any other env file (D-41), except the committed template.
+.env.*
+!.env.example
+*.key
 .vercel
 *.tsbuildinfo
 next-env.d.ts
