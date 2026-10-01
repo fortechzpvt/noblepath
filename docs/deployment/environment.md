@@ -166,6 +166,7 @@ These are all **SERVER-ONLY** secrets, apart from `REQUIRE_DATABASE_CONTENT` and
 | `ADMIN_ENCRYPTION_KEY` | Runtime | 32 random bytes, base64. Encrypts the TOTP secret | Yes | Wrong value: no one can pass two-step sign-in until `admin:create --reset-2fa` |
 | `PUBLIC_SITE_URL` | Build + runtime | The public site's origin, for previews, links and the image CSP | Yes | Previews of site images blocked by CSP |
 | `SITE_DEPLOY_HOOK_URL` | Runtime | The site's deploy hook. **A secret**: anyone with it can trigger builds | For publishing | Publish button disabled |
+| `ADMIN_URL` | Runtime | The admin's own origin, used as the password-reset return address (D-41). Defaults to `https://noblepathadmin.vercel.app` | Only if the admin moves | Reset links point at the wrong host (the Supabase Redirect URLs allowlist still blocks other sites) |
 
 **Scripts** (run by hand from a trusted computer, never set on a platform)
 

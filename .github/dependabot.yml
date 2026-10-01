@@ -95,7 +95,7 @@ updates:
           - version-update:semver-major
 
   # ---------------------------------------------------------------------------
-  # GitHub Actions used by ci.yml and deploy.yml
+  # GitHub Actions used by ci.yml (pinned to commit SHAs; Dependabot updates the pins)
   # ---------------------------------------------------------------------------
   - package-ecosystem: github-actions
     directory: "/"

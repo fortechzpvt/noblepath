@@ -6,6 +6,66 @@ requires it.
 
 ---
 
+## D-40 — Security audit: supply chain, secrets, Supabase exposure, authentication (2026-10-01)
+
+**Scope:** three read-only security agents, plus an Orchestrator review of authentication and
+the password-reset flow.
+- **External tests** were non-destructive and owner-authorised: Supabase REST/Auth/Storage/GraphQL
+  with the public anon key, read only, and TCP connect checks.
+- **Not done:** a fourth agent (live black-box pentest) was stopped before it ran because of
+  incomplete instructions. That pentest is still to do.
+
+**Result:** no Critical or High findings.
+
+### Verified as passing
+- **Database not exposed:** the anon key reads **nothing**. All 12 tables and `published_content`
+  return 401 `42501`. The OpenAPI root is refused. There are no RPC functions, no storage buckets,
+  and `pg_graphql` is not enabled.
+- **Sign-ups off:** `GET /auth/v1/settings` shows `disable_signup: true`, `mailer_autoconfirm: false`
+  and email as the only provider. This **verifies F-39-3's sign-up setting independently**.
+- **Dependencies:** `npm audit` reports 0 advisories at any severity in both repos. Lockfiles are v3,
+  every package has an integrity hash, and every package comes from registry.npmjs.org. There are
+  no install scripts in production dependencies and no GPL/AGPL licences.
+- **CI:** read-only `permissions`, `persist-credentials: false`, no `pull_request_target`, no
+  `${{ github.event.* }}` in `run:`, and no secrets.
+- **Secrets:**
+  - none in either repo's git history (all branches and unreachable objects), working tree, or
+    live client bundles;
+  - no source maps served;
+  - only `NEXT_PUBLIC_SITE_URL` is public;
+  - the Aiven `avnadmin` string from F-36-11 never reached git.
+- **Authentication:**
+  - no local password hashes (Supabase stores bcrypt);
+  - CSRF covered (Server Action origin check, SameSite=Lax, `form-action 'self'`);
+  - reset tokens are random, single-use and consumed by Supabase;
+  - recovery mode lasts at most 15 minutes;
+  - no enumeration through the wording of messages.
+
+### Findings
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| F-40-1 | Medium | The reset request reveals whether an email is an admin through **response time**: the email is sent before replying | **Fixed (D-41)**: `after()` |
+| F-40-2 | Medium | The 12 h session cap uses the user-wide `last_sign_in_at`, so any new sign-in extends every session; the cap-expiry sign-out is global | **Fixed (D-41)**: per-session `amr` timestamp; local sign-out |
+| F-40-3 | Medium | The password policy (14+ characters) is enforced only in the admin. Supabase's own minimum is lower, and its cookies are readable by JS (`PUT /auth/v1/user`) | Open (owner): set Supabase → Auth → Passwords minimum to 14, with required character classes |
+| F-40-4 | Medium | The lockdown migration does not revoke EXECUTE on functions from PUBLIC, and default-privilege revokes cover only `postgres`. Any future function in `public` would be callable through `/rest/v1/rpc` | **Written (D-41)**: migration 004; owner to run |
+| F-40-5 | Medium | No RLS as a second layer. Enabling RLS without policies would break the np_* roles | Open. Preferred fix: move the tables to a non-exposed schema (e.g. `app`) and stop exposing `public` |
+| F-40-6 | Medium | The Postgres pooler and direct ports are open to the internet, with no Network Restrictions | Open (owner/DevOps). Passwords are long random hex; consider restrictions or static egress |
+| F-40-7 | Medium | Admin repo: no Dependabot and no `npm audit` CI job | **Fixed (D-41)** |
+| F-40-8 | Medium | GitHub Actions are pinned to tags, not commit SHAs (both repos) | **Fixed (D-41)**: v4.4.0 commit SHAs |
+| F-40-9 | Low | The sign-in throttle race (F-39-10) and `redirectTo` taken from the Origin header (F-39-4) | **Fixed (D-41)** |
+| F-40-10 | Low | `.gitignore` gaps: site lacks `.env.*` and `*.key`; admin lacks `*.crt`; the admin `.dockerignore` lacks `.git` and `docs` | **Fixed (D-41)** |
+| F-40-11 | Low | Site has no `engines` field; there is an unused `@eslint/eslintrc`; Docker images are pinned by tag; caret ranges on `pg`, `resend`, `sharp` and `@supabase/*` (lockfile-pinned) | Open |
+| F-40-12 | Low | Schema enumeration through PostgREST error messages; `graphql_public` exposed; unused Twilio/SAML configuration | Open (resolved by F-40-5) |
+| F-40-13 | Info | The project ref and pooler host appear in the docs; a personal notification email appears in an ADR | Optional redaction |
+
+**Check in the Supabase dashboard (owner):**
+- access-token (JWT) lifetime of 3600 s or less;
+- email link/OTP expiry of 3600 s or less;
+- optionally, "Time-box user sessions" set to 12 h.
+
+---
+
 ## D-39 — Bug hunt: admin app, site and data (2026-10-01)
 
 **Scope:** five read-only specialist agents: site APIs, site frontend, admin security, live-site
@@ -20,8 +80,8 @@ crawl, and data consistency.
 |---|---|---|---|
 | F-39-1 | **High** | Panel pages relied on the layout's `requireAdmin()`. On a client-side navigation (RSC request) Next.js renders only the segments below the shared layout, so the layout did not run. A Supabase account not on the allowlist, a removed admin, or a session past 12 h could read enquiries (personal data), the activity log, drafts and statistics. Confirmed by the auditing agent against a local build | **Fixed**: every page and `generateMetadata` under `app/(panel)` now calls `requireAdmin()` first (cached per request with React `cache`). The regression test `tests/panel-guard.test.ts` fails if a page omits it (mutation-checked) |
 | F-39-2 | **High** | The "reset without current password" mode was a constant, unsigned `np_recovery=1` cookie. Anyone holding a session could set it and change the password without the current one | **Fixed**: recovery mode is now read from the session token's signed `amr` claim (`getClaims()`): a `recovery`/`otp` proof under 15 minutes old. The cookie is gone. Unit-tested (`tests/recovery.test.ts`) |
-| F-39-3 | Medium | The allowlist is keyed by email, not the Supabase user id. If public sign-ups are on and email confirmation is off, someone could register an allowlisted email that has no Supabase user yet | **Owner check required:** Supabase → Authentication → Sign In / Providers → turn **off** "Allow new users to sign up" and keep "Confirm email" on. Code hardening (store `auth_user_id`) is open |
-| F-39-4 | Medium | Password-reset links work only in the browser that asked for them (PKCE), and `redirectTo` comes from the request's Origin header | Open. Owner: set Supabase Site URL and Redirect URLs (`https://noblepathadmin.vercel.app/auth/callback`). Code: a fixed admin URL setting |
+| F-39-3 | Medium | The allowlist is keyed by email, not the Supabase user id. If public sign-ups are on and email confirmation is off, someone could register an allowlisted email that has no Supabase user yet | **Mitigated (verified 2026-10-01):** public sign-ups are off. `GET /auth/v1/settings` returns `disable_signup: true` (D-40). Code hardening (match on `auth_user_id`) remains open as defence in depth. |
+| F-39-4 | Medium | Password-reset links work only in the browser that asked for them (PKCE), and `redirectTo` comes from the request's Origin header | **Partly fixed (owner-confirmed, 2026-10-01):** Site URL `https://noblepathadmin.vercel.app` and the `/auth/callback` Redirect URL are set in Supabase. Still open: the same-browser (PKCE) limit for reset links, and `redirectTo` taken from the Origin header. |
 | F-39-5 | Medium (functional) | The content editor lost every typed edit after a validation error (React 19 resets a form after its `action`) | **Fixed**: submits through `onSubmit` + `startTransition`. Not browser-tested |
 | F-39-6 | Low-Medium | Saving an item deleted in another tab reported "Saved." and logged `content.updated` | **Fixed**: zero updated rows raises `ItemGoneError`, which shows a clear message |
 | F-39-7 | Low | Open redirect: `/auth/callback?next=/%5Cevil.com` (after a valid code) | **Fixed**: `lib/auth/safe-next.ts` compares the resolved origin. Unit-tested |

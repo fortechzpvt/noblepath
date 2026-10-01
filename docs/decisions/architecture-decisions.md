@@ -1865,6 +1865,64 @@ F-39-1 and F-39-2), and a 404 with an empty body on the public site.
 
 ---
 
+## D-41 - Security audit fixes (authentication, privacy requests, CI)
+
+**Date:** 2026-10-01 · **Decided by:** Orchestrator (Cybersecurity, Full-Stack and DevOps roles), from the D-40 audit; approved by the owner ("yes")
+
+**Status:** Accepted. Code complete and tested. Migration 004 awaits the owner.
+
+**Decision:**
+1. **No timing leak on password reset.** The reset email is sent after the response (`after()`),
+   so replies take the same time whether or not the email is an admin.
+2. **The 12-hour cap is per session.** It is measured from the session's own first `amr`
+   timestamp in the signed token, not the user-wide `last_sign_in_at`. Cap and refusal sign-outs
+   are local to the device.
+3. **Atomic sign-in throttle.** Attempts are recorded and counted in one statement, and a
+   successful sign-in removes its own attempt.
+4. **Fixed reset return address.** The return address is the `ADMIN_URL` setting, not the
+   request's Origin header.
+5. **Privacy requests from the admin.** Each enquiry can be **exported** (JSON) and **deleted**
+   (two-step). Both are audited, and so is viewing an enquiry.
+6. **Database function lockdown.** Migration `004_function_lockdown.sql` revokes function EXECUTE
+   from PUBLIC and extends the default-privilege revokes.
+7. **Generic error pages** (`error.tsx`, `global-error.tsx`) in both apps.
+8. **CI and repository hygiene:**
+   - the admin gets Dependabot and an `npm audit` gate;
+   - actions are pinned to commit SHAs in both repositories;
+   - ignore-file gaps are closed;
+   - the site gets `engines: 24.x`;
+   - the unused `@eslint/eslintrc` is removed;
+   - `Secure` session cookies are set explicitly.
+
+**Reason:** these are the code-fixable findings of the D-40 security audit
+(`docs/security/security-audit-2026-10-01.md`).
+
+**Alternatives considered:**
+- **A random delay on reset replies:** rejected. `after()` removes the cause, which is waiting on
+  email delivery, instead of masking it.
+- **Storing a session start time ourselves:** rejected. The signed `amr` timestamp already records
+  it and cannot be forged.
+- **Soft-deleting enquiries:** rejected for erasure requests, which require real deletion. The
+  audit log keeps only the reference.
+
+**Impact:**
+- **Admin:**
+  - the "Export data" and "Delete" buttons on each enquiry;
+  - an optional `ADMIN_URL` setting (it has a default);
+  - one migration to run.
+- **Site:** Node 24 is now declared, which the CI and Docker already used.
+
+**Known limitations:**
+- **Migration 004** is not yet run against a database.
+- **Not browser-tested:**
+  - the delete and export buttons;
+  - the reset email sent after the response, which needs a real reset to confirm.
+- **Still open (security audit §1):**
+  - M-3 nonce CSP, M-6 schema move, M-9 alerting, M-11 shared rate limits, L-2 token lifetime and idle timeout;
+  - the owner items: H-1 to H-3, M-4, M-7.
+
+---
+
 ## Pending decisions (not yet made)
 
 These are open and must be decided before the relevant work starts. Listed so they are visible rather than rediscovered mid-build.

@@ -3,6 +3,27 @@
 Significant changes, newest first (Fortechz policy §16). Decisions behind each entry are in
 `docs/decisions/architecture-decisions.md`.
 
+## 2026-10-01 — D-40/D-41: security audit and fixes
+
+### Security
+- A consolidated security review is published: `docs/security/security-audit-2026-10-01.md`. It found no Critical findings.
+- Admin:
+  - the reset reply no longer reveals admin emails through its timing;
+  - the 12-hour cap is per session;
+  - the sign-in throttle is atomic;
+  - the reset return address is fixed;
+  - session cookies are `Secure`;
+  - search wildcards are escaped.
+- Admin: per-enquiry **export** and **delete**, for privacy requests; enquiry views are audited.
+- Database: migration 004 locks down function EXECUTE (owner to run).
+- CI: admin Dependabot and `npm audit` gate; GitHub Actions pinned to commit SHAs (both repos).
+
+### Changed
+- Generic error pages in both apps.
+- Ignore files tightened.
+- Site declares Node 24.
+- The unused `@eslint/eslintrc` is removed.
+
 ## 2026-10-01 — D-39: bug hunt fixes
 
 ### Security
