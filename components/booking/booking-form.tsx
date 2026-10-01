@@ -54,12 +54,18 @@ export function BookingForm({
   trips,
   destinations,
   experiences,
+  initialPackageSlug = null,
 }: {
   readonly trips: readonly TripOption[];
   readonly destinations: readonly NamedOption[];
   readonly experiences: readonly NamedOption[];
+  readonly initialPackageSlug?: string | null;
 }) {
-  const [draft, setDraft] = useState<BookingDraft>(createEmptyDraft);
+  const [draft, setDraft] = useState<BookingDraft>(() =>
+    initialPackageSlug
+      ? { ...createEmptyDraft(), planChoice: "package", packageSlug: initialPackageSlug }
+      : createEmptyDraft(),
+  );
   const [step, setStep] = useState<Step>("form");
   const [errors, setErrors] = useState<readonly FormError[]>([]);
   const [accepted, setAccepted] = useState(false);

@@ -3,6 +3,45 @@
 Significant changes, newest first (Fortechz policy §16). Decisions behind each entry are in
 `docs/decisions/architecture-decisions.md`.
 
+## 2026-10-01 — D-39: bug hunt fixes
+
+### Security
+- Admin (`noblepathadmin`):
+  - every panel page re-checks the admin allowlist (F-39-1, High);
+  - password-recovery mode comes from the signed session token, not a forgeable cookie (F-39-2, High);
+  - the open redirect in `/auth/callback` is fixed (F-39-7).
+
+### Fixed
+- Admin:
+  - the editor keeps typed edits after validation errors;
+  - saving a deleted item no longer says "Saved.";
+  - a HEIC upload no longer causes a 500;
+  - sign-out is local to this device and is logged;
+  - two admin-only 500s are gone (itinerary JSON, `/enquiries/%25`).
+- Site: unknown `/trips/*` and `/destinations/*` slugs serve the full 404 page instead of an empty body.
+
+- Site bookings:
+  - pre-planned trip requests are no longer rejected because of hidden seeded entries;
+  - "Book this trip" preselects the trip;
+  - enquiries with stray control characters are still saved;
+  - DB and Resend timeouts are added;
+  - stricter number and phone checks, matched in the browser;
+  - visitor counts no longer drop at midnight;
+  - reference IDs use the Sri Lanka date.
+- Data:
+  - retention counts from the trip date when it is later;
+  - builds list broken content references clearly;
+  - licensed images need a credit;
+  - the admin's shared-file drift guard works again.
+
+### Tests
+- Admin: `tests/panel-guard.test.ts` and `tests/recovery.test.ts` (8 tests in total).
+- Site:
+  - `tests/d39.test.ts` (text cleaning, Sri Lanka dates);
+  - `tests/booking-d39.test.ts` (hidden entries, phone digits, digits-only legs, using the real server schema);
+  - a credit-rule test.
+  - 19 of 19 pass.
+
 ## 2026-09-30 — Security: Next.js 16.3.8
 
 ### Security

@@ -94,6 +94,15 @@ export function TripMap({
         });
 
         mapRef.current = map;
+        // The ride form stays mounted, hidden, while the trip form shows, so
+        // the map is usually created at 0×0. Leaflet caches that size, which
+        // left grey tiles and a wrong zoom once the form was revealed (D-39).
+        // Re-measure whenever the container's size changes.
+        if (typeof ResizeObserver !== "undefined") {
+          const observer = new ResizeObserver(() => map.invalidateSize());
+          observer.observe(containerRef.current);
+          map.on("unload", () => observer.disconnect());
+        }
         setStatus("ready");
       })
       .catch(() => {

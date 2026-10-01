@@ -6,6 +6,88 @@ requires it.
 
 ---
 
+## D-39 — Bug hunt: admin app, site and data (2026-10-01)
+
+**Scope:** five read-only specialist agents: site APIs, site frontend, admin security, live-site
+crawl, and data consistency.
+- **Run:** all five completed. Three were re-run after an API session limit interrupted them.
+- **Review:** the Orchestrator checked each finding before fixing. This is a self-review, not
+  an independent one.
+
+### Admin (`noblepathadmin`)
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| F-39-1 | **High** | Panel pages relied on the layout's `requireAdmin()`. On a client-side navigation (RSC request) Next.js renders only the segments below the shared layout, so the layout did not run. A Supabase account not on the allowlist, a removed admin, or a session past 12 h could read enquiries (personal data), the activity log, drafts and statistics. Confirmed by the auditing agent against a local build | **Fixed**: every page and `generateMetadata` under `app/(panel)` now calls `requireAdmin()` first (cached per request with React `cache`). The regression test `tests/panel-guard.test.ts` fails if a page omits it (mutation-checked) |
+| F-39-2 | **High** | The "reset without current password" mode was a constant, unsigned `np_recovery=1` cookie. Anyone holding a session could set it and change the password without the current one | **Fixed**: recovery mode is now read from the session token's signed `amr` claim (`getClaims()`): a `recovery`/`otp` proof under 15 minutes old. The cookie is gone. Unit-tested (`tests/recovery.test.ts`) |
+| F-39-3 | Medium | The allowlist is keyed by email, not the Supabase user id. If public sign-ups are on and email confirmation is off, someone could register an allowlisted email that has no Supabase user yet | **Owner check required:** Supabase → Authentication → Sign In / Providers → turn **off** "Allow new users to sign up" and keep "Confirm email" on. Code hardening (store `auth_user_id`) is open |
+| F-39-4 | Medium | Password-reset links work only in the browser that asked for them (PKCE), and `redirectTo` comes from the request's Origin header | Open. Owner: set Supabase Site URL and Redirect URLs (`https://noblepathadmin.vercel.app/auth/callback`). Code: a fixed admin URL setting |
+| F-39-5 | Medium (functional) | The content editor lost every typed edit after a validation error (React 19 resets a form after its `action`) | **Fixed**: submits through `onSubmit` + `startTransition`. Not browser-tested |
+| F-39-6 | Low-Medium | Saving an item deleted in another tab reported "Saved." and logged `content.updated` | **Fixed**: zero updated rows raises `ItemGoneError`, which shows a clear message |
+| F-39-7 | Low | Open redirect: `/auth/callback?next=/%5Cevil.com` (after a valid code) | **Fixed**: `lib/auth/safe-next.ts` compares the resolved origin. Unit-tested |
+| F-39-8 | Low | A HEIC upload from Chrome or Firefox crashed with a 500 (sharp has no HEVC decoder) | **Fixed**: HEVC is refused with a clear message, and all decode errors are `UploadError` |
+| F-39-9 | Low | "Sign out" signed out every device (Supabase's default global scope) and was not audited | **Fixed**: `scope: "local"`, plus a `logout` audit entry. The 12 h cap still uses the user-wide `last_sign_in_at` (open) |
+| F-39-10 | Low | The sign-in throttle counts before it records, so a parallel burst can exceed 10 attempts | Accepted for now. Supabase's own rate limits still apply |
+| F-39-11 | Low | Audit gaps: viewing an enquiry and recovery sign-ins are not logged; `login.refused` has no Supabase user id | Open (sign-out is now logged) |
+| F-39-12 | Low | Two admin-only 500s: non-array JSON in an itinerary field, and `/enquiries/%25` (double decode) | **Fixed** |
+
+**Out of date in the D-36 section above:** the session cookie is now Supabase's (SameSite=Lax, not
+`__Host-` Strict), the upload cap is 4 MB, and lockout is per client plus Supabase's limits, not
+per account.
+
+### Site server side (site-API audit)
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| F-39-13 | Medium | A NUL or lone-surrogate character in any free-text field passed validation, then Postgres refused the jsonb insert, so the enquiry never reached the admin | **Fixed**: `storable()`/`storableText()` (`lib/safe-text.ts`) clean every string at the one place enquiries are written |
+| F-39-14 | Low | `packageSlug` was stored for custom plans | **Fixed**: stored only for package plans |
+| F-39-15 | Medium | There was no client-side DB timeout (pooler startup parameters are unreliable) and no Resend timeout | **Fixed**: `query_timeout: 15_000` in `pg-config` (both apps), and a 10 s Resend timeout. Owner/DevOps may also run `alter role np_site_runtime set statement_timeout = '15s'` |
+| F-39-16 | Low | `Number()` accepted `0x5`, `1e1`, `5.0`, `+3` and `Infinity` in passenger, guest, participant, day and budget fields | **Fixed**: digits only, server and client |
+| F-39-17 | Low-Medium | A newline in a custom activity name forged lines in the staff email | **Fixed**: single-line rule |
+| — | Low | `"+....."` was accepted as a phone number | **Fixed**: at least 7 digits (bookings and rides, server and client) |
+| F-39-18 | Low | `/api/track` trusted a client-sent `cf-ipcountry` | **Fixed**: only Vercel's header is used |
+| F-39-19 | Low | Visitor counts were lost around midnight (salt day and lookup day differed) | **Fixed**: the Sri Lanka day is computed once (`colomboDay()`). The salt purge now runs on about 2% of views |
+| F-39-20 | Low | Reference ids carried the UTC date | **Fixed**: Sri Lanka date |
+| — | Low | Open: departure and item date ranges, past-date slack, path and referrer cardinality in `/api/track`, the Photon allowance per client, `pull-content` media atomicity, IDN emails | Open (low) |
+
+### Site frontend (frontend audit)
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| F-39-21 | **High** | Stays and activities seeded from other pages stayed in the hidden "build my own" lists. With a pre-planned trip chosen, the server rejected the request on fields the traveller could not see or fix | **Fixed**: `draftForSubmission()` sends only the active mode's entries |
+| F-39-22 | **High** | `/bookings?type=package&item=<slug>` ("Book this trip") was ignored and opened a blank form | **Fixed**: known slugs are preselected; unknown slugs are ignored |
+| — | Medium | The ride map was created hidden at 0×0 and showed grey tiles once revealed | **Fixed**: a `ResizeObserver` calls `invalidateSize()` |
+| — | Low | A debounced place search ran after a suggestion was picked; experience cards linked to a dead `#anchor`; the /plan FAQ hard-coded "4 to 15 days" | **Fixed** |
+| — | Medium/Low | Open: /plan transfer choices are not carried into /bookings; a stale saved /plan itinerary is still attached; server field errors point at missing ids in the trip form; carousel arrow keys drop focus; the first tap after a swipe is swallowed; the date `min` hydration mismatch; stale activity slugs count toward the cap; a rejected map drag | Open |
+
+### Data consistency (data audit)
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| F-39-23 | Medium | The 24-month purge used `created_at` only, so it could delete a request for a trip still up to two years away | **Fixed**: 24 months after the later of `created_at` and `travel_date` (`lib/retention.ts`, both the banner and the purge) |
+| F-39-25 | Medium | Unpublishing or deleting a referenced item made later site builds crash with a stack trace | **Fixed**: `pull-content` runs `findContentProblems` and lists what to fix |
+| F-39-24 | Low-Medium | A licensed image could be published without a credit, so it had no attribution on /credits | **Fixed**: schema rule (shared file, synced) |
+| — | Medium | The admin's shared-file drift guard looked for the retired monorepo layout and never ran | **Fixed**: it checks `../NobalPath` (or `SITE_REPO`). It immediately caught comment drift, which is now synced |
+| — | Low | `suggestedNights` accepted 0 in the schema | **Fixed**: `min(1)` |
+| — | Low | Monthly enquiry chart used UTC months; the status filter accepted `toString` | **Fixed** |
+| — | Medium/Low | Open: image `src` not verified to exist; picking a new library image keeps the old alt and credit; hard-coded slugs (`colombo`, home photos) are not in the integrity rules; regions and vehicles can be set to draft | Open |
+
+### Public site (live crawl, 51 pages, 319 assets)
+
+- **Result:** 0 broken links or assets, and no Critical or High findings. Security headers are
+  present and no cookies are set.
+- **Medium 1 (fixed):** an unknown `/trips/x` or `/destinations/x` returned 404 with an empty
+  server-rendered body. These routes now set `dynamicParams = false`, so unknown slugs get the
+  prerendered 404 page.
+- **Open:**
+  - og:images of 0.6–3.1 MB (WhatsApp may drop them);
+  - CSP `'unsafe-inline'` scripts (F-36-2);
+  - uppercase paths 404;
+  - the bare domain's HSTS lacks `includeSubDomains; preload`;
+  - two-hop redirects from `http://` on the bare domain and from `/experiences/`.
+
+---
+
 ## Dependency: Next.js GHSA-vcvr-r3jv-pc5j (2026-09-30)
 
 - **Found by:** the CI `npm audit --audit-level=high` job, on the D-38 push.

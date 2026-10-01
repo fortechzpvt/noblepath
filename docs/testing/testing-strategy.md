@@ -221,3 +221,21 @@ PostgreSQL 18.4 (embedded, from the scratchpad) and production builds of both ap
 - PageSpeed / Core Web Vitals, because the API was rate-limited;
 - Google's Rich Results Test, which needs the deployed URL.
 
+## 11. D-39: bug hunt (2026-10-01)
+
+- **Admin (`noblepathadmin`):**
+  - lint, typecheck, 8 of 8 tests and the production build pass;
+  - `tests/panel-guard.test.ts` was mutation-checked (it fails when a page loses `requireAdmin()`).
+- **Site:** checked on a clean copy outside iCloud, with dependencies installed fresh. The
+  project's own `node_modules` had been evicted by iCloud.
+  - Lint and typecheck pass, and 19 of 19 tests pass. The new tests cover hidden seeded entries
+    against the real server schema, the phone and digit rules, text cleaning, Sri Lanka dates and
+    the credit rule.
+  - Production build, then HTTP checks:
+    - `/trips/x` and `/destinations/does-not-exist` return 404 with the full page (h1 present);
+    - `/bookings?type=package&item=classic-sri-lanka` preselects the trip, and an unknown slug gives `null`;
+    - `/experiences` returns 308.
+- **Not performed:**
+  - browser checks of the editor fix, the ride-map resize and the booking form;
+  - a real enquiry against production.
+

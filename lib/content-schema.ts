@@ -80,13 +80,20 @@ const imageSrc = z
  */
 const httpsUrl = z.url({ protocol: /^https$/, message: "Use a full https:// web address." }).max(500);
 
-export const imageSchema = z.object({
-  src: imageSrc,
-  alt: text(300),
-  credit: optionalText(200),
-  sourceUrl: httpsUrl.optional(),
-  licenceUrl: httpsUrl.optional(),
-});
+export const imageSchema = z
+  .object({
+    src: imageSrc,
+    alt: text(300),
+    credit: optionalText(200),
+    sourceUrl: httpsUrl.optional(),
+    licenceUrl: httpsUrl.optional(),
+  })
+  // /credits lists only images with a credit, so a licensed photo without
+  // one would be published with no attribution at all (D-39, F-39-24).
+  .refine((image) => !(image.sourceUrl || image.licenceUrl) || Boolean(image.credit?.trim()), {
+    message: "Add a credit: a photo with a source or licence link must name its photographer.",
+    path: ["credit"],
+  });
 
 const coordinatesSchema = z.object({
   lat: z.number().min(5.5).max(10.1),
@@ -115,7 +122,8 @@ export const destinationSchema = z.object({
   description: z.array(text(2000)).min(1).max(12),
   region: z.enum(REGIONS),
   interests: z.array(z.enum(INTERESTS)).min(1),
-  suggestedNights: z.number().int().min(0).max(14),
+  // At least 1, as the integrity rules and the admin form already require (D-39).
+  suggestedNights: z.number().int().min(1).max(14),
   image: imageSchema,
   highlights: z.array(text(200)).max(20),
   travel: z

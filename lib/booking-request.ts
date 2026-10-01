@@ -355,8 +355,11 @@ function wholeNumber(
   max: number,
 ): "ok" | "empty" | "invalid" {
   if (value.trim() === "") return "empty";
+  // Digits only, exactly as the server checks (D-39): "1e1" or "5.0" fail here
+  // too, so the traveller sees the error next to the field.
+  if (!/^\d{1,3}$/.test(value.trim())) return "invalid";
   const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed >= min && parsed <= max ? "ok" : "invalid";
+  return parsed >= min && parsed <= max ? "ok" : "invalid";
 }
 
 /**
@@ -372,7 +375,7 @@ export function validateDraft(draft: BookingDraft, today: string = todayIso()): 
   if (t.fullName.trim().length < 2) add(ids.fullName, "Enter your full name.");
   if (t.nationality.trim().length < 2) add(ids.nationality, "Enter your nationality.");
   if (!EMAIL_PATTERN.test(t.email.trim())) add(ids.email, "Enter a valid email address.");
-  if (!PHONE_PATTERN.test(t.phone.trim())) {
+  if (!PHONE_PATTERN.test(t.phone.trim()) || (t.phone.match(/\d/g)?.length ?? 0) < 7) {
     add(ids.phone, "Enter a WhatsApp or phone number, including the country code.");
   }
 
@@ -456,7 +459,7 @@ export function validateDraft(draft: BookingDraft, today: string = todayIso()): 
     const p = draft.preferences;
     if (p.destinations.length === 0) add(ids.prefDestinations, "Choose at least one destination you would like to visit.");
     if (wholeNumber(p.days, 2, 60) !== "ok") add(ids.prefDays, "Enter how many days you would like, between 2 and 60.");
-    if (p.budget.trim() !== "" && !(Number(p.budget) > 0)) {
+    if (p.budget.trim() !== "" && !(/^\d{1,7}$/.test(p.budget.trim()) && Number(p.budget) > 0)) {
       add(ids.prefBudget, "Enter your budget as a number, or leave it empty.");
     }
   }
@@ -487,7 +490,10 @@ export function generateBookingRequestId(now: Date = new Date()): string {
   const bytes = new Uint8Array(6);
   crypto.getRandomValues(bytes);
   const suffix = Array.from(bytes, (byte) => ID_ALPHABET[byte % ID_ALPHABET.length]).join("");
-  const date = todayIso(now).replaceAll("-", "");
+  // The Sri Lanka date, the one staff and the admin's statistics use. The
+  // server's own date is UTC, so a 03:00 Colombo booking used to carry
+  // yesterday's date (D-39, F-39-20).
+  const date = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Colombo" }).format(now).replaceAll("-", "");
   return `NP-${date}-${suffix}`;
 }
 
@@ -518,10 +524,35 @@ const GENERIC_SUBMIT_ERROR =
  * same form, see `lib/validation.ts`), so it is sent as-is rather than
  * remapped into a second shape.
  */
+/**
+ * The draft as it should be sent: only the part of the plan the traveller is
+ * actually using (D-39, F-39-21).
+ *
+ * Stays and activities picked on other pages are seeded into the "build my
+ * own" lists. If the traveller then chose a pre-planned trip (or "just send
+ * my preferences"), those hidden entries still went to the server, which
+ * validated them, rejected the request on fields the traveller could not see,
+ * and left no way to fix it. Entries the traveller cannot see are not part of
+ * their request, so they are cleared here; the server is unchanged.
+ */
+export function draftForSubmission(draft: BookingDraft): BookingDraft {
+  const empty = createEmptyDraft();
+  const choosing = draft.planChoice === "custom" && draft.customMode === "choose";
+  const preferring = draft.planChoice === "custom" && draft.customMode === "preferences";
+  return {
+    ...draft,
+    packageSlug: draft.planChoice === "package" ? draft.packageSlug : "",
+    stays: choosing ? draft.stays : [],
+    activities: choosing ? draft.activities : [],
+    transport: choosing ? draft.transport : [],
+    preferences: preferring ? draft.preferences : empty.preferences,
+  };
+}
+
 export async function submitBookingRequest(
   draft: BookingDraft,
 ): Promise<{ readonly id: string }> {
-  return postEnquiry("/api/bookings", draft);
+  return postEnquiry("/api/bookings", draftForSubmission(draft));
 }
 
 /**

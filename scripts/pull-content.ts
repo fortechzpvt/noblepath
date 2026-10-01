@@ -22,6 +22,7 @@ import path from "node:path";
 
 import { Client } from "pg";
 
+import { findContentProblems } from "../lib/content-integrity";
 import { snapshotSchema, type ContentKind, type ContentSnapshot } from "../lib/content-schema";
 import { pgConfig } from "../lib/pg-config";
 
@@ -99,6 +100,18 @@ async function main(): Promise<void> {
       fail(`Published content failed validation:\n${issues}`);
     }
     const snapshot: ContentSnapshot = parsed.data;
+
+    // Cross-references, checked here with a readable list (D-39, F-39-25).
+    // "Publish" checks them in the admin, but unpublishing or deleting an item
+    // does not, and any later build (a code push, a redeploy) then failed deep
+    // inside lib/content.ts with a stack trace instead of saying what to fix.
+    const problems = findContentProblems(snapshot);
+    if (problems.length > 0) {
+      fail(
+        `Published content has broken references. Fix these in the admin, then Publish:\n` +
+          problems.slice(0, 20).map((problem) => `  - ${problem}`).join("\n"),
+      );
+    }
 
     // Copy the uploaded images that published content actually uses.
     const referenced = new Set<string>();

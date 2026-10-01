@@ -112,6 +112,10 @@ const contactSchema = z.strictObject({
     .max(24, { message: "That phone number is too long." })
     .regex(PHONE_PATTERN, {
       message: "Enter a WhatsApp or phone number, including the country code.",
+    })
+    // At least 7 digits: the pattern alone accepted "+....." (D-39).
+    .refine((value) => (value.match(/\d/g)?.length ?? 0) >= 7, {
+      message: "Enter a WhatsApp or phone number, including the country code.",
     }),
 });
 

@@ -20,7 +20,7 @@ Created by hand from `db/roles.sql` (noblepathadmin repository) after the first 
 | `anon`, `authenticated` | Supabase Data API (PostgREST) | **Nothing** on our tables: `003_supabase_lockdown.sql` revokes all privileges and the default privileges | Read or write any table through the public API key |
 | `np_admin` | Admin app, `admin:create`, `db:seed` | Read/write all tables | Create schema objects |
 | `np_site_build` | Site build (`CONTENT_DATABASE_URL`) | `select` on the `published_content` view; `select (id, ext, bytes)` on `media` | See drafts, enquiries, users, sessions, statistics |
-| `np_site_runtime` | Site runtime (`DATABASE_URL`) | `insert` into `booking_requests`, `page_views_daily`, `visitors_daily`; update `page_views_daily.views`; manage `visitor_salts` | Read any enquiry, content, user or session |
+| `np_site_runtime` | Site runtime (`DATABASE_URL`) | `insert` into `booking_requests`, `page_views_daily`, `visitors_daily`; `update (views)` and column-level `select (day, path, country, device, referrer_host, views)` on `page_views_daily` (the upsert's `on conflict … do update` needs both; do not remove the select); `select, insert, delete` on `visitor_salts` | Read any enquiry, content, user or session |
 
 These denials were checked against a real PostgreSQL:
 - `np_site_build` and `np_site_runtime` both get "permission denied" on `booking_requests`;

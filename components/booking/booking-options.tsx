@@ -42,11 +42,14 @@ const OPTIONS: ReadonlyArray<{
  */
 export function BookingOptions({
   initialService,
+  initialPackageSlug,
   trips,
   destinations,
   experiences,
 }: {
   readonly initialService: BookingService;
+  /** A known trip slug from `?type=package&item=`, preselected in the trip form. */
+  readonly initialPackageSlug: string | null;
   readonly trips: readonly TripOption[];
   readonly destinations: readonly NamedOption[];
   readonly experiences: readonly NamedOption[];
@@ -100,7 +103,12 @@ export function BookingOptions({
       </fieldset>
 
       <div hidden={service !== "trip"}>
-        <BookingForm trips={trips} destinations={destinations} experiences={experiences} />
+        <BookingForm
+          trips={trips}
+          destinations={destinations}
+          experiences={experiences}
+          initialPackageSlug={initialPackageSlug}
+        />
       </div>
       <div hidden={service !== "ride"}>
         <RideForm />

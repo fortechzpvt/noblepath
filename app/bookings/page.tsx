@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { BookingOptions } from "@/components/booking/booking-options";
 import { PageHeader } from "@/components/ui/page-header";
 import { Container, Section } from "@/components/ui/section";
-import { getAllDestinations, getAllExperiences, getAllTrips } from "@/lib/content";
+import { getAllDestinations, getAllExperiences, getAllTrips, isKnownTripSlug } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -19,7 +19,13 @@ export default async function BookingsPage({
   readonly searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   // `?service=ride` opens the single-trip form (D-24, D-25); anything else is the trip form.
-  const initialService = (await searchParams).service === "ride" ? "ride" : "trip";
+  const params = await searchParams;
+  const initialService = params.service === "ride" ? "ride" : "trip";
+  // "Book this trip" links send `?type=package&item=<slug>`. Before D-39 the
+  // page ignored it and opened a blank form (F-39-22). Unknown slugs are
+  // ignored rather than trusted.
+  const item = typeof params.item === "string" ? params.item : "";
+  const initialPackageSlug = params.type === "package" && isKnownTripSlug(item) ? item : null;
   // Only plain data crosses into the client component.
   const trips = getAllTrips().map((trip) => ({
     slug: trip.slug,
@@ -42,6 +48,7 @@ export default async function BookingsPage({
         <Container>
           <BookingOptions
             initialService={initialService}
+            initialPackageSlug={initialPackageSlug}
             trips={trips}
             destinations={destinations}
             experiences={experiences}
