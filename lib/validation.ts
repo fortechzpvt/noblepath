@@ -9,6 +9,8 @@ import {
   ROOM_TYPES,
   STAY_KINDS,
   TIERS,
+  entryDatesOutsideTrip,
+  MAX_TRIP_DAYS,
   type StayKind,
 } from "@/lib/booking-request";
 import {
@@ -209,7 +211,9 @@ const datesSchema = z
     if (arrival === null || departure === null) return; // already flagged above
     const now = new Date();
     const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-    const earliest = todayUtc - 24 * 60 * 60 * 1000; // a day of slack for UTC+13 travellers
+    // A day of slack for travellers behind UTC (the Americas): their "today"
+    // can still be yesterday in UTC.
+    const earliest = todayUtc - 24 * 60 * 60 * 1000;
     const latest = Date.UTC(
       now.getUTCFullYear() + MAX_ARRIVAL_YEARS_AHEAD,
       now.getUTCMonth(),
@@ -222,6 +226,14 @@ const datesSchema = z
         code: "custom",
         path: ["arrivalDate"],
         message: `We plan up to ${MAX_ARRIVAL_YEARS_AHEAD} years ahead. Please choose an earlier date.`,
+      });
+    }
+    if (departure - arrival > MAX_TRIP_DAYS * 24 * 60 * 60 * 1000) {
+      // Departure had no upper bound: "9999-12-31" was accepted (D-39).
+      ctx.addIssue({
+        code: "custom",
+        path: ["departureDate"],
+        message: `We plan trips of up to ${MAX_TRIP_DAYS} days. For longer stays, please contact us.`,
       });
     }
     if (departure - arrival < 24 * 60 * 60 * 1000) {
@@ -496,6 +508,9 @@ export const bookingDraftRequestSchema = z
           path: ["customEntries"],
           message: "Add at least one stay, activity or transport, or send your preferences instead.",
         });
+      }
+      for (const problem of entryDatesOutsideTrip(draft)) {
+        ctx.addIssue({ code: "custom", path: problem.path, message: problem.message });
       }
       return;
     }

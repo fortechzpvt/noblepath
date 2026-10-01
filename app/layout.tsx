@@ -5,7 +5,7 @@ import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { SiteHeader } from "@/components/site-header";
 import { ScrollRevealFallback } from "@/components/scroll-reveal-fallback";
 import { SiteFooter } from "@/components/site-footer";
-import { ORGANIZATION_ID, PRODUCTION_SITE_URL, SITE_URL, WEBSITE_ID, isIndexable, jsonLdScript } from "@/lib/seo";
+import { ORGANIZATION_ID, PRODUCTION_SITE_URL, SITE_URL, WEBSITE_ID, isIndexable, jsonLdScript, shareImage } from "@/lib/seo";
 
 import "./globals.css";
 
@@ -63,9 +63,9 @@ export const metadata: Metadata = {
       "Ready-made Sri Lanka itineraries, destinations, stays and activities, with a private driver for the whole route.",
     images: [
       {
-        url: "/images/hero/sigiriya-sunrise-2.jpg",
-        width: 1600,
-        height: 1200,
+        url: shareImage("/images/hero/sigiriya-sunrise-2.jpg"),
+        width: 1200,
+        height: 900,
         alt: "Sigiriya rock fortress rising from jungle at sunrise, birds circling overhead",
       },
     ],
@@ -75,7 +75,7 @@ export const metadata: Metadata = {
     title: "Sri Lanka Trip Planner & Private Driver Tours | Noble Path",
     description:
       "Ready-made Sri Lanka itineraries, destinations, stays and activities, with a private driver for the whole route.",
-    images: ["/images/hero/sigiriya-sunrise-2.jpg"],
+    images: [shareImage("/images/hero/sigiriya-sunrise-2.jpg")],
   },
   // Previews and staging are noindex; only the live origin is indexed (lib/seo.ts).
   robots: isIndexable ? { index: true, follow: true } : { index: false, follow: false },

@@ -34,13 +34,29 @@ Significant changes, newest first (Fortechz policy §16). Decisions behind each 
   - licensed images need a credit;
   - the admin's shared-file drift guard works again.
 
+- Site (second pass, all remaining site findings):
+  - booking form:
+    - /plan transfers carried into /bookings;
+    - no stale saved itinerary;
+    - server errors land on the right fields;
+    - entry dates must fall within the trip, and trips are capped at 120 days;
+    - the date minimum follows the visitor's own date;
+  - carousel keyboard focus and swipe tap fixed;
+  - a map pin dropped outside Sri Lanka snaps back;
+  - og:images are resized (3.1 MB to 72 KB);
+  - uppercase URLs redirect to lower case;
+  - the build checks that every image exists;
+  - `/api/track` counts only real pages;
+  - the place-search limit is 30 a minute per client.
+
 ### Tests
 - Admin: `tests/panel-guard.test.ts` and `tests/recovery.test.ts` (8 tests in total).
 - Site:
   - `tests/d39.test.ts` (text cleaning, Sri Lanka dates);
   - `tests/booking-d39.test.ts` (hidden entries, phone digits, digits-only legs, using the real server schema);
-  - a credit-rule test.
-  - 19 of 19 pass.
+  - a credit-rule test;
+  - field-id mapping, trip-window dates and share images.
+  - 22 of 22 pass.
 
 ## 2026-09-30 — Security: Next.js 16.3.8
 

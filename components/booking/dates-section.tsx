@@ -1,6 +1,7 @@
 import { Card } from "@/components/booking/ui";
 import { TextField } from "@/components/ui/field";
-import { ids, todayIso, tripLength, type FormError, type TripDates } from "@/lib/booking-request";
+import { ids, tripLength, type FormError, type TripDates } from "@/lib/booking-request";
+import { useToday } from "@/components/booking/use-today";
 
 /** Arrival and departure, with nights and days worked out for the traveller. */
 export function DatesSection({
@@ -12,6 +13,7 @@ export function DatesSection({
   readonly onChange: (next: TripDates) => void;
   readonly errors: readonly FormError[];
 }) {
+  const today = useToday();
   const errorFor = (id: string) => errors.find((error) => error.fieldId === id)?.message;
   const set = (patch: Partial<TripDates>) => onChange({ ...value, ...patch });
   const length = tripLength(value.arrivalDate, value.departureDate);
@@ -23,7 +25,7 @@ export function DatesSection({
           id={ids.arrivalDate}
           label="Arrival date"
           type="date"
-          min={todayIso()}
+          min={today || undefined}
           value={value.arrivalDate}
           onChange={(event) => set({ arrivalDate: event.target.value })}
           error={errorFor(ids.arrivalDate)}
@@ -40,7 +42,7 @@ export function DatesSection({
           id={ids.departureDate}
           label="Departure date"
           type="date"
-          min={value.arrivalDate || todayIso()}
+          min={value.arrivalDate || today || undefined}
           value={value.departureDate}
           onChange={(event) => set({ departureDate: event.target.value })}
           error={errorFor(ids.departureDate)}

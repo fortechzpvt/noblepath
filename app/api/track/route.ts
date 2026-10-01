@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { countryOf, deviceOf, isBot, normalizePath, referrerHost, colomboDay } from "@/lib/analytics";
+import { isKnownDestinationSlug, isKnownTripSlug } from "@/lib/content";
 import { getDb } from "@/lib/db";
 import { clientKey } from "@/lib/enquiry-endpoint";
 import { createRateLimiter } from "@/lib/rate-limit";
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return noContent();
   }
   const path = normalizePath(body.p);
-  if (!path) return noContent();
+  if (!path || !isSitePage(path)) return noContent();
 
   // Vercel's header only: `cf-ipcountry` is not set by this host, so a client
   // could send it to pick its own country (D-39, F-39-18).
@@ -104,3 +105,20 @@ async function saltFor(db: NonNullable<ReturnType<typeof getDb>>, day: string): 
 export async function GET(): Promise<NextResponse> {
   return new NextResponse(null, { status: 405, headers: { Allow: "POST" } });
 }
+
+/**
+ * Only real pages are counted (D-39, F-39-27). Any lower-case path used to be
+ * stored, so a script could add unlimited rows (`/x1`, `/x2`, …) to the
+ * statistics tables.
+ */
+const STATIC_PAGES = new Set(["/", "/plan", "/trips", "/destinations", "/activities", "/accommodation", "/about", "/bookings", "/credits"]);
+
+function isSitePage(path: string): boolean {
+  if (STATIC_PAGES.has(path)) return true;
+  const [, section, slug, extra] = path.split("/");
+  if (!slug || extra !== undefined) return false;
+  if (section === "trips") return isKnownTripSlug(slug);
+  if (section === "destinations") return isKnownDestinationSlug(slug);
+  return false;
+}
+

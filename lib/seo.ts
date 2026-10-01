@@ -45,6 +45,18 @@ export function clip(text: string, max = 155): string {
   return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[\s,;:.–-]+$/, "")}…`;
 }
 
+/**
+ * A share-sized copy of a local image for og:image (D-39). The originals are
+ * up to 3 MB, which WhatsApp and some other previewers drop; Next's image
+ * optimiser serves a 1200 px copy (a size in its default `deviceSizes`) at
+ * quality 75, as JPEG to crawlers that do not ask for AVIF/WebP.
+ * Remote (Unsplash) URLs are left as they are.
+ */
+export function shareImage(src: string): string {
+  if (!src.startsWith("/")) return src;
+  return `/_next/image?url=${encodeURIComponent(src)}&w=1200&q=75`;
+}
+
 interface PageSeo {
   /** Without the " | Noble Path" suffix; the root title template adds it. */
   readonly title: string;
@@ -61,13 +73,13 @@ interface PageSeo {
  */
 export function pageMetadata({ title, description, path, image, type = "website" }: PageSeo): Metadata {
   const fullTitle = `${title} | Noble Path`;
-  const images = image ? [{ url: image.src, alt: image.alt }] : undefined;
+  const images = image ? [{ url: shareImage(image.src), alt: image.alt }] : undefined;
   return {
     title,
     description,
     alternates: { canonical: path },
     openGraph: { type, siteName: "Noble Path", title: fullTitle, description, url: path, images },
-    twitter: { card: "summary_large_image", title: fullTitle, description, images: image ? [image.src] : undefined },
+    twitter: { card: "summary_large_image", title: fullTitle, description, images: image ? [shareImage(image.src)] : undefined },
   };
 }
 

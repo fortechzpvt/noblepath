@@ -516,6 +516,9 @@
   .np-ring-stage {
     perspective: 1600px;
     perspective-origin: 50% 35%;
+    /* Vertical scrolling stays with the browser; horizontal swipes reach the
+       carousel instead of being cancelled as a pan (D-39). */
+    touch-action: pan-y;
   }
   .np-ring {
     --np-ring-card: min(360px, 80vw);

@@ -152,11 +152,21 @@ export function TripMap({
           iconAnchor: [16, 16],
         }),
       }).addTo(map);
+      // Where the drag started, so a drop outside Sri Lanka can be undone (D-39).
+      let dragStart = marker.getLatLng();
+      marker.on("dragstart", () => {
+        dragStart = marker.getLatLng();
+      });
       marker.on("dragend", () => {
         const { lat, lng } = marker.getLatLng();
         const next = roundPoint({ lat, lng });
+        if (!isInSriLanka(next)) {
+          // Rejected: put the pin back where the form still says it is.
+          marker.setLatLng(dragStart);
+          return;
+        }
         fromMapRef.current = true;
-        if (isInSriLanka(next)) onPlaceRef.current(end, next);
+        onPlaceRef.current(end, next);
       });
       markersRef.current[end] = marker;
     }

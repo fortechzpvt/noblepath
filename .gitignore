@@ -20,3 +20,4 @@ next-env.d.ts
 # D-36: written by scripts/pull-content.ts before every build
 /content/generated/
 /public/media/
+/public/media.next-build/

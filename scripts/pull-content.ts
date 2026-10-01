@@ -17,7 +17,7 @@
  * Connects as `np_site_build`, which can read only the `published_content`
  * view and the media bytes (`db/roles.sql` in the `noblepathadmin` repository).
  */
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { Client } from "pg";
@@ -113,22 +113,42 @@ async function main(): Promise<void> {
       );
     }
 
-    // Copy the uploaded images that published content actually uses.
-    const referenced = new Set<string>();
-    for (const match of JSON.stringify(snapshot).matchAll(/\/media\/([0-9a-f-]{36})\.(jpg|webp|png)/g)) {
-      referenced.add(match[1]!);
+    // Every image the published content uses must exist (D-39, F-39-26).
+    // Before, a typo in a /images/… path or a /media/<id>.webp for an upload
+    // stored as .jpg passed validation and shipped a broken image.
+    const json = JSON.stringify(snapshot);
+    const sitePaths = new Set([...json.matchAll(/"(\/images\/[^"]+)"/g)].map((match) => match[1]!));
+    const missingSiteImages = [...sitePaths].filter((src) => !existsSync(path.join(ROOT, "public", src)));
+    if (missingSiteImages.length > 0) {
+      fail(`Published content uses site images that do not exist:\n${missingSiteImages.map((src) => `  - ${src}`).join("\n")}`);
     }
-    rmSync(MEDIA_DIR, { recursive: true, force: true });
-    mkdirSync(MEDIA_DIR, { recursive: true });
+
+    // Copy the uploaded images that published content actually uses, into a
+    // fresh folder that replaces the old one only once every file is written,
+    // so a failure never leaves public/media empty.
+    const referenced = new Map<string, string>(); // id -> ext the content asks for
+    for (const match of json.matchAll(/\/media\/([0-9a-f-]{36})\.(jpg|webp|png)/g)) {
+      referenced.set(match[1]!, match[2]!);
+    }
+    const staging = `${MEDIA_DIR}.next-build`;
+    rmSync(staging, { recursive: true, force: true });
+    mkdirSync(staging, { recursive: true });
     if (referenced.size > 0) {
       const media = await client.query<{ id: string; ext: string; bytes: Buffer }>(
         "select id, ext, bytes from media where id = any($1::uuid[])",
-        [[...referenced]],
+        [[...referenced.keys()]],
       );
-      for (const file of media.rows) writeFileSync(path.join(MEDIA_DIR, `${file.id}.${file.ext}`), file.bytes);
-      const missing = [...referenced].filter((id) => !media.rows.some((row) => row.id === id));
-      if (missing.length > 0) fail(`Published content uses images that no longer exist: ${missing.join(", ")}`);
+      const problems: string[] = [];
+      for (const [id, ext] of referenced) {
+        const row = media.rows.find((candidate) => candidate.id === id);
+        if (!row) problems.push(`/media/${id}.${ext} (no such upload)`);
+        else if (row.ext !== ext) problems.push(`/media/${id}.${ext} (the upload is .${row.ext})`);
+      }
+      if (problems.length > 0) fail(`Published content uses uploaded images that cannot be served:\n${problems.map((p) => `  - ${p}`).join("\n")}`);
+      for (const file of media.rows) writeFileSync(path.join(staging, `${file.id}.${file.ext}`), file.bytes);
     }
+    rmSync(MEDIA_DIR, { recursive: true, force: true });
+    renameSync(staging, MEDIA_DIR);
 
     mkdirSync(OUT_DIR, { recursive: true });
     writeFileSync(OUT_FILE, JSON.stringify(snapshot) + "\n");

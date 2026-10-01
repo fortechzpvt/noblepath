@@ -238,4 +238,11 @@ PostgreSQL 18.4 (embedded, from the scratchpad) and production builds of both ap
 - **Not performed:**
   - browser checks of the editor fix, the ride-map resize and the booking form;
   - a real enquiry against production.
+- **Second site pass (all remaining site findings), same clean-copy method:**
+  - lint and typecheck pass, and 22 of 22 tests pass;
+  - the production build succeeds;
+  - over HTTP:
+    - `/Trips` and `/destinations/Kandy` return 308 to lower case;
+    - the home og:image is served at 1200 px as JPEG (71,571 B, was 3,135,704 B);
+    - `/trips/x` returns 404.
 

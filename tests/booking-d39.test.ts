@@ -69,3 +69,41 @@ test("airport-leg numbers must be plain digits (F-39-16)", () => {
     assert.equal(bookingDraftRequestSchema.safeParse(withLeg(bad)).success, false, `${bad} should be rejected`);
   }
 });
+
+test("server field errors map to real form fields (D-39)", async () => {
+  const { toBookingFieldId, ids } = await import("../lib/booking-request");
+  assert.equal(toBookingFieldId("server:stays.0.checkOut"), ids.stay(0, "checkOut"));
+  assert.equal(toBookingFieldId("server:activities.2.date"), ids.activity(2, "date"));
+  assert.equal(toBookingFieldId("server:traveller.phone"), ids.phone);
+  assert.equal(toBookingFieldId("server:dates.departureDate"), ids.departureDate);
+  assert.equal(toBookingFieldId("server:pickup.passengers"), ids.leg("pickup", "passengers"));
+  assert.equal(toBookingFieldId("server:packageSlug"), ids.package);
+  assert.equal(toBookingFieldId("server:preferences.days"), ids.prefDays);
+  assert.equal(toBookingFieldId("server:website"), ids.submit);
+});
+
+test("entry dates must fall inside the trip, and trips are capped (D-39)", () => {
+  const base = packageDraft();
+  const custom: BookingDraft = {
+    ...base,
+    planChoice: "custom",
+    customMode: "choose",
+    packageSlug: "",
+    activities: [
+      { id: "act1", activity: "other", otherName: "Surfing", date: isoInDays(80), participants: "2", sourceActivitySlug: "" },
+    ],
+  };
+  const outside = bookingDraftRequestSchema.safeParse(custom);
+  assert.equal(outside.success, false);
+  assert.ok(outside.error?.issues.some((issue) => issue.path.join(".") === "activities.0.date"));
+  const inside = bookingDraftRequestSchema.safeParse({
+    ...custom,
+    activities: [{ ...custom.activities[0]!, date: isoInDays(35) }],
+  });
+  assert.equal(inside.success, true, JSON.stringify(inside.error?.issues));
+  const tooLong = bookingDraftRequestSchema.safeParse({
+    ...base,
+    dates: { ...base.dates, departureDate: "9999-12-31" },
+  });
+  assert.equal(tooLong.success, false);
+});

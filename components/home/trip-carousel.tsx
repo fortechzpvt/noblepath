@@ -128,10 +128,20 @@ export function TripCarousel({
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "ArrowRight") turnBy(1);
-    else if (event.key === "ArrowLeft") turnBy(-1);
-    else return;
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    const forward = event.key === "ArrowRight";
+    turnBy(forward ? 1 : -1);
     event.preventDefault();
+    // Turning makes the front card `inert`. If focus was on a link inside it,
+    // the browser dropped focus to <body> (D-39); keep it on the matching
+    // control instead.
+    const target = event.target as HTMLElement;
+    if (target.closest(".np-ring")) {
+      const control = event.currentTarget.querySelector<HTMLButtonElement>(
+        `button[aria-label="${forward ? "Next trip" : "Previous trip"}"]`,
+      );
+      control?.focus();
+    }
   }
 
   if (count === 0) return null;
@@ -154,6 +164,9 @@ export function TripCarousel({
         style={fit.scale < 1 ? { height: fit.natural * fit.scale } : undefined}
         onPointerDown={(event) => {
           swipe.current = { x: event.clientX, y: event.clientY };
+          // Touch swipes fire no click afterwards, so a flag left over from
+          // the last swipe would swallow this next, real tap (D-39).
+          suppressClick.current = false;
         }}
         onPointerUp={(event) => {
           const start = swipe.current;

@@ -16,7 +16,6 @@ import {
   TIERS,
   ids,
   makeEntryId,
-  todayIso,
   totalTravellers,
   type ActivityEntry,
   type BookingDraft,
@@ -29,6 +28,7 @@ import {
 import { getAccommodationBySlug, getActivityBySlug } from "@/lib/content";
 import { formatPriceBand, interestName } from "@/lib/format";
 import type { PriceBand } from "@/lib/types";
+import { useToday } from "@/components/booking/use-today";
 
 export interface TripOption {
   readonly slug: string;
@@ -98,6 +98,7 @@ export function PlanSection({
   readonly experiences: readonly NamedOption[];
   readonly errors: readonly FormError[];
 }) {
+  const today = useToday();
   const errorFor = (id: string) => errors.find((error) => error.fieldId === id)?.message;
   const party = String(Math.max(totalTravellers(draft.traveller), 1));
 
@@ -384,7 +385,7 @@ export function PlanSection({
                       id={ids.stay(index, "checkIn")}
                       label="Check-in"
                       type="date"
-                      min={todayIso()}
+                      min={today || undefined}
                       value={stay.checkIn}
                       onChange={(e) => setStay(stay.id, { checkIn: e.target.value })}
                       error={errorFor(ids.stay(index, "checkIn"))}
@@ -393,7 +394,7 @@ export function PlanSection({
                       id={ids.stay(index, "checkOut")}
                       label="Check-out"
                       type="date"
-                      min={stay.checkIn || todayIso()}
+                      min={stay.checkIn || today || undefined}
                       value={stay.checkOut}
                       onChange={(e) => setStay(stay.id, { checkOut: e.target.value })}
                       error={errorFor(ids.stay(index, "checkOut"))}
@@ -467,7 +468,7 @@ export function PlanSection({
                       id={ids.activity(index, "date")}
                       label="Date"
                       type="date"
-                      min={todayIso()}
+                      min={today || undefined}
                       value={activity.date}
                       onChange={(e) => setActivity(activity.id, { date: e.target.value })}
                       error={errorFor(ids.activity(index, "date"))}
@@ -535,7 +536,7 @@ export function PlanSection({
                       id={ids.transport(index, "date")}
                       label="Date required"
                       type="date"
-                      min={todayIso()}
+                      min={today || undefined}
                       value={entry.date}
                       onChange={(e) => setTransport(entry.id, { date: e.target.value })}
                       error={errorFor(ids.transport(index, "date"))}

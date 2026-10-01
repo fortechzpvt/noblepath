@@ -343,6 +343,74 @@ export const ids = {
   transport: (index: number, field: string) => `bk-transport-${index}-${field}`,
 } as const;
 
+/**
+ * Maps a server field error (`server:stays.0.checkOut`) to the on-page field id
+ * (`bk-stay-0-checkOut`) so the error summary link and the inline message land
+ * on the field (D-39). Unknown paths point at the submit button. The ride form
+ * has its own mapper (`ride-form.tsx`).
+ */
+export function toBookingFieldId(serverFieldId: string): string {
+  const path = serverFieldId.replace(/^server:/, "").split(".");
+  const [head, second, third] = path;
+  const simple: Record<string, string> = {
+    planChoice: ids.planChoice,
+    packageSlug: ids.package,
+    "preferences.days": ids.prefDays,
+    "preferences.budget": ids.prefBudget,
+    "preferences.destinations": ids.prefDestinations,
+  };
+  if (head === "traveller" || head === "dates") {
+    const id = (ids as unknown as Record<string, unknown>)[second ?? ""];
+    return typeof id === "string" ? id : ids.submit;
+  }
+  if ((head === "pickup" || head === "drop") && second) return ids.leg(head, second);
+  const index = Number(second);
+  if (Number.isInteger(index) && third) {
+    if (head === "stays") return ids.stay(index, third);
+    if (head === "activities") return ids.activity(index, third);
+    if (head === "transport") return ids.transport(index, third);
+  }
+  return simple[`${head}${second ? `.${second}` : ""}`] ?? simple[head ?? ""] ?? ids.submit;
+}
+
+/** The longest trip the form accepts, arrival to departure (D-39). */
+export const MAX_TRIP_DAYS = 120;
+
+/**
+ * Stay, activity and transport dates that fall outside the trip (D-39).
+ * Shared by `validateDraft` (browser) and `lib/validation.ts` (server) so the
+ * two can never disagree. Dates are compared as ISO strings, which sort
+ * correctly; entries with no date yet are left to the "choose a date" checks.
+ */
+export function entryDatesOutsideTrip(
+  draft: Pick<BookingDraft, "dates" | "stays" | "activities" | "transport">,
+): { readonly path: (string | number)[]; readonly fieldId: string; readonly message: string }[] {
+  const { arrivalDate: from, departureDate: to } = draft.dates;
+  if (parseIsoDate(from) === null || parseIsoDate(to) === null) return [];
+  const outside = (date: string) => parseIsoDate(date) !== null && (date < from || date > to);
+  const problems: { path: (string | number)[]; fieldId: string; message: string }[] = [];
+  const range = `between ${from} and ${to}`;
+  draft.stays.forEach((stay, index) => {
+    if (outside(stay.checkIn)) {
+      problems.push({ path: ["stays", index, "checkIn"], fieldId: ids.stay(index, "checkIn"), message: `Stay ${index + 1}: check in ${range}.` });
+    }
+    if (outside(stay.checkOut)) {
+      problems.push({ path: ["stays", index, "checkOut"], fieldId: ids.stay(index, "checkOut"), message: `Stay ${index + 1}: check out ${range}.` });
+    }
+  });
+  draft.activities.forEach((activity, index) => {
+    if (outside(activity.date)) {
+      problems.push({ path: ["activities", index, "date"], fieldId: ids.activity(index, "date"), message: `Activity ${index + 1}: choose a date ${range}.` });
+    }
+  });
+  draft.transport.forEach((entry, index) => {
+    if (outside(entry.date)) {
+      problems.push({ path: ["transport", index, "date"], fieldId: ids.transport(index, "date"), message: `Transport ${index + 1}: choose a date ${range}.` });
+    }
+  });
+  return problems;
+}
+
 export function todayIso(now: Date = new Date()): string {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
@@ -400,6 +468,9 @@ export function validateDraft(draft: BookingDraft, today: string = todayIso()): 
   if (departure === null) add(ids.departureDate, "Choose your departure date.");
   else if (arrival !== null && tripLength(d.arrivalDate, d.departureDate) === null) {
     add(ids.departureDate, "Departure must be at least one night after arrival.");
+  } else if ((tripLength(d.arrivalDate, d.departureDate)?.nights ?? 0) > MAX_TRIP_DAYS) {
+    // Same limit as the server (D-39).
+    add(ids.departureDate, `We plan trips of up to ${MAX_TRIP_DAYS} days. For longer stays, please contact us.`);
   }
   if (!TIME_PATTERN.test(d.departureTime)) add(ids.departureTime, "Choose your departure time.");
 
@@ -455,6 +526,7 @@ export function validateDraft(draft: BookingDraft, today: string = todayIso()): 
       if (entry.dropoff.trim().length < 2) add(ids.transport(index, "dropoff"), `Transport ${index + 1}: enter a drop-off location.`);
       if (parseIsoDate(entry.date) === null) add(ids.transport(index, "date"), `Transport ${index + 1}: choose a date.`);
     });
+    for (const problem of entryDatesOutsideTrip(draft)) add(problem.fieldId, problem.message);
   } else {
     const p = draft.preferences;
     if (p.destinations.length === 0) add(ids.prefDestinations, "Choose at least one destination you would like to visit.");

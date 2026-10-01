@@ -48,7 +48,12 @@ per account.
 | F-39-18 | Low | `/api/track` trusted a client-sent `cf-ipcountry` | **Fixed**: only Vercel's header is used |
 | F-39-19 | Low | Visitor counts were lost around midnight (salt day and lookup day differed) | **Fixed**: the Sri Lanka day is computed once (`colomboDay()`). The salt purge now runs on about 2% of views |
 | F-39-20 | Low | Reference ids carried the UTC date | **Fixed**: Sri Lanka date |
-| — | Low | Open: departure and item date ranges, past-date slack, path and referrer cardinality in `/api/track`, the Photon allowance per client, `pull-content` media atomicity, IDN emails | Open (low) |
+| F-39-26 | Low | `pull-content` did not check that `/images/…` files exist or that `/media/<id>.<ext>` matches the upload's real extension, and it emptied `public/media` before copying | **Fixed**: both checked, with a clear list; media is written to a staging folder and swapped in |
+| F-39-27 | Low | `/api/track` stored any path, so a script could add unlimited rows | **Fixed**: only real pages (static routes, known trip and destination slugs) are counted |
+| — | Low | Departure had no upper bound; stay/activity/transport dates could fall outside the trip | **Fixed**: trips of up to 120 days; entry dates must be inside the trip (one shared rule, browser and server) |
+| — | Low | The Photon allowance could be used up by a few clients | **Fixed**: 30 lookups per minute per client (was 60) |
+| — | Info | The past-date slack was reported as backwards | **No change**: the one-day slack is right for travellers behind UTC (the Americas); only the comment was wrong, and it is corrected |
+| — | Info | IDN email addresses (`josé@…`) are rejected | **Accepted**: kept ASCII-only for deliverability; revisit if a traveller reports it |
 
 ### Site frontend (frontend audit)
 
@@ -58,7 +63,16 @@ per account.
 | F-39-22 | **High** | `/bookings?type=package&item=<slug>` ("Book this trip") was ignored and opened a blank form | **Fixed**: known slugs are preselected; unknown slugs are ignored |
 | — | Medium | The ride map was created hidden at 0×0 and showed grey tiles once revealed | **Fixed**: a `ResizeObserver` calls `invalidateSize()` |
 | — | Low | A debounced place search ran after a suggestion was picked; experience cards linked to a dead `#anchor`; the /plan FAQ hard-coded "4 to 15 days" | **Fixed** |
-| — | Medium/Low | Open: /plan transfer choices are not carried into /bookings; a stale saved /plan itinerary is still attached; server field errors point at missing ids in the trip form; carousel arrow keys drop focus; the first tap after a swipe is swallowed; the date `min` hydration mismatch; stale activity slugs count toward the cap; a rejected map drag | Open |
+| — | Medium | Airport transfers and vehicle chosen on /plan were not carried into /bookings | **Fixed**: seeded into untouched legs |
+| — | Medium | A stale saved /plan itinerary was attached to every request, with no way to view or clear it | **Fixed**: no longer attached (the builder was removed in D-18) |
+| — | Medium | Server field errors in the trip form pointed at `server:…` ids that do not exist | **Fixed**: `toBookingFieldId()` maps them to the real fields. Unit-tested |
+| — | Low | Carousel arrow keys dropped focus to `<body>`; the first tap after a swipe was swallowed | **Fixed**: focus moves to the matching control; the flag is reset on each pointerdown; `touch-action: pan-y` |
+| — | Low | Date-input `min` caused a hydration mismatch (server UTC vs the visitor's date) | **Fixed**: `useToday()` (`useSyncExternalStore`, empty on the server) |
+| — | Low | Deleted or duplicate activity slugs used up the 15 seeded slots | **Fixed**: filtered and de-duplicated before the cap |
+| — | Low | A map pin dropped outside Sri Lanka stayed where it was dropped | **Fixed**: it snaps back |
+| — | Low | og:images were 0.6–3.1 MB originals | **Fixed**: served through the image optimiser at 1200 px (the home image is now 72 KB) |
+| — | Low | Uppercase paths (`/Trips`) returned 404 | **Fixed**: `proxy.ts` 308-redirects to lower case. Trade-off: the proxy runs on page requests (a few ms at the edge) |
+| — | Low | The hard-coded `colombo` start for the planner is not in the integrity rules | **Not applicable now**: the day-by-day planner is no longer on the site (D-18). Add it to the rules if the planner returns |
 
 ### Data consistency (data audit)
 
